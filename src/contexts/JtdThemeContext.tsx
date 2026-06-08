@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+// Force re-transpilation to clear any SSR cache
+const SSR_SAFE = true;
+
 type Theme = 'dark' | 'light';
 
 interface ThemeContextType {
