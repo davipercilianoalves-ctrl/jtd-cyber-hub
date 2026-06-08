@@ -21,8 +21,6 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated/compras'
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
 import { Route as AuthenticatedAnunciosRouteImport } from './routes/_authenticated/anuncios'
-import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos.novo'
-import { Route as AuthenticatedProdutosEditarRouteImport } from './routes/_authenticated/produtos.editar'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -85,18 +83,6 @@ const AuthenticatedAnunciosRoute = AuthenticatedAnunciosRouteImport.update({
   path: '/anuncios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedProdutosNovoRoute =
-  AuthenticatedProdutosNovoRouteImport.update({
-    id: '/novo',
-    path: '/novo',
-    getParentRoute: () => AuthenticatedProdutosRoute,
-  } as any)
-const AuthenticatedProdutosEditarRoute =
-  AuthenticatedProdutosEditarRouteImport.update({
-    id: '/editar',
-    path: '/editar',
-    getParentRoute: () => AuthenticatedProdutosRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -108,10 +94,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
-  '/produtos': typeof AuthenticatedProdutosRouteWithChildren
+  '/produtos': typeof AuthenticatedProdutosRoute
   '/vendas': typeof AuthenticatedVendasRoute
-  '/produtos/editar': typeof AuthenticatedProdutosEditarRoute
-  '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -123,10 +107,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
-  '/produtos': typeof AuthenticatedProdutosRouteWithChildren
+  '/produtos': typeof AuthenticatedProdutosRoute
   '/vendas': typeof AuthenticatedVendasRoute
-  '/produtos/editar': typeof AuthenticatedProdutosEditarRoute
-  '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -140,10 +122,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/_authenticated/metricas': typeof AuthenticatedMetricasRoute
-  '/_authenticated/produtos': typeof AuthenticatedProdutosRouteWithChildren
+  '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
-  '/_authenticated/produtos/editar': typeof AuthenticatedProdutosEditarRoute
-  '/_authenticated/produtos/novo': typeof AuthenticatedProdutosNovoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,8 +139,6 @@ export interface FileRouteTypes {
     | '/metricas'
     | '/produtos'
     | '/vendas'
-    | '/produtos/editar'
-    | '/produtos/novo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -174,8 +152,6 @@ export interface FileRouteTypes {
     | '/metricas'
     | '/produtos'
     | '/vendas'
-    | '/produtos/editar'
-    | '/produtos/novo'
   id:
     | '__root__'
     | '/'
@@ -190,8 +166,6 @@ export interface FileRouteTypes {
     | '/_authenticated/metricas'
     | '/_authenticated/produtos'
     | '/_authenticated/vendas'
-    | '/_authenticated/produtos/editar'
-    | '/_authenticated/produtos/novo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -286,37 +260,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnunciosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/produtos/novo': {
-      id: '/_authenticated/produtos/novo'
-      path: '/novo'
-      fullPath: '/produtos/novo'
-      preLoaderRoute: typeof AuthenticatedProdutosNovoRouteImport
-      parentRoute: typeof AuthenticatedProdutosRoute
-    }
-    '/_authenticated/produtos/editar': {
-      id: '/_authenticated/produtos/editar'
-      path: '/editar'
-      fullPath: '/produtos/editar'
-      preLoaderRoute: typeof AuthenticatedProdutosEditarRouteImport
-      parentRoute: typeof AuthenticatedProdutosRoute
-    }
   }
 }
-
-interface AuthenticatedProdutosRouteChildren {
-  AuthenticatedProdutosEditarRoute: typeof AuthenticatedProdutosEditarRoute
-  AuthenticatedProdutosNovoRoute: typeof AuthenticatedProdutosNovoRoute
-}
-
-const AuthenticatedProdutosRouteChildren: AuthenticatedProdutosRouteChildren = {
-  AuthenticatedProdutosEditarRoute: AuthenticatedProdutosEditarRoute,
-  AuthenticatedProdutosNovoRoute: AuthenticatedProdutosNovoRoute,
-}
-
-const AuthenticatedProdutosRouteWithChildren =
-  AuthenticatedProdutosRoute._addFileChildren(
-    AuthenticatedProdutosRouteChildren,
-  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnunciosRoute: typeof AuthenticatedAnunciosRoute
@@ -326,7 +271,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFornecedoresRoute: typeof AuthenticatedFornecedoresRoute
   AuthenticatedMetricasRoute: typeof AuthenticatedMetricasRoute
-  AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRouteWithChildren
+  AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
 }
 
@@ -338,7 +283,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFornecedoresRoute: AuthenticatedFornecedoresRoute,
   AuthenticatedMetricasRoute: AuthenticatedMetricasRoute,
-  AuthenticatedProdutosRoute: AuthenticatedProdutosRouteWithChildren,
+  AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
 }
 
@@ -353,3 +298,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
