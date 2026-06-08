@@ -31,8 +31,8 @@ export function Sidebar() {
 
   return (
     <aside
-      style={{ width: collapsed ? 64 : 220, background: "#0A0A0A" }}
-      className="flex shrink-0 flex-col border-r border-[rgba(255,255,255,0.06)] transition-[width] duration-200"
+      style={{ width: collapsed ? 64 : 220 }}
+      className="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width,background-color] duration-200"
     >
       {/* Logo */}
       <div className="flex h-16 items-center justify-between px-4">
@@ -41,7 +41,7 @@ export function Sidebar() {
         )}
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className="ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-[rgba(191,255,0,0.08)] hover:text-[#BFFF00]"
+          className="ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           aria-label="Alternar sidebar"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -61,8 +61,8 @@ export function Sidebar() {
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
                 "border-l-2",
                 active
-                  ? "border-[#BFFF00] bg-[rgba(191,255,0,0.08)] text-[#BFFF00]"
-                  : "border-transparent text-[#A0A0A0] hover:bg-[rgba(191,255,0,0.08)] hover:text-white",
+                  ? "border-primary bg-accent text-accent-foreground"
+                  : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
               ].join(" ")}
             >
               <Icon size={18} className="shrink-0" />
