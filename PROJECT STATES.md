@@ -4,7 +4,7 @@ PROJECT_STATE.md — Estado atual:
 
 ## Etapas
 - [x] Etapa 0: Base + Auth + Design System — CONCLUÍDA
-- [ ] Etapa 1: Fornecedores — PENDENTE
+- [x] Etapa 1: Fornecedores — CONCLUÍDA
 - [ ] Etapa 2: Produtos — PENDENTE
 - [ ] Etapa 3: Anúncios — PENDENTE
 - [ ] Etapa 4: Kits — PENDENTE
@@ -15,11 +15,15 @@ PROJECT_STATE.md — Estado atual:
 - [x] Lovable + Supabase
 - [x] Lovable + GitHub
 
+## Tabelas criadas no Supabase
+- [x] suppliers (RLS ativo)
+
 ## Decisões tomadas
 - Stack: Lovable + Supabase + GitHub
-- Auth: email/senha via Supabase Auth, sem cadastro público
-- Design: Acid Cyber (dark padrão) + Arctic Cyber (light)
+- Auth: email/senha via Supabase Auth
+- Design: Acid Cyber (dark) + Arctic Cyber (light)
+- Fornecedores: sidebar como item de suporte, não aba principal
 - API ML: somente leitura, sem escrita
 
 ## Próxima etapa
-Módulo 1 — Fornecedores
+Módulo 2 — Produtos
