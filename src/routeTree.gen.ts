@@ -22,7 +22,7 @@ import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedAnunciosRouteImport } from './routes/_authenticated/anuncios'
 import { Route as AuthenticatedProdutosIndexRouteImport } from './routes/_authenticated/produtos/index'
 import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos/novo'
-import { Route as AuthenticatedProdutosIdEditarRouteImport } from './routes/_authenticated/produtos/$id/editar'
+import { Route as AuthenticatedProdutosIdEditarRouteImport } from './routes/_authenticated/produtos/$id.editar'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -343,3 +343,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
