@@ -21,6 +21,8 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated/compras'
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
 import { Route as AuthenticatedAnunciosRouteImport } from './routes/_authenticated/anuncios'
+import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos.novo'
+import { Route as AuthenticatedProdutosIdEditarRouteImport } from './routes/_authenticated/produtos.$id.editar'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -83,6 +85,18 @@ const AuthenticatedAnunciosRoute = AuthenticatedAnunciosRouteImport.update({
   path: '/anuncios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProdutosNovoRoute =
+  AuthenticatedProdutosNovoRouteImport.update({
+    id: '/novo',
+    path: '/novo',
+    getParentRoute: () => AuthenticatedProdutosRoute,
+  } as any)
+const AuthenticatedProdutosIdEditarRoute =
+  AuthenticatedProdutosIdEditarRouteImport.update({
+    id: '/$id/editar',
+    path: '/$id/editar',
+    getParentRoute: () => AuthenticatedProdutosRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,8 +108,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
-  '/produtos': typeof AuthenticatedProdutosRoute
+  '/produtos': typeof AuthenticatedProdutosRouteWithChildren
   '/vendas': typeof AuthenticatedVendasRoute
+  '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,8 +123,10 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
-  '/produtos': typeof AuthenticatedProdutosRoute
+  '/produtos': typeof AuthenticatedProdutosRouteWithChildren
   '/vendas': typeof AuthenticatedVendasRoute
+  '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,8 +140,10 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/_authenticated/metricas': typeof AuthenticatedMetricasRoute
-  '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
+  '/_authenticated/produtos': typeof AuthenticatedProdutosRouteWithChildren
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
+  '/_authenticated/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/_authenticated/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,6 +159,8 @@ export interface FileRouteTypes {
     | '/metricas'
     | '/produtos'
     | '/vendas'
+    | '/produtos/novo'
+    | '/produtos/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -152,6 +174,8 @@ export interface FileRouteTypes {
     | '/metricas'
     | '/produtos'
     | '/vendas'
+    | '/produtos/novo'
+    | '/produtos/$id/editar'
   id:
     | '__root__'
     | '/'
@@ -166,6 +190,8 @@ export interface FileRouteTypes {
     | '/_authenticated/metricas'
     | '/_authenticated/produtos'
     | '/_authenticated/vendas'
+    | '/_authenticated/produtos/novo'
+    | '/_authenticated/produtos/$id/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -260,8 +286,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnunciosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/produtos/novo': {
+      id: '/_authenticated/produtos/novo'
+      path: '/novo'
+      fullPath: '/produtos/novo'
+      preLoaderRoute: typeof AuthenticatedProdutosNovoRouteImport
+      parentRoute: typeof AuthenticatedProdutosRoute
+    }
+    '/_authenticated/produtos/$id/editar': {
+      id: '/_authenticated/produtos/$id/editar'
+      path: '/$id/editar'
+      fullPath: '/produtos/$id/editar'
+      preLoaderRoute: typeof AuthenticatedProdutosIdEditarRouteImport
+      parentRoute: typeof AuthenticatedProdutosRoute
+    }
   }
 }
+
+interface AuthenticatedProdutosRouteChildren {
+  AuthenticatedProdutosNovoRoute: typeof AuthenticatedProdutosNovoRoute
+  AuthenticatedProdutosIdEditarRoute: typeof AuthenticatedProdutosIdEditarRoute
+}
+
+const AuthenticatedProdutosRouteChildren: AuthenticatedProdutosRouteChildren = {
+  AuthenticatedProdutosNovoRoute: AuthenticatedProdutosNovoRoute,
+  AuthenticatedProdutosIdEditarRoute: AuthenticatedProdutosIdEditarRoute,
+}
+
+const AuthenticatedProdutosRouteWithChildren =
+  AuthenticatedProdutosRoute._addFileChildren(
+    AuthenticatedProdutosRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnunciosRoute: typeof AuthenticatedAnunciosRoute
@@ -271,7 +326,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFornecedoresRoute: typeof AuthenticatedFornecedoresRoute
   AuthenticatedMetricasRoute: typeof AuthenticatedMetricasRoute
-  AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
+  AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRouteWithChildren
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
 }
 
@@ -283,7 +338,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFornecedoresRoute: AuthenticatedFornecedoresRoute,
   AuthenticatedMetricasRoute: AuthenticatedMetricasRoute,
-  AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
+  AuthenticatedProdutosRoute: AuthenticatedProdutosRouteWithChildren,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
 }
 
