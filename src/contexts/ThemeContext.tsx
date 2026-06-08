@@ -11,14 +11,17 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('jtd-theme');
-      return (saved as Theme) || 'dark';
-    }
-    return 'dark';
-  });
+  const [theme, setThemeState] = useState<Theme>('dark');
 
+  // Carregar tema inicial do localStorage após a montagem (cliente-only)
+  useEffect(() => {
+    const saved = localStorage.getItem('jtd-theme');
+    if (saved === 'light' || saved === 'dark') {
+      setThemeState(saved);
+    }
+  }, []);
+
+  // Aplicar tema ao documento e persistir mudanças
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
