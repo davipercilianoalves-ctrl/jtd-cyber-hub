@@ -12,6 +12,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Truck,
 } from "lucide-react";
 
 const navItems = [
@@ -23,6 +24,7 @@ const navItems = [
   { to: "/vendas", label: "Vendas", icon: DollarSign },
   { to: "/api", label: "API", icon: Plug },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
+  { to: "/fornecedores", label: "Fornecedores", icon: Truck },
 ] as const;
 
 export function Sidebar() {
