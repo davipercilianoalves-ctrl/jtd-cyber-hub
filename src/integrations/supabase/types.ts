@@ -14,6 +14,106 @@ export type Database = {
   }
   public: {
     Tables: {
+      product_competitors: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          keywords_found: string[] | null
+          price: number | null
+          product_id: string
+          title: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          keywords_found?: string[] | null
+          price?: number | null
+          product_id: string
+          title?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          keywords_found?: string[] | null
+          price?: number | null
+          product_id?: string
+          title?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_competitors_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string | null
+          common_questions: string | null
+          cost_price: number | null
+          created_at: string
+          description: string | null
+          dimensions: string | null
+          id: string
+          is_active: boolean
+          keywords: string[] | null
+          name: string
+          notes: string | null
+          sku: string | null
+          supplier_id: string | null
+          weight_g: number | null
+        }
+        Insert: {
+          category?: string | null
+          common_questions?: string | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          dimensions?: string | null
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          name: string
+          notes?: string | null
+          sku?: string | null
+          supplier_id?: string | null
+          weight_g?: number | null
+        }
+        Update: {
+          category?: string | null
+          common_questions?: string | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          dimensions?: string | null
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          name?: string
+          notes?: string | null
+          sku?: string | null
+          supplier_id?: string | null
+          weight_g?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           city: string | null
