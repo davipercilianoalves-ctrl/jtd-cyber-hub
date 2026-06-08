@@ -21,7 +21,6 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated/compras'
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
 import { Route as AuthenticatedAnunciosRouteImport } from './routes/_authenticated/anuncios'
-import { Route as AuthenticatedFornecedoresRouteImport } from './routes/_authenticated/fornecedores'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -85,18 +84,10 @@ const AuthenticatedAnunciosRoute = AuthenticatedAnunciosRouteImport.update({
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
-const AuthenticatedFornecedoresRoute = AuthenticatedFornecedoresRouteImport.update({
-  id: '/fornecedores',
-  path: '/fornecedores',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/anuncios': typeof AuthenticatedAnunciosRoute
-  '/fornecedores': typeof AuthenticatedFornecedoresRoute
-  '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/api': typeof AuthenticatedApiRoute
   '/compras': typeof AuthenticatedComprasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -125,7 +116,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/anuncios': typeof AuthenticatedAnunciosRoute
-  '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/_authenticated/api': typeof AuthenticatedApiRoute
   '/_authenticated/compras': typeof AuthenticatedComprasRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -141,8 +131,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/anuncios'
-    | '/fornecedores'
-    | '/fornecedores'
     | '/api'
     | '/compras'
     | '/configuracoes'
@@ -170,7 +158,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/anuncios'
-    | '/_authenticated/fornecedores'
     | '/_authenticated/api'
     | '/_authenticated/compras'
     | '/_authenticated/configuracoes'
@@ -273,13 +260,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnunciosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/fornecedores': {
-      id: '/_authenticated/fornecedores'
-      path: '/fornecedores'
-      fullPath: '/fornecedores'
-      preLoaderRoute: typeof AuthenticatedFornecedoresRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
@@ -293,7 +273,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMetricasRoute: typeof AuthenticatedMetricasRoute
   AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
-  AuthenticatedFornecedoresRoute: typeof AuthenticatedFornecedoresRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -306,7 +285,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMetricasRoute: AuthenticatedMetricasRoute,
   AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
-  AuthenticatedFornecedoresRoute: AuthenticatedFornecedoresRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
