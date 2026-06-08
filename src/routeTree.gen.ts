@@ -22,6 +22,7 @@ import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
 import { Route as AuthenticatedAnunciosRouteImport } from './routes/_authenticated/anuncios'
 import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos.novo'
+import { Route as AuthenticatedProdutosIdEditarRouteImport } from './routes/_authenticated/produtos.$id.editar'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -90,6 +91,12 @@ const AuthenticatedProdutosNovoRoute =
     path: '/novo',
     getParentRoute: () => AuthenticatedProdutosRoute,
   } as any)
+const AuthenticatedProdutosIdEditarRoute =
+  AuthenticatedProdutosIdEditarRouteImport.update({
+    id: '/$id/editar',
+    path: '/$id/editar',
+    getParentRoute: () => AuthenticatedProdutosRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/produtos': typeof AuthenticatedProdutosRouteWithChildren
   '/vendas': typeof AuthenticatedVendasRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +126,7 @@ export interface FileRoutesByTo {
   '/produtos': typeof AuthenticatedProdutosRouteWithChildren
   '/vendas': typeof AuthenticatedVendasRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +143,7 @@ export interface FileRoutesById {
   '/_authenticated/produtos': typeof AuthenticatedProdutosRouteWithChildren
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
   '/_authenticated/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/_authenticated/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/produtos'
     | '/vendas'
     | '/produtos/novo'
+    | '/produtos/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/produtos'
     | '/vendas'
     | '/produtos/novo'
+    | '/produtos/$id/editar'
   id:
     | '__root__'
     | '/'
@@ -179,6 +191,7 @@ export interface FileRouteTypes {
     | '/_authenticated/produtos'
     | '/_authenticated/vendas'
     | '/_authenticated/produtos/novo'
+    | '/_authenticated/produtos/$id/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -280,15 +293,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProdutosNovoRouteImport
       parentRoute: typeof AuthenticatedProdutosRoute
     }
+    '/_authenticated/produtos/$id/editar': {
+      id: '/_authenticated/produtos/$id/editar'
+      path: '/$id/editar'
+      fullPath: '/produtos/$id/editar'
+      preLoaderRoute: typeof AuthenticatedProdutosIdEditarRouteImport
+      parentRoute: typeof AuthenticatedProdutosRoute
+    }
   }
 }
 
 interface AuthenticatedProdutosRouteChildren {
   AuthenticatedProdutosNovoRoute: typeof AuthenticatedProdutosNovoRoute
+  AuthenticatedProdutosIdEditarRoute: typeof AuthenticatedProdutosIdEditarRoute
 }
 
 const AuthenticatedProdutosRouteChildren: AuthenticatedProdutosRouteChildren = {
   AuthenticatedProdutosNovoRoute: AuthenticatedProdutosNovoRoute,
+  AuthenticatedProdutosIdEditarRoute: AuthenticatedProdutosIdEditarRoute,
 }
 
 const AuthenticatedProdutosRouteWithChildren =
