@@ -3,7 +3,7 @@ import { Settings, LogOut, Sun, Moon } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/contexts/JtdThemeContext";
 
 export default function Configuracoes() {
   const navigate = useNavigate();
