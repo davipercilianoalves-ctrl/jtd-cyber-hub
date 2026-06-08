@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { 
   Loader2, 
@@ -13,7 +13,9 @@ import {
   ChevronDown, 
   ChevronUp, 
   ExternalLink,
-  DollarSign
+  DollarSign,
+  Package,
+  Users
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -78,6 +80,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   }
 
   async function fetchProduct() {
+    if (!productId) return;
     const { data, error } = await supabase.from("products").select("*, product_competitors(*)").eq("id", productId).single();
     if (data) {
       const { product_competitors, ...rest } = data as any;
