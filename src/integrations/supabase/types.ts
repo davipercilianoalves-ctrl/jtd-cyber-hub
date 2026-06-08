@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      suppliers: {
+        Row: {
+          city: string | null
+          contact_name: string | null
+          created_at: string
+          delivery_days: number | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          state: string | null
+          warranty_days: number | null
+          whatsapp: string | null
+        }
+        Insert: {
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          delivery_days?: number | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          state?: string | null
+          warranty_days?: number | null
+          whatsapp?: string | null
+        }
+        Update: {
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          delivery_days?: number | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          state?: string | null
+          warranty_days?: number | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
