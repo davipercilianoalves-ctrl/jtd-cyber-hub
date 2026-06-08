@@ -5,8 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * JTD — Acid Cyber Theme
- * Fundo absoluto preto, acentos lime/magenta/cyan.
+ * JTD — Acid Cyber (Dark) & Arctic Cyber (Light)
  */
 
 @theme inline {
@@ -42,6 +41,7 @@
   --color-cyan: var(--cyan);
   --color-surface: var(--surface);
   --color-sidebar: var(--sidebar);
+  --color-sidebar-border: var(--sidebar-border);
 
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -50,12 +50,13 @@
 :root {
   --radius: 0.5rem;
 
-  /* Acid Cyber palette */
+  /* Theme: Acid Cyber (Default / Dark) */
   --lime: #BFFF00;
   --magenta: #FF00FF;
   --cyan: #00FFFF;
   --surface: rgba(255, 255, 255, 0.04);
   --sidebar: #0A0A0A;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
 
   --background: #000000;
   --foreground: #FFFFFF;
@@ -84,24 +85,69 @@
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.12);
   --ring: #BFFF00;
+
+  --glass-blur: 20px;
+  --logo-gradient: linear-gradient(90deg, #BFFF00 0%, #00FFFF 100%);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.10);
+  --placeholder: #A0A0A0;
 }
 
-.dark {
-  /* Forçar mesma paleta — app é sempre dark */
-  --background: #000000;
-  --foreground: #FFFFFF;
+.light {
+  /* Theme: Arctic Cyber */
+  --lime: #7AB800;
+  --magenta: #FF00FF; /* Magenta holds same identity */
+  --cyan: #0099AA;
+  --surface: rgba(255, 255, 255, 0.80);
+  --sidebar: #FFFFFF;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+
+  --background: #F0F0F0;
+  --foreground: #0A0A0A;
+
+  --card: rgba(255, 255, 255, 0.80);
+  --card-foreground: #0A0A0A;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0A0A;
+
+  --primary: #7AB800;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #E4E4E4;
+  --secondary-foreground: #0A0A0A;
+
+  --muted: rgba(0, 0, 0, 0.04);
+  --muted-foreground: #555555;
+
+  --accent: rgba(122, 184, 0, 0.10);
+  --accent-foreground: #7AB800;
+
+  --destructive: #FF3366;
+  --destructive-foreground: #FFFFFF;
+
+  --border: rgba(0, 0, 0, 0.08);
+  --input: #FFFFFF;
+  --ring: #7AB800;
+
+  --glass-blur: 12px;
+  --logo-gradient: linear-gradient(90deg, #7AB800 0%, #0099AA 100%);
+  --input-bg: #FFFFFF;
+  --input-border: rgba(0, 0, 0, 0.15);
+  --placeholder: #999999;
 }
 
 @layer base {
   * {
-    border-color: var(--color-border);
+    border-color: var(--border);
   }
 
   html, body {
-    background-color: #000000;
-    color: #FFFFFF;
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   /* Tipografia numérica */
@@ -112,19 +158,21 @@
 
 /* Utilitários temáticos JTD */
 @utility jtd-glass {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  backdrop-filter: blur(var(--glass-blur));
 }
 
 @utility jtd-glass-gradient {
   position: relative;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--card);
   border-radius: 8px;
+  backdrop-filter: blur(var(--glass-blur));
 }
 
 @utility jtd-text-gradient {
-  background: linear-gradient(90deg, #BFFF00 0%, #00FFFF 100%);
+  background: var(--logo-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
