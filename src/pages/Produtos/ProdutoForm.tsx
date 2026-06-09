@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronUp,
   DollarSign,
-  Copy,
   Trash
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +55,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     keywords: [] as string[]
   });
 
-  function autoResize(target: HTMLTextAreaElement | null) {
+  function autoResize(target: HTMLElement | null) {
     if (!target) return;
     target.style.height = 'auto';
     target.style.height = target.scrollHeight + 'px';
@@ -129,8 +128,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             description: c.description,
             keywords_found: c.keywords_found,
             product_id: savedProductId,
-            price: 0, // Legacy support
-            url: ""   // Legacy support
+            price: 0,
+            url: ""
           }));
           await supabase.from("product_competitors").insert(competitorsToSave);
         }
@@ -531,7 +530,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             </div>
           </div>
 
-          <div className="space-y-0.5 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-0.5">
             {formData.keywords.map((kw, i) => (
               <div 
                 key={i} 
