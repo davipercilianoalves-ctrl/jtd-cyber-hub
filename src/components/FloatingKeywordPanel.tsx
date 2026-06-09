@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Tag, Move, Copy, Check, Send } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Tag, Move, Send } from 'lucide-react';
 
 interface FloatingKeywordPanelProps {
   title: string;
@@ -25,45 +25,36 @@ export default function FloatingKeywordPanel({
   isGeneral = false
 }: FloatingKeywordPanelProps) {
   const [position, setPosition] = useState({ x: initialX, y: initialY });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [newKeyword, setNewKeyword] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const posStart = useRef({ x: 0, y: 0 });
 
-  useEffect(() => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    posStart.current = { x: position.x, y: position.y };
+
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        setPosition({
-          x: e.clientX - dragOffset.x,
-          y: e.clientY - dragOffset.y
-        });
-      }
+      if (!isDragging.current) return;
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      setPosition({
+        x: posStart.current.x + dx,
+        y: posStart.current.y + dy
+      });
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
+      isDragging.current = false;
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (panelRef.current) {
-      const rect = panelRef.current.getBoundingClientRect();
-      setDragOffset({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      });
-      setIsDragging(true);
-    }
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   };
 
   const handleAdd = (e?: React.FormEvent) => {
@@ -81,15 +72,20 @@ export default function FloatingKeywordPanel({
         left: `${position.x}px`,
         top: `${position.y}px`,
         position: 'fixed',
-        zIndex: 100,
-        width: isGeneral ? '360px' : '320px',
+        zIndex: 200,
+        width: '280px',
+        background: 'hsl(var(--background))',
+        border: '1px solid hsl(var(--border))',
+        borderRadius: '8px',
+        boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+        color: 'hsl(var(--foreground))',
       }}
-      className="jtd-glass flex flex-col shadow-2xl animate-in zoom-in-95 duration-200 bg-black/95 border-primary/30"
+      className="flex flex-col animate-in zoom-in-95 duration-200"
     >
       {/* Header */}
       <div
         onMouseDown={handleMouseDown}
-        className="flex cursor-move items-center justify-between border-b border-sidebar-border px-4 py-3 bg-accent/5"
+        className="flex cursor-move items-center justify-between border-b border-sidebar-border px-4 py-3 bg-[hsl(var(--primary)/0.1)] rounded-t-lg"
       >
         <div className="flex items-center gap-2">
           <Tag size={14} className="text-primary" />
