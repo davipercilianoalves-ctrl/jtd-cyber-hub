@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Tag, Move, Send } from 'lucide-react';
+import { X, Tag, Move, Send, ChevronDown, ChevronUp, Trash2, Plus, Package, FileText, ArrowLeft, Save, Loader2 } from 'lucide-react';
 
 interface FloatingKeywordPanelProps {
   title: string;
@@ -87,7 +87,6 @@ export default function FloatingKeywordPanel({
       }}
       className="flex flex-col shadow-2xl animate-in zoom-in-95 duration-200"
     >
-      {/* Header */}
       <div
         onMouseDown={handleMouseDown}
         className="flex cursor-move items-center justify-between border-b border-sidebar-border px-4 py-3 bg-accent/5"
@@ -96,17 +95,14 @@ export default function FloatingKeywordPanel({
           <Move size={14} className="text-muted-foreground" />
           <span className="text-xs font-bold uppercase tracking-wider">{title}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-full p-1 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className="rounded-full p-1 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+        >
+          <X size={16} />
+        </button>
       </div>
 
-      {/* Content */}
       <div className="flex-1 p-4 max-h-[50vh] overflow-y-auto">
         <form onSubmit={handleAdd} className="mb-4 flex gap-2">
           <input
@@ -153,7 +149,6 @@ export default function FloatingKeywordPanel({
         </div>
       </div>
 
-      {/* Footer */}
       {onSendToProduct && keywords.length > 0 && (
         <div className="border-t border-sidebar-border p-3">
           <button
