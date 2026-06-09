@@ -1,23 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { 
   Loader2, 
   Plus, 
-  Truck, 
   X, 
   Save, 
   ArrowLeft, 
-  Tag, 
-  Copy, 
   Trash2, 
-  ExternalLink,
+  Package, 
+  FileText,
+  ChevronDown,
+  ChevronUp,
   DollarSign,
-  Package,
-  Users,
-  Search,
-  ClipboardList,
-  Weight,
-  Maximize
+  Trash
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -27,8 +22,6 @@ interface Competitor {
   id?: string;
   title: string;
   description: string;
-  price: number;
-  url: string;
   keywords_found: string[];
 }
 
@@ -42,10 +35,10 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [saving, setSaving] = useState(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
-  const [isAddingCompetitor, setIsAddingCompetitor] = useState(false);
-  const [newKeywordInput, setNewKeywordInput] = useState("");
+  const [openCompetitorIndex, setOpenCompetitorIndex] = useState<number | null>(null);
   const [openPanels, setOpenPanels] = useState<number[]>([]);
-  const [showGeneralPanel, setShowGeneralPanel] = useState(false);
+  const [newKeywordInput, setNewKeywordInput] = useState("");
+  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -62,19 +55,16 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     keywords: [] as string[]
   });
 
-  const [newCompetitor, setNewCompetitor] = useState<Competitor>({
-    title: "",
-    description: "",
-    price: 0,
-    url: "",
-    keywords_found: []
-  });
-
-  // Auto-resize helper
-  const adjustHeight = (e: React.ChangeEvent<HTMLTextAreaElement> | HTMLTextAreaElement) => {
-    const target = 'target' in e ? e.target : e;
+  function autoResize(target: HTMLElement | null) {
+    if (!target) return;
     target.style.height = 'auto';
-    target.style.height = `${Math.max(80, target.scrollHeight)}px`;
+    target.style.height = target.scrollHeight + 'px';
+  }
+
+  const textareaStyle: React.CSSProperties = { 
+    minHeight: '80px', 
+    overflow: 'hidden', 
+    resize: 'none' 
   };
 
   useEffect(() => {
@@ -82,16 +72,15 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     if (productId) fetchProduct();
   }, [productId]);
 
-  // Initial auto-resize for existing content
   useEffect(() => {
     if (!loading) {
       setTimeout(() => {
         document.querySelectorAll('textarea').forEach(textarea => {
-          adjustHeight(textarea);
+          autoResize(textarea);
         });
       }, 100);
     }
-  }, [loading, competitors.length]);
+  }, [loading, competitors, openCompetitorIndex]);
 
   async function fetchSuppliers() {
     const { data } = await supabase.from("suppliers").select("id, name, delivery_days, warranty_days").eq("is_active", true);
@@ -104,7 +93,12 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     if (data) {
       const { product_competitors, ...rest } = data as any;
       setFormData(rest);
-      setCompetitors(product_competitors || []);
+      setCompetitors((product_competitors || []).map((c: any) => ({
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        keywords_found: c.keywords_found || []
+      })));
     }
     setLoading(false);
   }
@@ -130,9 +124,12 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         await supabase.from("product_competitors").delete().eq("product_id", savedProductId);
         if (competitors.length > 0) {
           const competitorsToSave = competitors.map(c => ({
-            ...c,
+            title: c.title,
+            description: c.description,
+            keywords_found: c.keywords_found,
             product_id: savedProductId,
-            id: undefined 
+            price: 0,
+            url: ""
           }));
           await supabase.from("product_competitors").insert(competitorsToSave);
         }
@@ -156,17 +153,17 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
   const removeKeyword = (kw: string) => {
     setFormData({ ...formData, keywords: formData.keywords.filter(k => k !== kw) });
-  };
-
-  const copyKeywords = () => {
-    const text = formData.keywords.join(", ");
-    navigator.clipboard.writeText(text);
-    toast.success("Palavras-chave copiadas!");
+    setSelectedKeywords(selectedKeywords.filter(k => k !== kw));
   };
 
   const handleAddCompetitor = () => {
-    setCompetitors([...competitors, { ...newCompetitor }]);
-    setNewCompetitor({ title: "", description: "", price: 0, url: "", keywords_found: [] });
+    const newIdx = competitors.length;
+    setCompetitors([...competitors, { 
+      title: "", 
+      description: "", 
+      keywords_found: [] 
+    }]);
+    setOpenCompetitorIndex(newIdx);
   };
 
   const updateCompetitor = (idx: number, field: keyof Competitor, value: any) => {
@@ -175,33 +172,146 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     setCompetitors(newComps);
   };
 
-  // Price calculations
-  const prices = competitors.map(c => c.price).filter(p => p > 0);
-  const minPrice = prices.length ? Math.min(...prices) : 0;
-  const maxPrice = prices.length ? Math.max(...prices) : 0;
-  const avgPrice = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+  const toggleSelectedKeyword = (kw: string) => {
+    if (selectedKeywords.includes(kw)) {
+      setSelectedKeywords(selectedKeywords.filter(k => k !== kw));
+    } else {
+      setSelectedKeywords([...selectedKeywords, kw]);
+    }
+  };
+
+  const copySelectedKeywords = () => {
+    if (selectedKeywords.length === 0) return;
+    navigator.clipboard.writeText(selectedKeywords.join(", "));
+    toast.success("Palavras-chave selecionadas copiadas!");
+  };
+
+  const copyAllKeywords = () => {
+    if (formData.keywords.length === 0) return;
+    navigator.clipboard.writeText(formData.keywords.join(", "));
+    toast.success("Todas as palavras-chave copiadas!");
+  };
 
   const selectedSupplier = suppliers.find(s => s.id === formData.supplier_id);
 
   if (loading) return <div className="flex h-[60vh] items-center justify-center"><Loader2 size={32} className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-40 animate-in fade-in duration-300">
-      <button type="button" onClick={() => navigate({ to: "/produtos" })} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+    <div className="max-w-4xl mx-auto space-y-6 pb-20 animate-in fade-in duration-300">
+      
+      {/* BLOCO 0 — Navegação */}
+      <button 
+        type="button" 
+        onClick={() => navigate({ to: "/produtos" })} 
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
         <ArrowLeft size={16} /> Voltar para Produtos
       </button>
 
-      {/* SEÇÃO 1 — INFORMAÇÕES BÁSICAS */}
-      <section className="jtd-glass p-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <h3 className="font-black text-xl text-foreground flex items-center gap-3 italic tracking-tighter uppercase">
-            <Package size={24} className="text-primary" />
-            Informações Básicas
-          </h3>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${formData.is_active ? "text-primary" : "text-muted-foreground"}`}>
-                {formData.is_active ? "Produto Ativo" : "Produto Inativo"}
+      {/* BLOCO 1 — Informações Básicas */}
+      <section className="jtd-glass p-6 space-y-6">
+        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <Package size={20} className="text-primary" />
+          Informações Básicas
+        </h3>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2 space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Nome do Produto*</label>
+            <input 
+              required 
+              value={formData.name} 
+              onChange={e => setFormData({...formData, name: e.target.value})} 
+              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none transition-all" 
+              placeholder="Ex: Teclado Mecânico RGB"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">SKU</label>
+            <div className="flex gap-2">
+              <input 
+                value={formData.sku} 
+                onChange={e => setFormData({...formData, sku: e.target.value})} 
+                className="flex-1 rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
+                placeholder="SKU-001" 
+              />
+              <button 
+                type="button" 
+                onClick={() => setFormData({...formData, sku: `PRD-${Math.random().toString(36).substr(2, 5).toUpperCase()}`})} 
+                className="bg-primary text-black font-bold px-4 rounded text-xs hover:brightness-110 transition-all uppercase"
+              >
+                GERAR
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Categoria</label>
+            <input 
+              value={formData.category || ""} 
+              onChange={e => setFormData({...formData, category: e.target.value})} 
+              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Ex: Eletrônicos"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Fornecedor</label>
+            <select 
+              value={formData.supplier_id || ""} 
+              onChange={e => setFormData({...formData, supplier_id: e.target.value})} 
+              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+            >
+              <option value="">Selecionar Fornecedor...</option>
+              {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            {selectedSupplier && (
+              <div className="mt-1 text-[10px] font-bold text-primary animate-in fade-in">
+                🚚 {selectedSupplier.delivery_days} dias entrega • 🛡️ {selectedSupplier.warranty_days} dias garantia
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Preço de Custo (R$)</label>
+            <div className="relative">
+              <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input 
+                type="number" 
+                step="0.01" 
+                value={formData.cost_price || 0} 
+                onChange={e => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})} 
+                className="w-full rounded border border-sidebar-border bg-black/20 pl-8 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Peso (gramas)</label>
+            <input 
+              type="number" 
+              value={formData.weight_g || 0} 
+              onChange={e => setFormData({...formData, weight_g: parseInt(e.target.value) || 0})} 
+              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Dimensões</label>
+            <input 
+              value={formData.dimensions || ""} 
+              onChange={e => setFormData({...formData, dimensions: e.target.value})} 
+              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Ex: 30x20x10 cm"
+            />
+          </div>
+
+          <div className="col-span-2 flex items-center justify-between py-2 border-t border-sidebar-border/30 mt-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status do Produto</label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <span className={`text-[10px] font-black uppercase ${formData.is_active ? "text-primary" : "text-muted-foreground"}`}>
+                {formData.is_active ? "Ativo" : "Inativo"}
               </span>
               <div className="relative">
                 <input
@@ -210,416 +320,288 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                   className="sr-only"
                 />
-                <div className={`w-10 h-5 rounded-full transition-all duration-300 ${formData.is_active ? "bg-primary shadow-[0_0_10px_rgba(191,255,0,0.5)]" : "bg-muted"}`} />
+                <div className={`w-10 h-5 rounded-full transition-all duration-300 ${formData.is_active ? "bg-primary" : "bg-muted"}`} />
                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${formData.is_active ? "translate-x-5" : ""}`} />
               </div>
             </label>
           </div>
         </div>
-
-        <div className="space-y-6">
-          <div className="w-full">
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Nome do Produto</label>
-            <input 
-              required 
-              value={formData.name} 
-              onChange={e => setFormData({...formData, name: e.target.value})} 
-              className="w-full rounded-none border-b-2 border-sidebar-border bg-transparent p-3 text-2xl font-black text-foreground focus:border-primary transition-all focus:outline-none placeholder:text-white/10 uppercase italic" 
-              placeholder="NOME DO PRODUTO AQUI..."
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">SKU + Botão Gerar</label>
-              <div className="flex gap-2">
-                <input 
-                  value={formData.sku} 
-                  onChange={e => setFormData({...formData, sku: e.target.value})} 
-                  className="flex-1 rounded border border-sidebar-border bg-accent/5 p-3 text-sm text-foreground focus:border-primary font-mono focus:outline-none" 
-                  placeholder="EX: SKU-001" 
-                />
-                <button 
-                  type="button" 
-                  onClick={() => setFormData({...formData, sku: `PRD-${Math.random().toString(36).substr(2, 5).toUpperCase()}`})} 
-                  className="text-[10px] font-black bg-primary text-black hover:brightness-110 px-6 rounded transition-all whitespace-nowrap italic"
-                >
-                  GERAR
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Categoria</label>
-              <input 
-                value={formData.category || ""} 
-                onChange={e => setFormData({...formData, category: e.target.value})} 
-                className="w-full rounded border border-sidebar-border bg-accent/5 p-3 text-sm text-foreground focus:border-primary focus:outline-none"
-                placeholder="Ex: Eletrônicos"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Fornecedor Dropdown</label>
-              <select 
-                value={formData.supplier_id || ""} 
-                onChange={e => setFormData({...formData, supplier_id: e.target.value})} 
-                className="w-full rounded border border-sidebar-border bg-accent/5 p-3 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer"
-              >
-                <option value="">Selecionar Fornecedor...</option>
-                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              {selectedSupplier && (
-                <div className="mt-2 animate-in slide-in-from-left-2 duration-300">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary border border-primary/40 uppercase italic tracking-widest">
-                    <Truck size={12} className="mr-2" />
-                    🚚 {selectedSupplier.delivery_days} DIAS ENTREGA • 🛡️ {selectedSupplier.warranty_days} DIAS GARANTIA
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Preço de Custo</label>
-              <div className="relative">
-                <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  value={formData.cost_price || 0} 
-                  onChange={e => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})} 
-                  className="w-full rounded border border-sidebar-border bg-accent/5 pl-8 p-3 text-sm text-foreground focus:border-primary focus:outline-none font-mono" 
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Peso (gramas)</label>
-              <div className="relative">
-                <Weight size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input 
-                  type="number" 
-                  value={formData.weight_g || 0} 
-                  onChange={e => setFormData({...formData, weight_g: parseInt(e.target.value) || 0})} 
-                  className="w-full rounded border border-sidebar-border bg-accent/5 pl-8 p-3 text-sm text-foreground focus:border-primary focus:outline-none" 
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Dimensões</label>
-              <div className="relative">
-                <Maximize size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input 
-                  value={formData.dimensions || ""} 
-                  onChange={e => setFormData({...formData, dimensions: e.target.value})} 
-                  className="w-full rounded border border-sidebar-border bg-accent/5 pl-8 p-3 text-sm text-foreground focus:border-primary focus:outline-none"
-                  placeholder="Ex: 30x20x10 cm"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
-      {/* SEÇÃO 2 — TEXTOS */}
-      <section className="jtd-glass p-8 space-y-8">
-        <h3 className="font-black text-xl text-foreground flex items-center gap-3 italic tracking-tighter uppercase">
-          <ClipboardList size={24} className="text-primary" />
+      {/* BLOCO 2 — Textos do Produto */}
+      <section className="jtd-glass p-6 space-y-6">
+        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <FileText size={20} className="text-primary" />
           Textos do Produto
         </h3>
 
-        <div className="space-y-8">
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Descrição Interna</label>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Descrição Interna</label>
             <textarea 
               value={formData.description || ""} 
               onChange={e => {
                 setFormData({...formData, description: e.target.value});
-                adjustHeight(e);
+                autoResize(e.target);
               }} 
-              className="w-full rounded border border-sidebar-border bg-accent/5 p-4 text-sm text-foreground focus:border-primary resize-none focus:outline-none min-h-[80px] overflow-hidden transition-all duration-200"
-              placeholder="Digite a descrição interna..."
+              style={textareaStyle}
+              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Digite a descrição interna completa do produto..."
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Perguntas Frequentes</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Perguntas Frequentes</label>
             <textarea 
               value={formData.common_questions || ""} 
               onChange={e => {
                 setFormData({...formData, common_questions: e.target.value});
-                adjustHeight(e);
+                autoResize(e.target);
               }} 
-              className="w-full rounded border border-sidebar-border bg-accent/5 p-4 text-sm text-foreground focus:border-primary resize-none focus:outline-none min-h-[80px] overflow-hidden transition-all duration-200"
-              placeholder="Liste as dúvidas frequentes..."
+              style={textareaStyle}
+              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Liste as principais dúvidas dos compradores"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Notas Internas</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Notas Internas</label>
             <textarea 
               value={formData.notes || ""} 
               onChange={e => {
                 setFormData({...formData, notes: e.target.value});
-                adjustHeight(e);
+                autoResize(e.target);
               }} 
-              className="w-full rounded border border-sidebar-border bg-accent/5 p-4 text-sm text-foreground focus:border-primary resize-none focus:outline-none min-h-[80px] overflow-hidden transition-all duration-200"
-              placeholder="Anotações importantes..."
+              style={textareaStyle}
+              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Anotações de uso exclusivo da equipe..."
             />
           </div>
         </div>
       </section>
 
-      {/* SEÇÃO 3 — ANÁLISE DE CONCORRENTES */}
-      <section className="jtd-glass p-8 space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <h3 className="font-black text-xl text-foreground flex items-center gap-3 italic tracking-tighter uppercase">
-            <Search size={24} className="text-primary" />
-            Análise de Concorrentes
-          </h3>
-
-          <div className="flex items-center gap-2 bg-black/40 border border-sidebar-border rounded px-4 py-2 font-black text-[10px] tracking-widest italic">
-            <span className="text-green-500">MIN: {minPrice ? `R$ ${minPrice.toFixed(2)}` : "—"}</span>
-            <span className="text-white/20">|</span>
-            <span className="text-cyan-500">MÉDIO: {avgPrice ? `R$ ${avgPrice.toFixed(2)}` : "—"}</span>
-            <span className="text-white/20">|</span>
-            <span className="text-magenta">MÁX: {maxPrice ? `R$ ${maxPrice.toFixed(2)}` : "—"}</span>
-          </div>
+      {/* BLOCO 3 — Análise de Concorrentes */}
+      <section className="jtd-glass p-6 space-y-6">
+        <div>
+          <h3 className="font-bold text-lg text-foreground">Análise de Concorrentes</h3>
+          <p className="text-muted-foreground text-xs">A seção de concorrentes serve APENAS para localizar palavras-chave.</p>
         </div>
 
-        <div className="space-y-6">
-          {competitors.map((comp, idx) => (
-            <div key={idx} className="jtd-glass bg-white/5 border-sidebar-border/50 p-6 space-y-6 relative group animate-in slide-in-from-bottom-4 duration-300">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-primary italic">#{idx + 1}</span>
-                <button 
-                  type="button" 
-                  onClick={() => setCompetitors(competitors.filter((_, i) => i !== idx))} 
-                  className="p-2 text-muted-foreground hover:text-red-500 transition-colors bg-white/5 rounded"
+        <div className="space-y-3">
+          {competitors.map((comp, idx) => {
+            const isOpen = openCompetitorIndex === idx;
+            return (
+              <div key={idx} className="border border-sidebar-border rounded-lg overflow-hidden transition-all duration-300">
+                {/* Header Accordion */}
+                <div 
+                  className="flex items-center justify-between p-4 bg-black/20 cursor-pointer hover:bg-black/30 transition-all"
+                  onClick={() => setOpenCompetitorIndex(isOpen ? null : idx)}
                 >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Título</label>
-                  <textarea 
-                    value={comp.title} 
-                    onChange={e => {
-                      updateCompetitor(idx, 'title', e.target.value);
-                      adjustHeight(e);
-                    }}
-                    className="w-full bg-transparent border-b border-sidebar-border focus:border-primary p-0 py-2 text-lg font-black text-foreground focus:outline-none resize-none overflow-hidden" 
-                    placeholder="TÍTULO DO ANÚNCIO..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Descrição</label>
-                  <textarea 
-                    value={comp.description} 
-                    onChange={e => {
-                      updateCompetitor(idx, 'description', e.target.value);
-                      adjustHeight(e);
-                    }}
-                    className="w-full bg-transparent border-b border-sidebar-border focus:border-primary p-0 py-2 text-sm text-muted-foreground focus:outline-none resize-none overflow-hidden" 
-                    placeholder="DESCRIÇÃO DO CONCORRENTE..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Preço</label>
-                    <div className="relative">
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 text-cyan-500 font-black italic">R$</span>
-                      <input 
-                        type="number" 
-                        step="0.01"
-                        value={comp.price || ""}
-                        onChange={e => updateCompetitor(idx, 'price', parseFloat(e.target.value) || 0)}
-                        className="w-full bg-transparent border-b border-sidebar-border focus:border-primary pl-8 py-2 text-xl font-black text-cyan-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">URL</label>
-                    <div className="flex gap-2 items-center">
-                      <input 
-                        value={comp.url} 
-                        onChange={e => updateCompetitor(idx, 'url', e.target.value)}
-                        className="flex-1 bg-transparent border-b border-sidebar-border focus:border-primary py-2 text-xs text-muted-foreground focus:outline-none truncate" 
-                        placeholder="https://..."
-                      />
-                      <a href={comp.url} target="_blank" rel="noopener noreferrer" className="p-2 text-muted-foreground hover:text-primary transition-colors">
-                        <ExternalLink size={14} />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-4 border-t border-sidebar-border/30">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Palavras-Chave Deste Concorrente</label>
-                  <div className="flex flex-wrap gap-2">
-                    {comp.keywords_found.map((kw, kIdx) => (
-                      <span key={kIdx} className="bg-primary/10 border border-primary/40 px-3 py-1 rounded text-[10px] font-black text-primary uppercase italic tracking-tighter">
-                        {kw}
-                      </span>
-                    ))}
-                    <button 
-                      type="button" 
-                      onClick={() => setOpenPanels([...openPanels, idx])}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-white/5 hover:bg-white/10 border border-sidebar-border text-[10px] font-black text-white/60 transition-all italic uppercase"
-                    >
-                      <Plus size={10} /> ADICIONAR
-                    </button>
+                  <div className="flex items-center gap-3">
+                    {isOpen ? <ChevronUp size={18} className="text-primary" /> : <ChevronDown size={18} className="text-primary" />}
+                    <span className="text-sm font-bold text-foreground">Concorrente #{idx + 1}</span>
                   </div>
                   <button 
                     type="button" 
-                    onClick={() => {
-                      const uniqueKeywords = Array.from(new Set([...formData.keywords, ...comp.keywords_found]));
-                      setFormData({ ...formData, keywords: uniqueKeywords });
-                      toast.success(`Keywords enviadas para o produto!`);
-                    }}
-                    className="text-[10px] font-black text-primary hover:underline uppercase italic tracking-widest"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCompetitors(competitors.filter((_, i) => i !== idx));
+                      if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
+                    }} 
+                    className="text-muted-foreground hover:text-red-500 transition-colors p-1"
                   >
-                    [ ENVIAR TODAS PARA O PRODUTO ]
+                    <Trash2 size={16} />
                   </button>
                 </div>
+
+                {/* Content Accordion */}
+                {isOpen && (
+                  <div className="p-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">TÍTULO</label>
+                      <textarea 
+                        value={comp.title} 
+                        onChange={e => {
+                          updateCompetitor(idx, 'title', e.target.value);
+                          autoResize(e.target);
+                        }}
+                        style={{ ...textareaStyle, minHeight: '48px' }}
+                        className="w-full bg-black/20 border border-sidebar-border rounded p-3 text-sm focus:border-primary focus:outline-none" 
+                        placeholder="Título do anúncio..."
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">DESCRIÇÃO</label>
+                      <textarea 
+                        value={comp.description} 
+                        onChange={e => {
+                          updateCompetitor(idx, 'description', e.target.value);
+                          autoResize(e.target);
+                        }}
+                        style={textareaStyle}
+                        className="w-full bg-black/20 border border-sidebar-border rounded p-3 text-sm focus:border-primary focus:outline-none" 
+                        placeholder="Descrição do anúncio..."
+                      />
+                    </div>
+
+                    <div className="pt-2 border-t border-sidebar-border/30">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 block">Palavras-chave deste concorrente</label>
+                      
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {comp.keywords_found.map((kw, kIdx) => (
+                          <span key={kIdx} className="bg-primary/10 border border-primary/40 px-2 py-1 rounded text-[10px] font-bold text-primary">
+                            {kw}
+                          </span>
+                        ))}
+                        {comp.keywords_found.length === 0 && <span className="text-[10px] text-muted-foreground italic">Nenhuma palavra adicionada</span>}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            if (!openPanels.includes(idx)) {
+                              setOpenPanels([...openPanels, idx]);
+                            }
+                          }}
+                          style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}
+                          className="flex-1 border rounded px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Plus size={14} /> Adicionar Palavras-chave
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            if (comp.keywords_found.length === 0) return;
+                            const uniqueKeywords = Array.from(new Set([...formData.keywords, ...comp.keywords_found]));
+                            setFormData({ ...formData, keywords: uniqueKeywords });
+                            toast.success(`Keywords enviadas para o produto!`);
+                          }}
+                          className="flex-1 text-[10px] font-bold text-primary hover:underline flex items-center justify-center gap-1 uppercase tracking-wider"
+                        >
+                          Enviar todas para o produto →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           <button 
             type="button" 
             onClick={handleAddCompetitor}
-            className="w-full border-2 border-dashed border-sidebar-border py-8 rounded flex items-center justify-center gap-3 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all group bg-white/2"
+            className="w-full border-2 border-dashed border-sidebar-border rounded-lg py-4 text-muted-foreground hover:border-primary/50 hover:text-primary flex items-center justify-center gap-2 transition-all group bg-black/5"
           >
-            <Plus size={24} className="group-hover:scale-125 transition-transform" />
-            <span className="font-black italic uppercase tracking-[0.2em] text-sm">ADICIONAR CONCORRENTE</span>
+            <Plus size={20} className="group-hover:scale-110 transition-transform" />
+            <span className="font-bold text-xs uppercase tracking-widest">ADICIONAR CONCORRENTE</span>
           </button>
         </div>
       </section>
 
-      {/* SEÇÃO 4 — PALAVRAS-CHAVE DO PRODUTO */}
-      <section className="jtd-glass p-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <h3 className="font-black text-xl text-foreground flex items-center gap-3 italic tracking-tighter uppercase">
-            <Tag size={24} className="text-primary" />
-            Palavras-Chave do Produto
-          </h3>
-          <span className="bg-primary/20 text-primary text-[10px] font-black px-3 py-1 rounded-full border border-primary/40 italic uppercase tracking-widest">
-            {formData.keywords.length} PALAVRAS-CHAVE
-          </span>
-        </div>
-
-        <div className="flex flex-wrap gap-3 min-h-[40px]">
-          {formData.keywords.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic opacity-50">Nenhuma palavra-chave adicionada ao produto ainda.</p>
-          ) : (
-            formData.keywords.map((kw, i) => (
-              <span 
-                key={i} 
-                className="flex items-center gap-2 rounded bg-primary/10 border border-primary/40 px-3 py-1.5 text-xs font-black text-primary transition-all hover:bg-primary/20 italic uppercase tracking-tighter"
+      {/* BLOCO 4 — Palavras-Chave do Produto */}
+      <section className="jtd-glass p-6 space-y-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+              Palavras-Chave
+              <span className="bg-primary/20 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/40">
+                {formData.keywords.length}
+              </span>
+            </h3>
+            <div className="flex gap-4">
+              <button 
+                type="button" 
+                onClick={copyAllKeywords} 
+                className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                {kw}
-                <button type="button" onClick={() => removeKeyword(kw)} className="text-primary/70 hover:text-primary">
-                  <X size={14} />
-                </button>
-              </span>
-            ))
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <input 
-            type="text"
-            value={newKeywordInput}
-            onChange={e => setNewKeywordInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addKeyword(newKeywordInput), setNewKeywordInput(""))}
-            className="flex-1 rounded border border-sidebar-border bg-accent/5 p-4 text-sm text-foreground focus:border-primary focus:outline-none uppercase font-black italic tracking-widest" 
-            placeholder="DIGITAR PALAVRA..."
-          />
-          <button 
-            type="button" 
-            onClick={() => { addKeyword(newKeywordInput); setNewKeywordInput(""); }}
-            className="bg-primary px-8 rounded font-black text-black text-xs hover:brightness-110 transition-all italic tracking-widest"
-          >
-            ADICIONAR
-          </button>
-        </div>
-
-        <div className="flex gap-8 pt-4 border-t border-sidebar-border/30">
-          <button type="button" onClick={copyKeywords} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors italic">
-            [ COPIAR TODAS ]
-          </button>
-          <button type="button" onClick={() => { if(confirm("Limpar todas as palavras-chave?")) setFormData({...formData, keywords: []}) }} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-red-500 transition-colors italic">
-            [ LIMPAR TODAS ]
-          </button>
-        </div>
-      </section>
-
-      {/* RODAPÉ FIXO */}
-      <footer className="fixed bottom-0 left-0 right-0 jtd-glass border-t border-sidebar-border bg-black/90 backdrop-blur-xl p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-wrap gap-8 text-[10px] font-black tracking-[0.15em] uppercase italic">
-            <div className="flex items-center gap-2">
-              <Tag size={14} className="text-primary" />
-              <span className="text-muted-foreground">Keywords:</span>
-              <span className="text-primary">{formData.keywords.length}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users size={14} className="text-cyan-500" />
-              <span className="text-muted-foreground">Concorrentes:</span>
-              <span className="text-cyan-500">{competitors.length}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <DollarSign size={14} className="text-magenta" />
-              <span className="text-muted-foreground">Faixa:</span>
-              <span className="text-magenta">
-                {minPrice ? `R$ ${minPrice.toFixed(2)} - R$ ${maxPrice.toFixed(2)}` : "—"}
-              </span>
+                Copiar Todas
+              </button>
+              <button 
+                type="button" 
+                onClick={copySelectedKeywords} 
+                disabled={selectedKeywords.length === 0}
+                className={`text-xs font-medium transition-colors ${selectedKeywords.length === 0 ? "text-muted-foreground/40 cursor-not-allowed" : "text-muted-foreground hover:text-primary"}`}
+              >
+                Copiar Selecionadas
+              </button>
             </div>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <button type="button" onClick={() => navigate({ to: "/produtos" })} className="px-8 py-3 rounded font-black text-muted-foreground text-xs hover:text-white transition-all italic tracking-widest">
-              CANCELAR
-            </button>
+
+          <div className="space-y-0.5">
+            {formData.keywords.map((kw, i) => (
+              <div 
+                key={i} 
+                className="flex items-center justify-between p-2 rounded hover:bg-white/[0.04] group transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedKeywords.includes(kw)}
+                    onChange={() => toggleSelectedKeyword(kw)}
+                    className="w-4 h-4 rounded border-sidebar-border bg-black/20 text-primary focus:ring-primary focus:ring-offset-0"
+                  />
+                  <span className="text-sm text-foreground">{kw}</span>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => removeKeyword(kw)} 
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 transition-all p-1"
+                >
+                  <Trash size={14} />
+                </button>
+              </div>
+            ))}
+            {formData.keywords.length === 0 && (
+              <div className="py-8 text-center text-muted-foreground/50 text-xs italic border border-dashed border-sidebar-border rounded">
+                Nenhuma palavra-chave adicionada ainda.
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <input 
+              type="text"
+              value={newKeywordInput}
+              onChange={e => setNewKeywordInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addKeyword(newKeywordInput), setNewKeywordInput(""))}
+              className="flex-1 rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none" 
+              placeholder="Adicionar nova palavra-chave..."
+            />
             <button 
               type="button" 
-              onClick={() => handleSubmit()} 
-              disabled={saving} 
-              className="flex items-center gap-3 bg-primary px-12 py-3 rounded font-black text-black text-sm hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(191,255,0,0.4)] italic uppercase tracking-tighter"
+              onClick={() => { addKeyword(newKeywordInput); setNewKeywordInput(""); }}
+              className="bg-primary text-black font-bold px-6 rounded hover:brightness-110 transition-all text-xs"
             >
-              {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              SALVAR PRODUTO
+              ADICIONAR
             </button>
           </div>
         </div>
-      </footer>
+      </section>
 
-      {/* Botão Flutuante Palavras-Chave */}
-      <button 
-        type="button" 
-        onClick={() => setShowGeneralPanel(!showGeneralPanel)}
-        className="fixed bottom-28 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-black shadow-[0_0_25px_rgba(191,255,0,0.6)] hover:scale-110 transition-all active:scale-90 border-2 border-white/20"
-      >
-        <Tag size={28} />
-        <span className="absolute -top-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-magenta text-[10px] font-black text-white ring-2 ring-black shadow-lg">
-          {formData.keywords.length}
-        </span>
-        <div className="absolute -bottom-6 text-[8px] font-black tracking-widest text-primary bg-black/60 px-2 py-0.5 rounded italic">KEYWORDS</div>
-      </button>
+      {/* Ações Finais */}
+      <div className="flex justify-end gap-4 pt-6 border-t border-sidebar-border/30">
+        <button 
+          type="button" 
+          onClick={() => navigate({ to: "/produtos" })} 
+          className="px-8 py-3 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-white/5 transition-all text-sm"
+        >
+          CANCELAR
+        </button>
+        <button 
+          type="button" 
+          onClick={() => handleSubmit()} 
+          disabled={saving} 
+          className="bg-primary px-8 py-3 rounded font-bold text-black text-sm hover:brightness-110 active:scale-[0.98] transition-all shadow-lg flex items-center gap-2"
+        >
+          {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+          SALVAR PRODUTO
+        </button>
+      </div>
 
-      {/* Painéis Flutuantes Arrastáveis */}
+      {/* Painéis Flutuantes Arrastáveis (Apenas para Concorrentes) */}
       {openPanels.map((compIdx) => (
         <FloatingKeywordPanel
           key={`panel-${compIdx}`}
@@ -647,19 +629,6 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           initialY={100 + compIdx * 30}
         />
       ))}
-
-      {showGeneralPanel && (
-        <FloatingKeywordPanel
-          title="KEYWORDS DO PRODUTO"
-          keywords={formData.keywords}
-          isGeneral
-          onClose={() => setShowGeneralPanel(false)}
-          onAddKeyword={addKeyword}
-          onRemoveKeyword={removeKeyword}
-          initialX={window.innerWidth - 450}
-          initialY={window.innerHeight - 600}
-        />
-      )}
     </div>
   );
 }
