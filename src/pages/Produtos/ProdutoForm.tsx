@@ -42,6 +42,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [newKeywordInput, setNewKeywordInput] = useState("");
   const [openPanels, setOpenPanels] = useState<number[]>([]);
   const [showGeneralPanel, setShowGeneralPanel] = useState(false);
+  const [openCompetitorIndex, setOpenCompetitorIndex] = useState<number | null>(null);
+
 
   const [formData, setFormData] = useState({
     name: "",
@@ -92,6 +94,14 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       }, 100);
     }
   }, [loading, competitors.length]);
+
+  useEffect(() => {
+    // Fechar painel do concorrente que foi fechado no accordion
+    setOpenPanels(prev => 
+      prev.filter(idx => idx === openCompetitorIndex)
+    );
+  }, [openCompetitorIndex]);
+
 
   async function fetchSuppliers() {
     const { data } = await supabase.from("suppliers").select("id, name, delivery_days, warranty_days").eq("is_active", true);
@@ -389,18 +399,37 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         </div>
 
         <div className="space-y-4">
-          {competitors.map((comp, idx) => (
-            <div key={idx} className="border border-sidebar-border rounded-lg p-4 space-y-3 relative">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black text-primary">#{idx + 1}</span>
-                <button 
-                  type="button" 
-                  onClick={() => setCompetitors(competitors.filter((_, i) => i !== idx))} 
-                  className="text-muted-foreground hover:text-red-500 transition-colors"
+          {competitors.map((comp, idx) => {
+            const isOpen = openCompetitorIndex === idx;
+            return (
+              <div key={idx} className="border border-sidebar-border rounded-lg overflow-hidden relative">
+                {/* Header do Accordion */}
+                <div 
+                  className="flex justify-between items-center p-4 cursor-pointer hover:bg-black/10 bg-[hsl(var(--primary)/0.05)] transition-colors"
+                  onClick={() => setOpenCompetitorIndex(isOpen ? null : idx)}
                 >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-primary transform transition-transform duration-200">
+                      {isOpen ? "▼" : "▶"}
+                    </span>
+                    <span className="text-sm font-bold uppercase tracking-wider text-foreground">Concorrente #{idx + 1}</span>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCompetitors(competitors.filter((_, i) => i !== idx));
+                      if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
+                    }} 
+                    className="text-muted-foreground hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+
+                {isOpen && (
+                  <div className="p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">TÍTULO *</label>
@@ -488,8 +517,12 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
 
           <button 
             type="button" 
@@ -606,7 +639,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       {openPanels.map((compIdx) => (
         <FloatingKeywordPanel
           key={`panel-${compIdx}`}
-          title={`CONCORRENTE #${compIdx + 1}`}
+          title={`Keywords — Concorrente #${compIdx + 1}`}
           keywords={competitors[compIdx].keywords_found}
           onClose={() => setOpenPanels(openPanels.filter(id => id !== compIdx))}
           onAddKeyword={(kw) => {
@@ -626,10 +659,11 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             setFormData({ ...formData, keywords: uniqueKeywords });
             toast.success(`Keywords enviadas para o produto!`);
           }}
-          initialX={100 + compIdx * 30}
-          initialY={100 + compIdx * 30}
+          initialX={window.innerWidth - 320}
+          initialY={200 + (compIdx * 20)}
         />
       ))}
+
 
       {showGeneralPanel && (
         <FloatingKeywordPanel
