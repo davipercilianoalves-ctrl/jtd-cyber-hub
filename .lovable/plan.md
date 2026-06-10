@@ -1,47 +1,44 @@
-# Ajustes — Painel Flutuante Universal + Header do Concorrente
+# Ajustes Header Concorrente + Painel Keywords
 
 Escopo: `src/pages/Produtos/ProdutoForm.tsx` e `src/components/FloatingKeywordPanel.tsx`.
 
-## 1. Painel flutuante universal (uma única instância sempre montada)
+## 1. Header do card de concorrente — só texto ao lado da seta
 
-- Hoje o painel é montado/desmontado por concorrente e o "destino" das keywords é fixo no momento da abertura.
-- Mudar para: **uma única instância do painel**, persistente, sempre disponível. O destino das keywords é **sempre o concorrente atualmente aberto** (`openCompetitorIndex`).
-- Comportamento:
-  - Abrir o painel = `panelOpen = true` (estado independente do concorrente).
-  - Toda keyword digitada/adicionada vai para `competitors[openCompetitorIndex].keywords_found`.
-  - Se o usuário troca o concorrente aberto (clica outra seta), o painel **continua aberto na mesma posição/tamanho**, mas a partir desse momento as novas palavras vão para o novo concorrente.
-  - Não há mais "salvar texto pendente ao trocar" — não precisa, o input continua o mesmo, só muda o destino.
-  - As keywords exibidas dentro do painel ("Deste concorrente") atualizam para refletir o concorrente aberto agora.
-  - Se nenhum concorrente está aberto, mostrar aviso curto "Abra um concorrente para adicionar keywords" e desabilitar o ADD.
-- A lista global `allKeywords` continua vindo de todos os concorrentes + keywords do produto, mostrada como sugestões (clique = adiciona ao concorrente aberto atual).
-- Fluxo final permanece: o botão "Enviar para Lista do Produto" envia as keywords do concorrente aberto para a lista principal do produto.
+- A barra superior do card continua sendo o trigger inteiro de abrir/fechar.
+- Ao lado da seta, mostrar **apenas o título como texto** (não input). Sem edição inline ali.
+- A edição do título do concorrente continua existindo, mas **só aparece quando o card está aberto**, dentro do corpo expandido (campo "TÍTULO DO ANÚNCIO" como já existe para outros campos). Assim o clique na barra de cima nunca interfere com edição.
+- Linha de baixo do header (`#N`, link, preço, lixeira) permanece como hoje.
 
-## 2. Header do card de concorrente — barra inteira clicável
+## 2. Painel de Keywords — lista unificada + modo compacto
 
-Layout novo do header (toda a barra de cima é o trigger de expandir/recolher):
+### 2a. Lista unificada
+Remover a separação "Deste Concorrente" vs "Já usadas em outros". Uma única lista com **todas as keywords de todas as análises + produto**, ordenadas. Cada chip indica visualmente a origem:
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│ [˅]  TÍTULO DO ANÚNCIO CONCORRENTE — editável            │  ← barra toda clicável
-├──────────────────────────────────────────────────────────┤
-│ #N    link do anúncio...              R$ [preço]   [🗑] │
-└──────────────────────────────────────────────────────────┘
-```
+- Keywords do concorrente atualmente aberto: estilo "ativo" (fundo primário cheio, com `×` para remover).
+- Keywords de outros concorrentes / produto: estilo "fantasma" (borda fina, sem `×`); clique adiciona ao concorrente aberto.
+- Pequeno marcador de origem ao lado: `#2`, `#3`, `P` (produto) — para "determinar onde foram encontradas". Tooltip com o nome completo.
+- Se a mesma palavra existe em mais de um lugar, mostra um único chip com múltiplos marcadores (`#2 #3`).
 
-- A **barra superior inteira** (não só a seta) é o botão que abre/fecha o card. Cursor `pointer` em toda a área.
-- Dentro dessa barra: ícone seta à esquerda + **título do anúncio** ao lado da seta (input de título fica nessa linha, com `onClick`/`onMouseDown` parando propagação para não acionar o toggle).
-- Linha de baixo: `#N`, link, preço, lixeira (fora do trigger, como hoje).
-- Mantém comportamento exclusivo: abrir um fecha o outro.
+### 2b. Botão compactar input
+- Novo botão no header do painel (ícone) alterna entre dois modos:
+  - **Modo lista** (padrão): mostra input + lista de keywords.
+  - **Modo input-only**: mostra **só** o campo "nova palavra" + botão ADD. A lista some, painel encolhe para o mínimo.
+- Estado persiste enquanto o painel estiver aberto.
+
+### 2c. Compactação geral
+- Reduzir paddings, font-sizes e gaps no painel para ocupar o mínimo necessário.
+- Tamanho inicial menor (ex.: 320×ajustado ao conteúdo). Auto-grow continua até o usuário arrastar.
+- Banner do alvo atual (`→ CONCORRENTE #N — título`) continua, mas em uma linha mais fina.
 
 ## Técnico
 
-- `FloatingKeywordPanel`: nova prop `targetTitle` (título do concorrente aberto) + `disabled` (quando nenhum aberto). Remover `onPendingChange`/`flushPending` (não precisam mais).
+- `FloatingKeywordPanel`:
+  - Nova prop `keywordSources: { keyword: string; sources: Array<{ label: string; isCurrent: boolean }> }[]` (substitui `keywords` + `allKeywords`).
+  - Estado interno `compact: boolean` para modo input-only; botão no header alterna.
+  - Render único da lista unificada com estilo condicional por `isCurrent`.
 - `ProdutoForm`:
-  - Estado: `panelOpen: boolean` (substitui `openPanel: number | null`), `panelPending` removido.
-  - `openCompetitorIndex` continua governando qual concorrente recebe as keywords.
-  - Botão "+ Adicionar Palavras-chave" dentro do card apenas faz `setPanelOpen(true)` (não precisa setar índice — já é o aberto).
-  - Reescrever header do card conforme item 2; input de título com `onClick={(e) => e.stopPropagation()}`.
+  - Montar `keywordSources` no momento de renderizar o painel: percorre todos os concorrentes + lista do produto, agrupa por palavra, marca `isCurrent` quando `sourceIndex === openCompetitorIndex`.
+  - Header do card: substituir input de título por `<span>` com o título; mover o input editável para dentro do corpo expandido.
 
 ## Fora de escopo
-
-Banco, schema, outras seções, "Análise Geral do Produto", lista de keywords do produto.
+Banco, outras seções, lógica de envio para o produto (mantém botão atual).
