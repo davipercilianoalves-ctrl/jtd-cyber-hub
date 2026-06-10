@@ -1,72 +1,74 @@
-# Reorganização do ProdutoForm + UX de Palavras-Chave
+# Ajustes — Análise de Concorrentes + Painel Flutuante
 
-Escopo: somente `src/pages/Produtos/ProdutoForm.tsx`, `src/components/FloatingKeywordPanel.tsx` e `src/pages/Anuncios/AnuncioForm.tsx` (remoção do bloco de preço). Sem mudar banco nem lógica de salvamento.
+Escopo: `src/pages/Produtos/ProdutoForm.tsx` e `src/components/FloatingKeywordPanel.tsx`. Sem mexer em banco nem em outras telas.
 
-## 1. Nova ordem dos blocos no ProdutoForm
+## 1. Cabeçalho da seção Análise de Concorrentes
 
-```text
-1. Informações Básicas (com botão copiar ao lado de cada campo)
-2. Palavras-Chave do Produto (lista selecionável + copiar)
-3. Análise de Concorrentes (com painéis flutuantes)
-4. Textos do Produto (descrição, FAQ, notas)
-5. Análise Geral do Produto (substitui a barra fixa)
-6. Rodapé com botões Cancelar / Salvar (não-fixo, no fim da página)
-```
+- Remover os 3 cards MIN / MED / MAX que ficam no cabeçalho da seção (eles já aparecem na "Análise Geral do Produto" no rodapé do form).
+- Cabeçalho fica só com o título + subtítulo.
 
-## 2. Remover barra fixa inferior
+## 2. Acordeão exclusivo (só 1 concorrente aberto por vez)
 
-- Apagar o `<footer fixed bottom-0 ...>` atual.
-- Criar nova seção `jtd-glass` **"Análise Geral do Produto"** no fim do form contendo os mesmos contadores (Keywords cadastradas, Concorrentes analisados, Faixa de Preço Min/Med/Max) em layout de cards horizontais com o visual Acid Cyber (mesmas cores verde/ciano/magenta usadas em concorrentes).
-- Botões **Cancelar** e **Salvar Produto** passam para uma barra normal logo abaixo dessa análise (não fixa), mantendo o mesmo estilo dos botões atuais.
-
-## 3. Preço: mover de Anúncios para Produtos
-
-- Em `src/pages/Anuncios/AnuncioForm.tsx`: remover qualquer bloco/campo de precificação do anúncio (preço sugerido, preço do anúncio, etc.). Manter restante intacto.
-- Em Produtos: a sub-seção **Preço** já existe em Informações Básicas (Preço de Venda, Custo, Listas) — confirmar que cobre o que era exibido nos anúncios. Sem novos campos no schema.
-
-## 4. Ícone de copiar em cada campo das Informações Básicas
-
-- Adicionar componente local `CopyButton` (ícone `Copy` da lucide-react, 14px) à direita de cada input/select/textarea das 6 sub-seções (Identificação, Classificação, Preço, Códigos Fiscais, Logística, Dimensões & Peso).
-- Implementação: wrapper `relative`, botão `absolute right-2 top-1/2`, on click → `navigator.clipboard.writeText(value)` + `toast.success("Copiado!")`.
-- Toggles (Frete Grátis, Ativo) ficam sem botão de copiar.
-
-## 5. Lista de Palavras-Chave melhorada
-
-- Manter chips clicáveis para selecionar.
-- Adicionar acima da lista uma barra de ações maior e mais visível com:
-  - Contador "X selecionadas de Y"
-  - Botão **Selecionar Todas** / **Desmarcar Todas**
-  - Botões **COPIAR SELECIONADAS** e **COPIAR TODAS** em destaque (estilo botão primário outline em vez de link texto)
-  - Botão **LIMPAR** discreto à direita
-- Chips selecionados ficam com fundo `bg-primary text-black` (já existe) — aumentar levemente o tamanho e contraste para melhor visibilidade.
-
-## 6. Painel flutuante de keywords (`FloatingKeywordPanel.tsx`)
-
-Problema atual: fundo opaco que tapa o conteúdo, baixo contraste, pouca mobilidade.
-
-Ajustes:
-- Trocar `bg-black/95` por `bg-card` + `backdrop-blur-xl` + `border-2 border-primary` + `shadow-[0_0_40px_rgba(191,255,0,0.3)]` → respeita tema claro/escuro automaticamente.
-- Adicionar handle de redimensionar no canto inferior direito (resize via mouse: largura 280–600px, altura 200–600px).
-- Limitar arrasto à viewport (clamp x/y para não sair da tela).
-- Adicionar botão **Minimizar** (colapsa para apenas header).
-- Aumentar contraste dos chips dentro do painel usando as mesmas cores `bg-primary/15 border-primary/40 text-primary`.
-- Botão **ENVIAR PARA LISTA DO PRODUTO** ganha destaque maior (já tem, manter).
-
-## 7. Análise Geral do Produto (novo bloco)
-
-Cards em grid `grid-cols-4`:
+- A seta de expandir vira o **primeiro elemento** de cada card de concorrente (lado esquerdo, antes do `#N` ou agrupada com ele em coluna).
+- O **título** do concorrente passa a ficar **abaixo da seta/numeração**, não ao lado.
+- Layout do header de cada concorrente:
 
 ```text
-┌──────────────┬──────────────┬──────────────┬──────────────┐
-│ KEYWORDS     │ CONCORRENTES │ FAIXA PREÇO  │ PREÇO VENDA  │
-│ X cadastr.   │ X analisados │ R$ min — max │ R$ X,XX      │
-└──────────────┴──────────────┴──────────────┴──────────────┘
+[˅]                 [R$ preço]   [🗑]
+ #1
+ TÍTULO DO ANÚNCIO — editável
+ link do anúncio...
 ```
 
-Cada card no padrão Acid Cyber (`jtd-glass`, borda colorida, label uppercase 10px, valor em destaque).
+- Clicar na seta de um concorrente fechado abre ele **e fecha automaticamente** qualquer outro concorrente aberto (`openCompetitorIndex` já é estado único — apenas garantir comportamento de toggle exclusivo).
+- Clicar na seta do concorrente aberto fecha ele.
+
+## 3. Painel flutuante de keywords vinculado ao concorrente
+
+Hoje cada concorrente pode ter seu próprio painel aberto independentemente. Mudança:
+
+- **Apenas 1 painel flutuante de concorrente pode estar aberto por vez.**
+- Quando o usuário clica em "+ Adicionar palavras-chave" de outro concorrente (ou expande outro concorrente via seta) **enquanto há um painel aberto**:
+  1. O texto que estiver digitado no campo "Nova palavra..." é **salvo automaticamente** como keyword do concorrente anterior (split por vírgula/enter, igual ao botão ADD).
+  2. As keywords já existentes do concorrente anterior permanecem (já é o comportamento atual, garantir).
+  3. O painel anterior fecha.
+  4. O novo painel abre para o concorrente atual.
+- `openPanels: number[]` vira `openPanel: number | null` (single).
+
+## 4. Painel flutuante (`FloatingKeywordPanel.tsx`) — melhorias
+
+### 4.1 Tamanho dinâmico baseado no conteúdo
+
+- Largura/altura inicial calculadas a partir da quantidade de keywords (mais keywords = painel maior, até o máximo já existente 700×700).
+- Quando o usuário adiciona keywords e ainda não redimensionou manualmente, o painel cresce sozinho. Após o primeiro resize manual, congela o tamanho.
+
+### 4.2 Lista global de keywords já encontradas
+
+- Nova prop `allKeywords: string[]` passada pelo ProdutoForm = união de `competitors.flatMap(c => c.keywords_found)` + `keywords` do produto.
+- Dentro do painel, abaixo do input "Nova palavra...", adicionar bloco **"JÁ USADAS EM OUTROS CONCORRENTES"** com chips menores em cor diferente (`bg-muted/30 border-muted-foreground/20`), clicáveis para adicionar ao concorrente atual.
+- Cada chip dessa lista que já está no concorrente atual aparece marcado/desabilitado, evitando duplicar.
+
+### 4.3 Redimensionar nas 3 direções (largura, altura, diagonal)
+
+- Adicionar 3 handles: borda direita (resize horizontal), borda inferior (vertical) e canto inferior-direito (diagonal, já existe).
+- Cursores: `ew-resize`, `ns-resize`, `se-resize`.
+
+### 4.4 Mobilidade melhorada
+
+- Permitir arrasto também encostando topo/laterais (já clampa hoje — manter).
+- Header de arrasto fica mais largo e com cursor `grab`/`grabbing` durante arrasto.
+- Quando minimizado, manter posição arrastável.
+- Garantir que o painel não fica atrás do header do app (z-index alto, já tem `z-100`).
+
+## 5. Persistência do texto não-salvo ao trocar de painel
+
+Hoje `newKeyword` é estado interno do `FloatingKeywordPanel`. Para o item 3 funcionar:
+- Adicionar prop opcional `onBeforeClose?: (pendingText: string) => void`.
+- No ProdutoForm, ao trocar `openPanel` para outro índice, ler o input atual via callback e injetar o texto como keyword(s) do concorrente anterior antes de abrir o novo.
+- Implementação: usar `useImperativeHandle` no painel ou simplesmente disparar `onBeforeClose(newKeyword)` no `useEffect` de cleanup quando o painel é desmontado.
 
 ## Fora de escopo
 
-- Não alterar schema do Supabase.
-- Não tocar em Kits, Dashboard, Fornecedores, outras telas.
-- Não alterar lógica de save, navegação ou keywords (apenas reorganização visual e UX).
+- Não alterar a lista de palavras-chave do produto principal.
+- Não alterar schema, save logic, ou outras seções.
+- Não mexer no rodapé "Análise Geral do Produto" (lá ficam os preços agora).

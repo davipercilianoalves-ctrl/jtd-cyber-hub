@@ -68,7 +68,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [openCompetitorIndex, setOpenCompetitorIndex] = useState<number | null>(null);
-  const [openPanels, setOpenPanels] = useState<number[]>([]);
+  const [openPanel, setOpenPanel] = useState<number | null>(null);
+  const [panelPending, setPanelPending] = useState<string>("");
   const [newKeywordInput, setNewKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
@@ -803,53 +804,48 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       {/* 3. ANÁLISE DE CONCORRENTES                                   */}
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sidebar-border/30 pb-6">
-          <div>
-            <h3 className="font-bold text-lg text-foreground">Análise de Concorrentes</h3>
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
-              Analise preços e extraia keywords
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="bg-green-500/10 border border-green-500/30 px-3 py-1.5 rounded-lg text-center">
-              <p className="text-[8px] font-black uppercase text-green-500">MIN</p>
-              <p className="text-xs font-bold text-green-500 font-mono">
-                R$ {minPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="bg-cyan-500/10 border border-cyan-500/30 px-3 py-1.5 rounded-lg text-center">
-              <p className="text-[8px] font-black uppercase text-cyan-500">MED</p>
-              <p className="text-xs font-bold text-cyan-500 font-mono">
-                R$ {medPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div
-              className="px-3 py-1.5 rounded-lg text-center border"
-              style={{ backgroundColor: "rgba(255, 0, 255, 0.1)", borderColor: "rgba(255, 0, 255, 0.3)" }}
-            >
-              <p className="text-[8px] font-black uppercase" style={{ color: "#ff00ff" }}>
-                MAX
-              </p>
-              <p className="text-xs font-bold font-mono" style={{ color: "#ff00ff" }}>
-                R$ {maxPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
+        <div className="border-b border-sidebar-border/30 pb-6">
+          <h3 className="font-bold text-lg text-foreground">Análise de Concorrentes</h3>
+          <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+            Analise preços e extraia keywords
+          </p>
         </div>
 
         <div className="space-y-4">
           {competitors.map((comp, idx) => {
             const isOpen = openCompetitorIndex === idx;
+            const switchPanelTo = (target: number | null) => {
+              if (openPanel !== null && openPanel !== target && panelPending.trim()) {
+                const pend = panelPending.trim();
+                const newComps = [...competitors];
+                pend.split(",").map(s => s.trim()).filter(Boolean).forEach(kw => {
+                  if (!newComps[openPanel].keywords_found.includes(kw)) newComps[openPanel].keywords_found.push(kw);
+                });
+                setCompetitors(newComps);
+              }
+              setPanelPending("");
+              setOpenPanel(target);
+            };
             return (
               <div
                 key={idx}
                 className="jtd-glass border border-sidebar-border rounded-lg overflow-hidden transition-all duration-300"
               >
                 <div className="p-4 flex items-start gap-4">
-                  <span className="text-primary font-black text-sm pt-1">#{idx + 1}</span>
-                  <div className="flex-1 space-y-1">
+                  <div className="flex flex-col items-center gap-1 shrink-0 w-8">
+                    <button
+                      type="button"
+                      onClick={() => setOpenCompetitorIndex(isOpen ? null : idx)}
+                      className="text-muted-foreground hover:text-primary p-1 rounded hover:bg-primary/10"
+                      title={isOpen ? "Recolher" : "Expandir"}
+                    >
+                      {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </button>
+                    <span className="text-primary font-black text-sm">#{idx + 1}</span>
+                  </div>
+                  <div className="flex-1 space-y-1 min-w-0">
                     <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <input
                           value={comp.title}
                           onChange={(e) => updateCompetitor(idx, "title", e.target.value)}
@@ -875,7 +871,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-start gap-3 shrink-0">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-bold text-muted-foreground">R$</span>
                           <input
@@ -886,25 +882,17 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                             className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-24 text-right focus:ring-0 font-mono"
                           />
                         </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCompetitors(competitors.filter((_, i) => i !== idx));
-                              if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
-                            }}
-                            className="text-muted-foreground hover:text-destructive p-1"
-                          >
-                            <Trash size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOpenCompetitorIndex(isOpen ? null : idx)}
-                            className="text-muted-foreground hover:text-foreground p-1"
-                          >
-                            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCompetitors(competitors.filter((_, i) => i !== idx));
+                            if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
+                            if (openPanel === idx) setOpenPanel(null);
+                          }}
+                          className="text-muted-foreground hover:text-destructive p-1"
+                        >
+                          <Trash size={14} />
+                        </button>
                       </div>
                     </div>
 
@@ -940,10 +928,10 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                       ))}
                       <button
                         type="button"
-                        onClick={() => !openPanels.includes(idx) && setOpenPanels([...openPanels, idx])}
+                        onClick={() => switchPanelTo(openPanel === idx ? null : idx)}
                         className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase"
                       >
-                        + Adicionar Palavras-chave
+                        {openPanel === idx ? "− Fechar painel" : "+ Adicionar Palavras-chave"}
                       </button>
                     </div>
                   </div>
@@ -1078,34 +1066,49 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         </button>
       </div>
 
-      {/* Painéis Flutuantes Arrastáveis (Concorrentes) */}
-      {openPanels.map((compIdx) => (
+      {/* Painel Flutuante Único (Concorrente) */}
+      {openPanel !== null && competitors[openPanel] && (
         <FloatingKeywordPanel
-          key={`panel-${compIdx}`}
-          title={`CONCORRENTE #${compIdx + 1}`}
-          keywords={competitors[compIdx].keywords_found}
-          onClose={() => setOpenPanels(openPanels.filter((id) => id !== compIdx))}
+          key={`panel-${openPanel}`}
+          title={`CONCORRENTE #${openPanel + 1}`}
+          keywords={competitors[openPanel].keywords_found}
+          allKeywords={Array.from(new Set([
+            ...competitors.flatMap((c, i) => i === openPanel ? [] : c.keywords_found),
+            ...(formData.keywords as string[]),
+          ]))}
+          onPendingChange={setPanelPending}
+          onClose={() => {
+            if (panelPending.trim() && openPanel !== null) {
+              const newComps = [...competitors];
+              panelPending.trim().split(",").map(s => s.trim()).filter(Boolean).forEach(kw => {
+                if (!newComps[openPanel].keywords_found.includes(kw)) newComps[openPanel].keywords_found.push(kw);
+              });
+              setCompetitors(newComps);
+            }
+            setPanelPending("");
+            setOpenPanel(null);
+          }}
           onAddKeyword={(kw) => {
             const newComps = [...competitors];
-            if (!newComps[compIdx].keywords_found.includes(kw)) {
-              newComps[compIdx].keywords_found.push(kw);
+            if (!newComps[openPanel].keywords_found.includes(kw)) {
+              newComps[openPanel].keywords_found.push(kw);
               setCompetitors(newComps);
             }
           }}
           onRemoveKeyword={(kw) => {
             const newComps = [...competitors];
-            newComps[compIdx].keywords_found = newComps[compIdx].keywords_found.filter((k) => k !== kw);
+            newComps[openPanel].keywords_found = newComps[openPanel].keywords_found.filter((k) => k !== kw);
             setCompetitors(newComps);
           }}
           onSendToProduct={(kws) => {
-            const uniqueKeywords = Array.from(new Set([...formData.keywords, ...kws]));
+            const uniqueKeywords = Array.from(new Set([...(formData.keywords as string[]), ...kws]));
             setFormData({ ...formData, keywords: uniqueKeywords });
             toast.success("Keywords enviadas para o produto!");
           }}
-          initialX={100 + compIdx * 30}
-          initialY={100 + compIdx * 30}
+          initialX={120}
+          initialY={140}
         />
-      ))}
+      )}
     </div>
   );
 }
