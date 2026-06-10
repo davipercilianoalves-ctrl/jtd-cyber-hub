@@ -79,7 +79,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [panelOpen, setPanelOpen] = useState<boolean>(false);
   const [newKeywordInput, setNewKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
-  const [selectionMenu, setSelectionMenu] = useState<{ x: number, y: number, text: string, competitorIdx: number } | null>(null);
+  const [selectionMenu, setSelectionMenu] = useState<{ x: number, y: number, text: string, start: number, end: number, competitorIdx: number, isExisting: boolean } | null>(null);
   const descriptionRefs = useRef<{ [key: number]: HTMLTextAreaElement | null }>({});
 
   const [formData, setFormData] = useState<any>({
