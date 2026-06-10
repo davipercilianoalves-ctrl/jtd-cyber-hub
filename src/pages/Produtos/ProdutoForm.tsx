@@ -1071,15 +1071,22 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               ? `→ Concorrente #${openCompetitorIndex + 1}${competitors[openCompetitorIndex].title ? ` — ${competitors[openCompetitorIndex].title}` : ""}`
               : null
           }
-          keywords={
-            openCompetitorIndex !== null && competitors[openCompetitorIndex]
-              ? competitors[openCompetitorIndex].keywords_found
-              : []
-          }
-          allKeywords={Array.from(new Set([
-            ...competitors.flatMap((c, i) => i === openCompetitorIndex ? [] : c.keywords_found),
-            ...(formData.keywords as string[]),
-          ]))}
+          keywordSources={(() => {
+            const map = new Map<string, { keyword: string; sources: Array<{ label: string; isCurrent: boolean }> }>();
+            competitors.forEach((c, i) => {
+              c.keywords_found.forEach((kw) => {
+                const entry = map.get(kw) || { keyword: kw, sources: [] };
+                entry.sources.push({ label: `#${i + 1}`, isCurrent: i === openCompetitorIndex });
+                map.set(kw, entry);
+              });
+            });
+            (formData.keywords as string[]).forEach((kw) => {
+              const entry = map.get(kw) || { keyword: kw, sources: [] };
+              entry.sources.push({ label: 'P', isCurrent: false });
+              map.set(kw, entry);
+            });
+            return Array.from(map.values()).sort((a, b) => a.keyword.localeCompare(b.keyword));
+          })()}
           onClose={() => setPanelOpen(false)}
           onAddKeyword={(kw) => {
             if (openCompetitorIndex === null) {
@@ -1099,7 +1106,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               newComps[openCompetitorIndex].keywords_found.filter((k) => k !== kw);
             setCompetitors(newComps);
           }}
-          onSendToProduct={(kws) => {
+          onSendToProduct={() => {
+            if (openCompetitorIndex === null) return;
+            const kws = competitors[openCompetitorIndex].keywords_found;
             const uniqueKeywords = Array.from(new Set([...(formData.keywords as string[]), ...kws]));
             setFormData({ ...formData, keywords: uniqueKeywords });
             toast.success("Keywords enviadas para o produto!");
