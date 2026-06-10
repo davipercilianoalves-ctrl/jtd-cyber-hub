@@ -25,6 +25,7 @@ export type Database = {
           full_description_template: string | null
           id: string
           is_active: boolean
+          keywords: string[] | null
           marketplace: string
           marketplace_fee: number | null
           packaging_cost: number | null
@@ -48,6 +49,7 @@ export type Database = {
           full_description_template?: string | null
           id?: string
           is_active?: boolean
+          keywords?: string[] | null
           marketplace?: string
           marketplace_fee?: number | null
           packaging_cost?: number | null
@@ -71,6 +73,7 @@ export type Database = {
           full_description_template?: string | null
           id?: string
           is_active?: boolean
+          keywords?: string[] | null
           marketplace?: string
           marketplace_fee?: number | null
           packaging_cost?: number | null

@@ -163,11 +163,13 @@ export default function AnuncioForm() {
     
     setSaving(true);
     try {
+      const { keywords, ...restOfData } = formData;
       if (id) {
-        await supabase.from("ads").update(formData).eq("id", id);
+        await supabase.from("ads").update(formData as any).eq("id", id);
       } else {
-        await supabase.from("ads").insert([formData]);
+        await supabase.from("ads").insert([formData] as any);
       }
+
       toast.success(id ? "Anúncio atualizado!" : "Anúncio criado!");
       navigate({ to: "/anuncios" });
     } catch (error) {

@@ -1,0 +1,1 @@
+ALTER TABLE public.ads ADD COLUMN keywords TEXT[] DEFAULT '{}';
