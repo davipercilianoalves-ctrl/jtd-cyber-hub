@@ -1054,38 +1054,41 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         </button>
       </div>
 
-      {/* Painel Flutuante Único (Concorrente) */}
-      {openPanel !== null && competitors[openPanel] && (
+      {/* Painel Flutuante Universal — sempre envia ao concorrente atualmente aberto */}
+      {panelOpen && (
         <FloatingKeywordPanel
-          key={`panel-${openPanel}`}
-          title={`CONCORRENTE #${openPanel + 1}`}
-          keywords={competitors[openPanel].keywords_found}
+          title="PAINEL DE KEYWORDS"
+          targetTitle={
+            openCompetitorIndex !== null && competitors[openCompetitorIndex]
+              ? `→ Concorrente #${openCompetitorIndex + 1}${competitors[openCompetitorIndex].title ? ` — ${competitors[openCompetitorIndex].title}` : ""}`
+              : null
+          }
+          keywords={
+            openCompetitorIndex !== null && competitors[openCompetitorIndex]
+              ? competitors[openCompetitorIndex].keywords_found
+              : []
+          }
           allKeywords={Array.from(new Set([
-            ...competitors.flatMap((c, i) => i === openPanel ? [] : c.keywords_found),
+            ...competitors.flatMap((c, i) => i === openCompetitorIndex ? [] : c.keywords_found),
             ...(formData.keywords as string[]),
           ]))}
-          onPendingChange={setPanelPending}
-          onClose={() => {
-            if (panelPending.trim() && openPanel !== null) {
-              const newComps = [...competitors];
-              panelPending.trim().split(",").map(s => s.trim()).filter(Boolean).forEach(kw => {
-                if (!newComps[openPanel].keywords_found.includes(kw)) newComps[openPanel].keywords_found.push(kw);
-              });
-              setCompetitors(newComps);
-            }
-            setPanelPending("");
-            setOpenPanel(null);
-          }}
+          onClose={() => setPanelOpen(false)}
           onAddKeyword={(kw) => {
+            if (openCompetitorIndex === null) {
+              toast.error("Abra um concorrente para adicionar keywords");
+              return;
+            }
             const newComps = [...competitors];
-            if (!newComps[openPanel].keywords_found.includes(kw)) {
-              newComps[openPanel].keywords_found.push(kw);
+            if (!newComps[openCompetitorIndex].keywords_found.includes(kw)) {
+              newComps[openCompetitorIndex].keywords_found.push(kw);
               setCompetitors(newComps);
             }
           }}
           onRemoveKeyword={(kw) => {
+            if (openCompetitorIndex === null) return;
             const newComps = [...competitors];
-            newComps[openPanel].keywords_found = newComps[openPanel].keywords_found.filter((k) => k !== kw);
+            newComps[openCompetitorIndex].keywords_found =
+              newComps[openCompetitorIndex].keywords_found.filter((k) => k !== kw);
             setCompetitors(newComps);
           }}
           onSendToProduct={(kws) => {
