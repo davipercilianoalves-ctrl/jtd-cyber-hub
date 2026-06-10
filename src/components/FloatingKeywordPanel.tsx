@@ -1,66 +1,48 @@
-import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import { X, Tag, Move, Send, Minus, Maximize2, Plus } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Tag, Move, Send, Minus, Maximize2, Plus, AlertTriangle } from 'lucide-react';
 
 interface FloatingKeywordPanelProps {
   title: string;
+  targetTitle?: string | null;
   keywords: string[];
   allKeywords?: string[];
   onClose: () => void;
   onRemoveKeyword: (keyword: string) => void;
   onAddKeyword: (keyword: string) => void;
   onSendToProduct?: (keywords: string[]) => void;
-  onPendingChange?: (text: string) => void;
   initialX?: number;
   initialY?: number;
 }
 
-export interface FloatingKeywordPanelHandle {
-  flushPending: () => string;
-}
-
-const FloatingKeywordPanel = forwardRef<FloatingKeywordPanelHandle, FloatingKeywordPanelProps>(function FloatingKeywordPanel({
+export default function FloatingKeywordPanel({
   title,
+  targetTitle,
   keywords,
   allKeywords = [],
   onClose,
   onRemoveKeyword,
   onAddKeyword,
   onSendToProduct,
-  onPendingChange,
   initialX = 100,
   initialY = 100,
-}, ref) {
+}: FloatingKeywordPanelProps) {
   const [position, setPosition] = useState({ x: initialX, y: initialY });
-  const [size, setSize] = useState(() => {
-    const baseW = 340;
-    const baseH = 320;
-    const extraRows = Math.ceil(keywords.length / 4);
-    return { w: Math.min(baseW + extraRows * 10, 560), h: Math.min(baseH + extraRows * 24, 560) };
-  });
+  const [size, setSize] = useState({ w: 380, h: 420 });
   const [userResized, setUserResized] = useState(false);
   const [dragMode, setDragMode] = useState<null | 'move' | 'se' | 'e' | 's'>(null);
   const [minimized, setMinimized] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [newKeyword, setNewKeyword] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
-  const newKeywordRef = useRef('');
 
-  useImperativeHandle(ref, () => ({
-    flushPending: () => {
-      const v = newKeywordRef.current.trim();
-      newKeywordRef.current = '';
-      return v;
-    },
-  }));
-
-  useEffect(() => { newKeywordRef.current = newKeyword; onPendingChange?.(newKeyword); }, [newKeyword]);
+  const hasTarget = !!targetTitle;
 
   // Auto-grow with content until user manually resizes
   useEffect(() => {
     if (userResized) return;
     const rows = Math.ceil(Math.max(keywords.length, allKeywords.length) / 4);
-    const targetH = Math.min(320 + rows * 22, 600);
-    const targetW = Math.min(340 + Math.floor(rows / 2) * 20, 600);
+    const targetH = Math.min(380 + rows * 22, 640);
+    const targetW = Math.min(380 + Math.floor(rows / 2) * 20, 640);
     setSize((s) => ({ w: Math.max(s.w, targetW), h: Math.max(s.h, targetH) }));
   }, [keywords.length, allKeywords.length, userResized]);
 
@@ -78,10 +60,10 @@ const FloatingKeywordPanel = forwardRef<FloatingKeywordPanelHandle, FloatingKeyw
         setSize((prev) => {
           let w = prev.w, h = prev.h;
           if (dragMode === 'e' || dragMode === 'se') {
-            w = Math.min(Math.max(280, e.clientX - position.x), vw - position.x - 4);
+            w = Math.min(Math.max(300, e.clientX - position.x), vw - position.x - 4);
           }
           if (dragMode === 's' || dragMode === 'se') {
-            h = Math.min(Math.max(220, e.clientY - position.y), vh - position.y - 4);
+            h = Math.min(Math.max(240, e.clientY - position.y), vh - position.y - 4);
           }
           return { w, h };
         });
@@ -106,6 +88,7 @@ const FloatingKeywordPanel = forwardRef<FloatingKeywordPanelHandle, FloatingKeyw
 
   const handleAdd = (e?: React.FormEvent) => {
     e?.preventDefault();
+    if (!hasTarget) return;
     const v = newKeyword.trim();
     if (v) {
       v.split(',').map((s) => s.trim()).filter(Boolean).forEach(onAddKeyword);
@@ -149,16 +132,30 @@ const FloatingKeywordPanel = forwardRef<FloatingKeywordPanelHandle, FloatingKeyw
 
       {!minimized && (
         <>
+          {/* Banner do alvo atual */}
+          <div className={`px-4 py-2 border-b text-[10px] font-bold uppercase tracking-wider truncate ${
+            hasTarget
+              ? 'border-primary/20 bg-primary/10 text-primary'
+              : 'border-amber-500/30 bg-amber-500/10 text-amber-500 flex items-center gap-2'
+          }`}>
+            {hasTarget ? targetTitle : (<><AlertTriangle size={12} /> Abra um concorrente para adicionar keywords</>)}
+          </div>
+
           <div className="flex-1 p-4 overflow-y-auto space-y-4">
             <form onSubmit={handleAdd} className="flex gap-2">
               <input
                 type="text"
                 value={newKeyword}
                 onChange={(e) => setNewKeyword(e.target.value)}
-                placeholder="Nova palavra... (vírgulas)"
-                className="flex-1 rounded border border-sidebar-border bg-internal-20 px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                placeholder={hasTarget ? "Nova palavra... (vírgulas)" : "Abra um concorrente..."}
+                disabled={!hasTarget}
+                className="flex-1 rounded border border-sidebar-border bg-internal-20 px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-40"
               />
-              <button type="submit" className="rounded bg-primary px-3 py-1.5 text-[10px] font-black text-primary-foreground hover:brightness-110 uppercase tracking-wider">
+              <button
+                type="submit"
+                disabled={!hasTarget}
+                className="rounded bg-primary px-3 py-1.5 text-[10px] font-black text-primary-foreground hover:brightness-110 uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 Add
               </button>
             </form>
@@ -193,8 +190,9 @@ const FloatingKeywordPanel = forwardRef<FloatingKeywordPanelHandle, FloatingKeyw
                     <button
                       type="button"
                       key={i}
+                      disabled={!hasTarget}
                       onClick={() => onAddKeyword(kw)}
-                      className="flex items-center gap-1 rounded bg-muted/40 border border-muted-foreground/20 px-2 py-0.5 text-[10px] font-bold text-muted-foreground hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors"
+                      className="flex items-center gap-1 rounded bg-muted/40 border border-muted-foreground/20 px-2 py-0.5 text-[10px] font-bold text-muted-foreground hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Plus size={9} />
                       {kw}
@@ -235,6 +233,4 @@ const FloatingKeywordPanel = forwardRef<FloatingKeywordPanelHandle, FloatingKeyw
       )}
     </div>
   );
-});
-
-export default FloatingKeywordPanel;
+}
