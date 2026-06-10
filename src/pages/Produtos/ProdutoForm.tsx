@@ -1121,6 +1121,47 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         </button>
       </div>
 
+      {/* Menu de seleção flutuante */}
+      {selectionMenu && (
+        <div 
+          className="selection-menu fixed z-[9999] flex items-center gap-1 bg-background border border-sidebar-border shadow-2xl rounded-full p-1.5 animate-in fade-in zoom-in duration-150"
+          style={{ 
+            left: `${selectionMenu.x}px`, 
+            top: `${selectionMenu.y}px`,
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleAddHighlightedKeyword}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:brightness-110 transition-all whitespace-nowrap"
+          >
+            <Highlighter size={12} />
+            Marcar Keyword
+          </button>
+          <div className="w-[1px] h-4 bg-sidebar-border mx-1" />
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(selectionMenu.text);
+              toast.success("Copiado!");
+              setSelectionMenu(null);
+            }}
+            className="p-1.5 rounded-full hover:bg-internal-20 text-muted-foreground hover:text-primary transition-colors"
+            title="Copiar texto"
+          >
+            <Copy size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectionMenu(null)}
+            className="p-1.5 rounded-full hover:bg-internal-20 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+
       {/* Painel Flutuante Universal — sempre envia ao concorrente atualmente aberto */}
       {panelOpen && (
         <FloatingKeywordPanel
