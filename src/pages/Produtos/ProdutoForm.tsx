@@ -276,100 +276,358 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-          <div className="col-span-3 space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Nome do Produto*</label>
-            <input 
-              required 
-              value={formData.name} 
-              onChange={e => setFormData({...formData, name: e.target.value})} 
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-lg font-bold focus:border-primary focus:outline-none transition-all" 
-              placeholder="Ex: Teclado Mecânico RGB"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">SKU</label>
-            <div className="flex gap-2">
-              <input 
-                value={formData.sku} 
-                onChange={e => setFormData({...formData, sku: e.target.value})} 
-                className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
-                placeholder="SKU-001" 
+        {/* IDENTIFICAÇÃO */}
+        <div className="space-y-3">
+          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Identificação</h4>
+          <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+            <div className="col-span-3 space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Nome do Produto*</label>
+              <input
+                required
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-lg font-bold focus:border-primary focus:outline-none transition-all"
+                placeholder="Ex: Teclado Mecânico RGB"
               />
-              <button 
-                type="button" 
-                onClick={() => setFormData({...formData, sku: `PRD-${Math.random().toString(36).substr(2, 5).toUpperCase()}`})} 
-                className="bg-primary text-black font-bold px-4 rounded text-xs hover:brightness-110 transition-all uppercase whitespace-nowrap"
-              >
-                GERAR
-              </button>
             </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Categoria</label>
-            <input 
-              value={formData.category || ""} 
-              onChange={e => setFormData({...formData, category: e.target.value})} 
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="Ex: Eletrônicos"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Fornecedor</label>
-            <select 
-              value={formData.supplier_id || ""} 
-              onChange={e => setFormData({...formData, supplier_id: e.target.value})} 
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
-            >
-              <option value="">Selecionar Fornecedor...</option>
-              {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            {selectedSupplier && (
-              <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-primary animate-in fade-in">
-                <span>🚚 {selectedSupplier.delivery_days} dias entrega</span>
-                <span className="opacity-30">•</span>
-                <span>🛡️ {selectedSupplier.warranty_days} dias garantia</span>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Código (SKU)</label>
+              <div className="flex gap-2">
+                <input
+                  value={formData.sku}
+                  onChange={e => setFormData({ ...formData, sku: e.target.value })}
+                  className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                  placeholder="SKU-001"
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, sku: `PRD-${Math.random().toString(36).substr(2, 5).toUpperCase()}` })}
+                  className="bg-primary text-black font-bold px-4 rounded text-xs hover:brightness-110 transition-all uppercase whitespace-nowrap"
+                >
+                  GERAR
+                </button>
               </div>
-            )}
-          </div>
+            </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preço de Custo (R$)</label>
-            <div className="relative">
-              <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input 
-                type="number" 
-                step="0.01" 
-                value={formData.cost_price || 0} 
-                onChange={e => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})} 
-                className="w-full rounded border border-sidebar-border bg-internal-20 pl-8 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Marca</label>
+              <input
+                value={formData.brand || ""}
+                onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="Ex: Logitech"
               />
             </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Peso (gramas)</label>
-            <input 
-              type="number" 
-              value={formData.weight_g || 0} 
-              onChange={e => setFormData({...formData, weight_g: parseInt(e.target.value) || 0})} 
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
-            />
-          </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Categoria</label>
+              <input
+                value={formData.category || ""}
+                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="Ex: Eletrônicos"
+              />
+            </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Dimensões</label>
-            <input 
-              value={formData.dimensions || ""} 
-              onChange={e => setFormData({...formData, dimensions: e.target.value})} 
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="Ex: 30x20x10 cm"
-            />
+            <div className="space-y-1.5 col-span-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Fornecedor</label>
+              <select
+                value={formData.supplier_id || ""}
+                onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="">Selecionar Fornecedor...</option>
+                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              {selectedSupplier && (
+                <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-primary animate-in fade-in">
+                  <span>🚚 {selectedSupplier.delivery_days} dias entrega</span>
+                  <span className="opacity-30">•</span>
+                  <span>🛡️ {selectedSupplier.warranty_days} dias garantia</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Produção</label>
+              <select
+                value={formData.production_type || "propria"}
+                onChange={e => setFormData({ ...formData, production_type: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="propria">Própria</option>
+                <option value="terceiros">Terceiros</option>
+              </select>
+            </div>
           </div>
         </div>
+
+        {/* CLASSIFICAÇÃO */}
+        <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
+          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Classificação</h4>
+          <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Formato</label>
+              <select
+                value={formData.format || "simples"}
+                onChange={e => setFormData({ ...formData, format: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="simples">Simples (item único)</option>
+                <option value="variacoes">Com variações</option>
+                <option value="composicao">Com composição (kit)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tipo</label>
+              <select
+                value={formData.type || "produto"}
+                onChange={e => setFormData({ ...formData, type: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="produto">Produto</option>
+                <option value="servico">Serviço</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Situação</label>
+              <select
+                value={formData.status || "ativo"}
+                onChange={e => setFormData({ ...formData, status: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Condição</label>
+              <select
+                value={formData.condition || "novo"}
+                onChange={e => setFormData({ ...formData, condition: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="novo">Novo</option>
+                <option value="usado">Usado</option>
+                <option value="recondicionado">Recondicionado</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Unidade</label>
+              <input
+                value={formData.unit || "UN"}
+                onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono uppercase"
+                placeholder="UN"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* PREÇO */}
+        <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
+          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Preço</h4>
+          <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preço de Venda (R$)</label>
+              <div className="relative">
+                <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.sale_price || 0}
+                  onChange={e => setFormData({ ...formData, sale_price: parseFloat(e.target.value) || 0 })}
+                  className="w-full rounded border border-sidebar-border bg-internal-20 pl-8 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preço de Custo (R$)</label>
+              <div className="relative">
+                <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.cost_price || 0}
+                  onChange={e => setFormData({ ...formData, cost_price: parseFloat(e.target.value) || 0 })}
+                  className="w-full rounded border border-sidebar-border bg-internal-20 pl-8 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Listas de Preço</label>
+              <input
+                value={Array.isArray(formData.price_lists) ? formData.price_lists.join(", ") : ""}
+                onChange={e => setFormData({ ...formData, price_lists: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="Ex: Atacado, Varejo"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* CÓDIGOS FISCAIS */}
+        <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
+          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Códigos Fiscais</h4>
+          <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">GTIN/EAN</label>
+              <input
+                value={formData.gtin || ""}
+                onChange={e => setFormData({ ...formData, gtin: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                placeholder="7891234567890"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">GTIN/EAN Tributário</label>
+              <input
+                value={formData.gtin_tax || ""}
+                onChange={e => setFormData({ ...formData, gtin_tax: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                placeholder="7891234567890"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* LOGÍSTICA */}
+        <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
+          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Logística</h4>
+          <div className="grid grid-cols-4 gap-x-6 gap-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Frete Grátis</label>
+              <div className="flex items-center gap-3 h-[44px]">
+                <span className={`text-[10px] font-black uppercase ${formData.free_shipping ? "text-primary" : "text-muted-foreground"}`}>
+                  {formData.free_shipping ? "Sim" : "Não"}
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.free_shipping}
+                    onChange={e => setFormData({ ...formData, free_shipping: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5 bg-muted rounded-full peer peer-checked:bg-primary transition-all duration-300"></div>
+                  <div className="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-all duration-300 peer-checked:translate-x-5"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Volumes</label>
+              <input
+                type="number"
+                value={formData.volumes || 1}
+                onChange={e => setFormData({ ...formData, volumes: parseInt(e.target.value) || 1 })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Itens p/ Caixa</label>
+              <input
+                type="number"
+                value={formData.items_per_box || 1}
+                onChange={e => setFormData({ ...formData, items_per_box: parseInt(e.target.value) || 1 })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Data de Validade</label>
+              <input
+                type="date"
+                value={formData.expiration_date || ""}
+                onChange={e => setFormData({ ...formData, expiration_date: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* DIMENSÕES & PESO */}
+        <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
+          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Dimensões & Peso</h4>
+          <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Unidade de Medida</label>
+              <select
+                value={formData.measurement_unit || "cm"}
+                onChange={e => setFormData({ ...formData, measurement_unit: e.target.value })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="m">Metros</option>
+                <option value="cm">Centímetros</option>
+                <option value="mm">Milímetros</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Largura</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.width || 0}
+                onChange={e => setFormData({ ...formData, width: parseFloat(e.target.value) || 0 })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Altura</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.height || 0}
+                onChange={e => setFormData({ ...formData, height: parseFloat(e.target.value) || 0 })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Profundidade</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.depth || 0}
+                onChange={e => setFormData({ ...formData, depth: parseFloat(e.target.value) || 0 })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Peso Líquido (g)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.net_weight_g || 0}
+                onChange={e => setFormData({ ...formData, net_weight_g: parseFloat(e.target.value) || 0 })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Peso Bruto (g)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.gross_weight_g || 0}
+                onChange={e => setFormData({ ...formData, gross_weight_g: parseFloat(e.target.value) || 0 })}
+                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
       </section>
 
       {/* BLOCO 2 — Textos do Produto */}
