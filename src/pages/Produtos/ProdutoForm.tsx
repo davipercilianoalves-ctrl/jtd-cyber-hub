@@ -169,6 +169,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         title: c.title || "",
         description: c.description || "",
         keywords_found: c.keywords_found || [],
+        highlights: Array.isArray(c.highlights) ? c.highlights : [],
         price: Number(c.price) || 0,
         url: c.url || ""
       })));
