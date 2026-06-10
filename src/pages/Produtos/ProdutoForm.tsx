@@ -1,21 +1,50 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { 
-  Loader2, 
-  Plus, 
-  X, 
-  Save, 
-  ArrowLeft, 
-  Trash2, 
-  Package, 
+import {
+  Loader2,
+  Plus,
+  X,
+  Save,
+  ArrowLeft,
+  Package,
   FileText,
   ChevronDown,
   ChevronUp,
   DollarSign,
   Trash,
   ExternalLink,
-  Tag
+  Tag,
+  Copy,
+  BarChart3,
+  CheckSquare,
+  Square,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
+
+// Botão pequeno de copiar — usado ao lado de cada campo
+function CopyBtn({ value }: { value: any }) {
+  const text = value === null || value === undefined ? "" : String(value);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (!text) {
+          toast.error("Campo vazio");
+          return;
+        }
+        navigator.clipboard.writeText(text);
+        toast.success("Copiado!");
+      }}
+      title="Copiar"
+      className="shrink-0 w-9 h-[44px] flex items-center justify-center rounded border border-sidebar-border bg-internal-20 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all"
+    >
+      <Copy size={13} />
+    </button>
+  );
+}
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
