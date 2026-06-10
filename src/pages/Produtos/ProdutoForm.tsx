@@ -117,6 +117,12 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     if (!target) return;
     target.style.height = 'auto';
     target.style.height = target.scrollHeight + 'px';
+    
+    // Sincroniza a altura da camada de destaque se houver uma
+    const highlightLayer = target.previousElementSibling as HTMLElement;
+    if (highlightLayer && highlightLayer.tagName === 'DIV') {
+      highlightLayer.style.height = target.style.height;
+    }
   }
 
   const textareaStyle: React.CSSProperties = { 
