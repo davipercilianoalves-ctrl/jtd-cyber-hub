@@ -35,7 +35,7 @@ export default function Produtos() {
       <div className="relative">
         <Search className="absolute left-3 top-3 text-muted-foreground" size={18} />
         <input 
-          className="w-full bg-white/[0.03] border border-sidebar-border rounded py-3 pl-10 pr-4 text-sm outline-none focus:border-primary"
+          className="w-full bg-internal-w03 border border-sidebar-border rounded py-3 pl-10 pr-4 text-sm outline-none focus:border-primary"
           placeholder="Buscar por nome ou SKU..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -46,14 +46,14 @@ export default function Produtos() {
 
       {loading ? (
         <div className="space-y-2">
-          {[...Array(5)].map((_, i) => <div key={i} className="h-12 w-full rounded bg-white/5 animate-pulse" />)}
+          {[...Array(5)].map((_, i) => <div key={i} className="h-12 w-full rounded bg-internal-w5 animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-primary/30"><Package size={64} className="mx-auto mb-4" />Nenhum produto cadastrado</div>
       ) : (
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-white/[0.03] border-b border-sidebar-border">
+            <tr className="bg-internal-w03 border-b border-sidebar-border">
               <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Nome + SKU</th>
               <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Fornecedor</th>
               <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Custo</th>
@@ -65,7 +65,7 @@ export default function Produtos() {
           </thead>
           <tbody>
             {filtered.map(p => (
-              <tr key={p.id} onClick={() => navigate({ to: "/produtos/$id/editar", params: { id: p.id } })} className="border-b border-sidebar-border/40 hover:bg-white/[0.04] transition-colors group cursor-pointer">
+              <tr key={p.id} onClick={() => navigate({ to: "/produtos/$id/editar", params: { id: p.id } })} className="border-b border-sidebar-border/40 hover:bg-internal-w04 transition-colors group cursor-pointer">
                 <td className="p-4">
                   <div className="font-semibold text-foreground">{p.name}</div>
                   <div className="font-mono text-[10px] text-muted-foreground">{p.sku || "—"}</div>

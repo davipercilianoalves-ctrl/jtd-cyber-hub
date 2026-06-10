@@ -43,7 +43,7 @@
   --color-sidebar: var(--sidebar);
   --color-sidebar-border: var(--sidebar-border);
 
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Space Grotesk", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -91,12 +91,21 @@
   --input-bg: rgba(255, 255, 255, 0.05);
   --input-border: rgba(255, 255, 255, 0.10);
   --placeholder: #A0A0A0;
+
+  /* Universal adaptive backgrounds */
+  --bg-internal-20: rgba(255, 255, 255, 0.04);
+  --bg-internal-40: rgba(255, 255, 255, 0.06);
+  --bg-internal-50: rgba(255, 255, 255, 0.08);
+  --bg-internal-80: rgba(0, 0, 0, 0.8);
+  --bg-internal-w5: rgba(255, 255, 255, 0.05);
+  --bg-internal-w03: rgba(255, 255, 255, 0.03);
+  --bg-internal-w04: rgba(255, 255, 255, 0.04);
 }
 
 .light {
   /* Theme: Arctic Cyber */
   --lime: #7AB800;
-  --magenta: #FF00FF; /* Magenta holds same identity */
+  --magenta: #FF00FF;
   --cyan: #0099AA;
   --surface: rgba(255, 255, 255, 0.80);
   --sidebar: #FFFFFF;
@@ -135,6 +144,15 @@
   --input-bg: #FFFFFF;
   --input-border: rgba(0, 0, 0, 0.15);
   --placeholder: #999999;
+
+  /* Universal adaptive backgrounds for Light Theme */
+  --bg-internal-20: hsl(var(--muted) / 0.3);
+  --bg-internal-40: hsl(var(--muted) / 0.5);
+  --bg-internal-50: hsl(var(--muted) / 0.6);
+  --bg-internal-80: hsl(var(--background) / 0.9);
+  --bg-internal-w5: hsl(var(--muted) / 0.2);
+  --bg-internal-w03: hsl(var(--muted) / 0.1);
+  --bg-internal-w04: hsl(var(--muted) / 0.15);
 }
 
 @layer base {
@@ -175,6 +193,14 @@
   background: var(--logo-gradient);
   -webkit-background-clip: text;
   background-clip: text;
-  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
   color: transparent;
 }
+
+@utility bg-internal-20 { background-color: var(--bg-internal-20); }
+@utility bg-internal-40 { background-color: var(--bg-internal-40); }
+@utility bg-internal-50 { background-color: var(--bg-internal-50); }
+@utility bg-internal-80 { background-color: var(--bg-internal-80); }
+@utility bg-internal-w5 { background-color: var(--bg-internal-w5); }
+@utility bg-internal-w03 { background-color: var(--bg-internal-w03); }
+@utility bg-internal-w04 { background-color: var(--bg-internal-w04); }

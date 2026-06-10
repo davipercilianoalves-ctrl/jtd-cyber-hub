@@ -49,7 +49,7 @@ export default function Fornecedores() {
       <div className="relative">
         <Search className="absolute left-3 top-3 text-muted-foreground" size={18} />
         <input 
-          className="w-full bg-white/[0.03] border border-sidebar-border rounded py-3 pl-10 pr-4 text-sm focus:border-primary outline-none"
+          className="w-full bg-internal-w03 border border-sidebar-border rounded py-3 pl-10 pr-4 text-sm focus:border-primary outline-none"
           placeholder="Buscar por nome, cidade ou estado..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -60,14 +60,14 @@ export default function Fornecedores() {
 
       {loading ? (
         <div className="space-y-2">
-          {[...Array(5)].map((_, i) => <div key={i} className="h-12 w-full rounded bg-white/5 animate-pulse" />)}
+          {[...Array(5)].map((_, i) => <div key={i} className="h-12 w-full rounded bg-internal-w5 animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-primary/30"><Truck size={64} className="mx-auto mb-4" />Nenhum fornecedor cadastrado</div>
       ) : (
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-white/[0.03] border-b border-sidebar-border">
+            <tr className="bg-internal-w03 border-b border-sidebar-border">
               <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Nome</th>
               <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Cidade/Estado</th>
               <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Entrega</th>
@@ -78,7 +78,7 @@ export default function Fornecedores() {
           </thead>
           <tbody>
             {filtered.map(s => (
-              <tr key={s.id} className="border-b border-sidebar-border/40 hover:bg-white/[0.04] transition-colors group">
+              <tr key={s.id} className="border-b border-sidebar-border/40 hover:bg-internal-w04 transition-colors group">
                 <td className="p-4 font-semibold text-foreground">{s.name}</td>
                 <td className="p-4 text-sm text-muted-foreground">{s.city ? `${s.city}/${s.state}` : "—"}</td>
                 <td className="p-4 text-sm flex items-center gap-2"><Truck size={14} className="text-primary"/> {s.delivery_days} dias</td>
