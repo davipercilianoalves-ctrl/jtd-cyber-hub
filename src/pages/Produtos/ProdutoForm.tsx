@@ -819,7 +819,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 key={idx}
                 className="jtd-glass border border-sidebar-border rounded-lg overflow-hidden transition-all duration-300"
               >
-                {/* HEADER BAR — toda clicável para abrir/fechar */}
+                {/* HEADER BAR — só texto ao lado da seta */}
                 <button
                   type="button"
                   onClick={toggleOpen}
@@ -829,14 +829,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   <span className="text-primary shrink-0">
                     {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </span>
-                  <input
-                    value={comp.title}
-                    onChange={(e) => updateCompetitor(idx, "title", e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    className="flex-1 min-w-0 bg-transparent border-none p-0 text-base font-bold text-foreground focus:ring-0 focus:outline-none placeholder:text-muted-foreground/30"
-                    placeholder="TÍTULO DO ANÚNCIO CONCORRENTE — editável"
-                  />
+                  <span className="flex-1 min-w-0 text-base font-bold text-foreground truncate">
+                    {comp.title || <span className="text-muted-foreground/40">Concorrente sem título</span>}
+                  </span>
                 </button>
 
                 {/* LINHA META: #N, link, preço, lixeira */}
@@ -885,20 +880,33 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 {/* CONTEÚDO EXPANDIDO */}
                 {isOpen && (
                   <div className="px-4 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
-                    <div className="border-t border-sidebar-border/30 pt-4">
-                      <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
-                        Descrição do Concorrente
-                      </label>
-                      <textarea
-                        value={comp.description}
-                        onChange={(e) => {
-                          updateCompetitor(idx, "description", e.target.value);
-                          autoResize(e.target);
-                        }}
-                        style={textareaStyle}
-                        className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none"
-                        placeholder="Cole aqui a descrição do anúncio concorrente..."
-                      />
+                    <div className="border-t border-sidebar-border/30 pt-4 space-y-3">
+                      <div>
+                        <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
+                          Título do Anúncio
+                        </label>
+                        <input
+                          value={comp.title}
+                          onChange={(e) => updateCompetitor(idx, "title", e.target.value)}
+                          className="w-full bg-internal-20 border border-sidebar-border rounded p-2 text-sm font-bold focus:border-primary focus:outline-none"
+                          placeholder="Título do anúncio concorrente..."
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
+                          Descrição do Concorrente
+                        </label>
+                        <textarea
+                          value={comp.description}
+                          onChange={(e) => {
+                            updateCompetitor(idx, "description", e.target.value);
+                            autoResize(e.target);
+                          }}
+                          style={textareaStyle}
+                          className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none"
+                          placeholder="Cole aqui a descrição do anúncio concorrente..."
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1063,15 +1071,22 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               ? `→ Concorrente #${openCompetitorIndex + 1}${competitors[openCompetitorIndex].title ? ` — ${competitors[openCompetitorIndex].title}` : ""}`
               : null
           }
-          keywords={
-            openCompetitorIndex !== null && competitors[openCompetitorIndex]
-              ? competitors[openCompetitorIndex].keywords_found
-              : []
-          }
-          allKeywords={Array.from(new Set([
-            ...competitors.flatMap((c, i) => i === openCompetitorIndex ? [] : c.keywords_found),
-            ...(formData.keywords as string[]),
-          ]))}
+          keywordSources={(() => {
+            const map = new Map<string, { keyword: string; sources: Array<{ label: string; isCurrent: boolean }> }>();
+            competitors.forEach((c, i) => {
+              c.keywords_found.forEach((kw) => {
+                const entry = map.get(kw) || { keyword: kw, sources: [] };
+                entry.sources.push({ label: `#${i + 1}`, isCurrent: i === openCompetitorIndex });
+                map.set(kw, entry);
+              });
+            });
+            (formData.keywords as string[]).forEach((kw) => {
+              const entry = map.get(kw) || { keyword: kw, sources: [] };
+              entry.sources.push({ label: 'P', isCurrent: false });
+              map.set(kw, entry);
+            });
+            return Array.from(map.values()).sort((a, b) => a.keyword.localeCompare(b.keyword));
+          })()}
           onClose={() => setPanelOpen(false)}
           onAddKeyword={(kw) => {
             if (openCompetitorIndex === null) {
@@ -1091,7 +1106,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               newComps[openCompetitorIndex].keywords_found.filter((k) => k !== kw);
             setCompetitors(newComps);
           }}
-          onSendToProduct={(kws) => {
+          onSendToProduct={() => {
+            if (openCompetitorIndex === null) return;
+            const kws = competitors[openCompetitorIndex].keywords_found;
             const uniqueKeywords = Array.from(new Set([...(formData.keywords as string[]), ...kws]));
             setFormData({ ...formData, keywords: uniqueKeywords });
             toast.success("Keywords enviadas para o produto!");
