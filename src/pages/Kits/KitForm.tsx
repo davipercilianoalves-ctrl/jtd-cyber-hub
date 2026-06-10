@@ -58,6 +58,7 @@ export default function KitForm() {
     if (!id) return;
     const { data, error } = await supabase.from("kits").select("*, kit_products(*, products(name, sku, cost_price, keywords))").eq("id", id).single();
     if (data) {
+
       const { kit_products, ...rest } = data as any;
       setFormData(rest);
       setKitProducts(kit_products);
