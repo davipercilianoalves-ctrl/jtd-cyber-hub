@@ -941,18 +941,47 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                         <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
                           Descrição do Concorrente
                         </label>
-                        <textarea
-                          value={comp.description}
-                          onChange={(e) => {
-                            updateCompetitor(idx, "description", e.target.value);
-                            autoResize(e.target);
-                          }}
-                          onMouseUp={(e) => handleTextSelection(e, idx)}
-                          ref={(el) => { descriptionRefs.current[idx] = el; }}
-                          style={textareaStyle}
-                          className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400 selection:text-black break-all"
-                          placeholder="Cole aqui a descrição do anúncio concorrente..."
-                        />
+                        <div className="relative group">
+                          {/* Camada de Visualização (Highlights) */}
+                          <div 
+                            className="absolute inset-0 p-3 text-xs pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent"
+                            style={{ ...textareaStyle, height: '100%' }}
+                          >
+                            {(() => {
+                              let text = comp.description || "";
+                              const keywords = comp.keywords_found || [];
+                              
+                              if (keywords.length === 0) return text;
+                              
+                              // Escapar regex e ordenar por tamanho para evitar conflitos
+                              const sortedKws = [...new Set(keywords)].sort((a, b) => b.length - a.length);
+                              const pattern = new RegExp(`(${sortedKws.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+                              
+                              const parts = text.split(pattern);
+                              return parts.map((part, i) => {
+                                const isMatch = sortedKws.some(kw => kw.toLowerCase() === part.toLowerCase());
+                                return isMatch ? (
+                                  <mark key={i} className="bg-yellow-400/60 text-transparent rounded-sm px-0.5">
+                                    {part}
+                                  </mark>
+                                ) : part;
+                              });
+                            })()}
+                          </div>
+
+                          <textarea
+                            value={comp.description}
+                            onChange={(e) => {
+                              updateCompetitor(idx, "description", e.target.value);
+                              autoResize(e.target);
+                            }}
+                            onMouseUp={(e) => handleTextSelection(e, idx)}
+                            ref={(el) => { descriptionRefs.current[idx] = el; }}
+                            style={{ ...textareaStyle, background: 'transparent' }}
+                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400 selection:text-black break-all"
+                            placeholder="Cole aqui a descrição do anúncio concorrente..."
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
