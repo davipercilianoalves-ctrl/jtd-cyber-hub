@@ -950,7 +950,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                           onMouseUp={(e) => handleTextSelection(e, idx)}
                           ref={(el) => { descriptionRefs.current[idx] = el; }}
                           style={textareaStyle}
-                          className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-primary/30"
+                          className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400 selection:text-black break-all"
                           placeholder="Cole aqui a descrição do anúncio concorrente..."
                         />
                       </div>
