@@ -959,25 +959,27 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 )}
 
                 {/* KEYWORDS */}
-                <div className="px-4 pb-4 flex flex-wrap items-center gap-2">
-                  <span className="text-[8px] font-black uppercase text-muted-foreground mr-2">Keywords:</span>
-                  {comp.keywords_found.map((kw, kIdx) => (
-                    <span
-                      key={kIdx}
-                      className="bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px] font-bold text-primary"
-                    >
-                      {kw}
-                    </span>
-                  ))}
-                  {isOpen && (
-                    <button
-                      type="button"
-                      onClick={() => setPanelOpen(!panelOpen)}
-                      className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase"
-                    >
-                      {panelOpen ? "− Fechar painel" : "+ Adicionar Palavras-chave"}
-                    </button>
-                  )}
+                <div className="px-4 pb-4 flex flex-wrap items-center gap-2 overflow-hidden">
+                  <span className="text-[8px] font-black uppercase text-muted-foreground mr-2 shrink-0">Keywords:</span>
+                  <div className="flex flex-wrap gap-2 items-center min-w-0">
+                    {comp.keywords_found.map((kw, kIdx) => (
+                      <span
+                        key={kIdx}
+                        className="bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px] font-bold text-primary break-all max-w-full"
+                      >
+                        {kw}
+                      </span>
+                    ))}
+                    {isOpen && (
+                      <button
+                        type="button"
+                        onClick={() => setPanelOpen(!panelOpen)}
+                        className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase shrink-0"
+                      >
+                        {panelOpen ? "− Fechar painel" : "+ Adicionar Palavras-chave"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
