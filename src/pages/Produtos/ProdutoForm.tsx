@@ -296,13 +296,12 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   };
 
   useEffect(() => {
-    const handleClickOutside = () => setSelectionMenu(null);
-    window.addEventListener('mousedown', (e) => {
-      // Se não clicou no menu ou no textarea, fecha
+    const handleClickOutside = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest('.selection-menu')) {
         setSelectionMenu(null);
       }
-    });
+    };
+    window.addEventListener('mousedown', handleClickOutside);
     return () => window.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
