@@ -181,7 +181,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   };
 
   const removeKeyword = (kw: string) => {
-    setFormData({ ...formData, keywords: formData.keywords.filter(k => k !== kw) });
+    setFormData({ ...formData, keywords: formData.keywords.filter((k: string) => k !== kw) });
     setSelectedKeywords(selectedKeywords.filter(k => k !== kw));
   };
 
