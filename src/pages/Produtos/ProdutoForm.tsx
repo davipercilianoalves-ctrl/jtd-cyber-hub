@@ -1067,10 +1067,14 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                               const layer = (e.currentTarget.previousElementSibling as HTMLElement);
                               if (layer) layer.scrollTop = e.currentTarget.scrollTop;
                             }}
+                            onMouseDown={(e) => {
+                              // Impede o "drag" do texto em alguns browsers que pode bugar a seleção
+                              if (e.detail > 1) e.preventDefault();
+                            }}
                             onMouseUp={(e) => handleTextSelection(e, idx)}
                             ref={(el) => { descriptionRefs.current[idx] = el; }}
                             style={{ ...textareaStyle, background: 'transparent', lineHeight: '1.5', letterSpacing: 'normal' }}
-                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400/30 selection:text-current break-all"
+                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400/30 selection:text-current break-all touch-none"
                             placeholder="Cole aqui a descrição do anúncio concorrente..."
                           />
                         </div>
