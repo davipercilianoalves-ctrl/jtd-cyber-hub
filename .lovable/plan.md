@@ -1,74 +1,47 @@
-# Ajustes — Análise de Concorrentes + Painel Flutuante
+# Ajustes — Painel Flutuante Universal + Header do Concorrente
 
-Escopo: `src/pages/Produtos/ProdutoForm.tsx` e `src/components/FloatingKeywordPanel.tsx`. Sem mexer em banco nem em outras telas.
+Escopo: `src/pages/Produtos/ProdutoForm.tsx` e `src/components/FloatingKeywordPanel.tsx`.
 
-## 1. Cabeçalho da seção Análise de Concorrentes
+## 1. Painel flutuante universal (uma única instância sempre montada)
 
-- Remover os 3 cards MIN / MED / MAX que ficam no cabeçalho da seção (eles já aparecem na "Análise Geral do Produto" no rodapé do form).
-- Cabeçalho fica só com o título + subtítulo.
+- Hoje o painel é montado/desmontado por concorrente e o "destino" das keywords é fixo no momento da abertura.
+- Mudar para: **uma única instância do painel**, persistente, sempre disponível. O destino das keywords é **sempre o concorrente atualmente aberto** (`openCompetitorIndex`).
+- Comportamento:
+  - Abrir o painel = `panelOpen = true` (estado independente do concorrente).
+  - Toda keyword digitada/adicionada vai para `competitors[openCompetitorIndex].keywords_found`.
+  - Se o usuário troca o concorrente aberto (clica outra seta), o painel **continua aberto na mesma posição/tamanho**, mas a partir desse momento as novas palavras vão para o novo concorrente.
+  - Não há mais "salvar texto pendente ao trocar" — não precisa, o input continua o mesmo, só muda o destino.
+  - As keywords exibidas dentro do painel ("Deste concorrente") atualizam para refletir o concorrente aberto agora.
+  - Se nenhum concorrente está aberto, mostrar aviso curto "Abra um concorrente para adicionar keywords" e desabilitar o ADD.
+- A lista global `allKeywords` continua vindo de todos os concorrentes + keywords do produto, mostrada como sugestões (clique = adiciona ao concorrente aberto atual).
+- Fluxo final permanece: o botão "Enviar para Lista do Produto" envia as keywords do concorrente aberto para a lista principal do produto.
 
-## 2. Acordeão exclusivo (só 1 concorrente aberto por vez)
+## 2. Header do card de concorrente — barra inteira clicável
 
-- A seta de expandir vira o **primeiro elemento** de cada card de concorrente (lado esquerdo, antes do `#N` ou agrupada com ele em coluna).
-- O **título** do concorrente passa a ficar **abaixo da seta/numeração**, não ao lado.
-- Layout do header de cada concorrente:
+Layout novo do header (toda a barra de cima é o trigger de expandir/recolher):
 
 ```text
-[˅]                 [R$ preço]   [🗑]
- #1
- TÍTULO DO ANÚNCIO — editável
- link do anúncio...
+┌──────────────────────────────────────────────────────────┐
+│ [˅]  TÍTULO DO ANÚNCIO CONCORRENTE — editável            │  ← barra toda clicável
+├──────────────────────────────────────────────────────────┤
+│ #N    link do anúncio...              R$ [preço]   [🗑] │
+└──────────────────────────────────────────────────────────┘
 ```
 
-- Clicar na seta de um concorrente fechado abre ele **e fecha automaticamente** qualquer outro concorrente aberto (`openCompetitorIndex` já é estado único — apenas garantir comportamento de toggle exclusivo).
-- Clicar na seta do concorrente aberto fecha ele.
+- A **barra superior inteira** (não só a seta) é o botão que abre/fecha o card. Cursor `pointer` em toda a área.
+- Dentro dessa barra: ícone seta à esquerda + **título do anúncio** ao lado da seta (input de título fica nessa linha, com `onClick`/`onMouseDown` parando propagação para não acionar o toggle).
+- Linha de baixo: `#N`, link, preço, lixeira (fora do trigger, como hoje).
+- Mantém comportamento exclusivo: abrir um fecha o outro.
 
-## 3. Painel flutuante de keywords vinculado ao concorrente
+## Técnico
 
-Hoje cada concorrente pode ter seu próprio painel aberto independentemente. Mudança:
-
-- **Apenas 1 painel flutuante de concorrente pode estar aberto por vez.**
-- Quando o usuário clica em "+ Adicionar palavras-chave" de outro concorrente (ou expande outro concorrente via seta) **enquanto há um painel aberto**:
-  1. O texto que estiver digitado no campo "Nova palavra..." é **salvo automaticamente** como keyword do concorrente anterior (split por vírgula/enter, igual ao botão ADD).
-  2. As keywords já existentes do concorrente anterior permanecem (já é o comportamento atual, garantir).
-  3. O painel anterior fecha.
-  4. O novo painel abre para o concorrente atual.
-- `openPanels: number[]` vira `openPanel: number | null` (single).
-
-## 4. Painel flutuante (`FloatingKeywordPanel.tsx`) — melhorias
-
-### 4.1 Tamanho dinâmico baseado no conteúdo
-
-- Largura/altura inicial calculadas a partir da quantidade de keywords (mais keywords = painel maior, até o máximo já existente 700×700).
-- Quando o usuário adiciona keywords e ainda não redimensionou manualmente, o painel cresce sozinho. Após o primeiro resize manual, congela o tamanho.
-
-### 4.2 Lista global de keywords já encontradas
-
-- Nova prop `allKeywords: string[]` passada pelo ProdutoForm = união de `competitors.flatMap(c => c.keywords_found)` + `keywords` do produto.
-- Dentro do painel, abaixo do input "Nova palavra...", adicionar bloco **"JÁ USADAS EM OUTROS CONCORRENTES"** com chips menores em cor diferente (`bg-muted/30 border-muted-foreground/20`), clicáveis para adicionar ao concorrente atual.
-- Cada chip dessa lista que já está no concorrente atual aparece marcado/desabilitado, evitando duplicar.
-
-### 4.3 Redimensionar nas 3 direções (largura, altura, diagonal)
-
-- Adicionar 3 handles: borda direita (resize horizontal), borda inferior (vertical) e canto inferior-direito (diagonal, já existe).
-- Cursores: `ew-resize`, `ns-resize`, `se-resize`.
-
-### 4.4 Mobilidade melhorada
-
-- Permitir arrasto também encostando topo/laterais (já clampa hoje — manter).
-- Header de arrasto fica mais largo e com cursor `grab`/`grabbing` durante arrasto.
-- Quando minimizado, manter posição arrastável.
-- Garantir que o painel não fica atrás do header do app (z-index alto, já tem `z-100`).
-
-## 5. Persistência do texto não-salvo ao trocar de painel
-
-Hoje `newKeyword` é estado interno do `FloatingKeywordPanel`. Para o item 3 funcionar:
-- Adicionar prop opcional `onBeforeClose?: (pendingText: string) => void`.
-- No ProdutoForm, ao trocar `openPanel` para outro índice, ler o input atual via callback e injetar o texto como keyword(s) do concorrente anterior antes de abrir o novo.
-- Implementação: usar `useImperativeHandle` no painel ou simplesmente disparar `onBeforeClose(newKeyword)` no `useEffect` de cleanup quando o painel é desmontado.
+- `FloatingKeywordPanel`: nova prop `targetTitle` (título do concorrente aberto) + `disabled` (quando nenhum aberto). Remover `onPendingChange`/`flushPending` (não precisam mais).
+- `ProdutoForm`:
+  - Estado: `panelOpen: boolean` (substitui `openPanel: number | null`), `panelPending` removido.
+  - `openCompetitorIndex` continua governando qual concorrente recebe as keywords.
+  - Botão "+ Adicionar Palavras-chave" dentro do card apenas faz `setPanelOpen(true)` (não precisa setar índice — já é o aberto).
+  - Reescrever header do card conforme item 2; input de título com `onClick={(e) => e.stopPropagation()}`.
 
 ## Fora de escopo
 
-- Não alterar a lista de palavras-chave do produto principal.
-- Não alterar schema, save logic, ou outras seções.
-- Não mexer no rodapé "Análise Geral do Produto" (lá ficam os preços agora).
+Banco, schema, outras seções, "Análise Geral do Produto", lista de keywords do produto.
