@@ -577,7 +577,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         </div>
 
         <div className="flex flex-wrap gap-2 min-h-[40px]">
-          {formData.keywords.map((kw, i) => (
+          {formData.keywords.map((kw: string, i: number) => (
             <div 
               key={i} 
               onClick={() => toggleSelectedKeyword(kw)}
