@@ -263,6 +263,49 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
   const selectedSupplier = suppliers.find(s => s.id === formData.supplier_id);
 
+  const handleTextSelection = (e: React.MouseEvent<HTMLTextAreaElement>, competitorIdx: number) => {
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+
+    if (selectedText && selectedText.trim().length > 0) {
+      const rect = textarea.getBoundingClientRect();
+      // Aproximação da posição do cursor para o menu flutuante
+      setSelectionMenu({
+        x: e.clientX,
+        y: e.clientY - 60,
+        text: selectedText.trim(),
+        competitorIdx
+      });
+    } else {
+      setSelectionMenu(null);
+    }
+  };
+
+  const handleAddHighlightedKeyword = () => {
+    if (!selectionMenu) return;
+    const { text, competitorIdx } = selectionMenu;
+    const newComps = [...competitors];
+    if (!newComps[competitorIdx].keywords_found.includes(text)) {
+      newComps[competitorIdx].keywords_found.push(text);
+      setCompetitors(newComps);
+      toast.success(`"${text}" adicionada!`);
+    }
+    setSelectionMenu(null);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = () => setSelectionMenu(null);
+    window.addEventListener('mousedown', (e) => {
+      // Se não clicou no menu ou no textarea, fecha
+      if (!(e.target as HTMLElement).closest('.selection-menu')) {
+        setSelectionMenu(null);
+      }
+    });
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Price analysis
   const prices = competitors.map(c => c.price).filter(p => p > 0);
   const minPrice = prices.length ? Math.min(...prices) : 0;
