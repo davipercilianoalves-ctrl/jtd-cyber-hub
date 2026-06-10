@@ -45,9 +45,8 @@ function CopyBtn({ value }: { value: any }) {
   );
 }
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
+
+
 
 interface Competitor {
   id?: string;
