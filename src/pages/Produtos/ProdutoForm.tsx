@@ -49,11 +49,18 @@ function CopyBtn({ value }: { value: any }) {
 
 
 
+interface Highlight {
+  start: number;
+  end: number;
+  text: string;
+}
+
 interface Competitor {
   id?: string;
   title: string;
   description: string;
   keywords_found: string[];
+  highlights: Highlight[];
   price: number;
   url: string;
 }
