@@ -245,52 +245,115 @@ export type Database = {
       }
       products: {
         Row: {
+          brand: string | null
           category: string | null
           common_questions: string | null
+          condition: string | null
           cost_price: number | null
           created_at: string
+          depth: number | null
           description: string | null
           dimensions: string | null
+          expiration_date: string | null
+          format: string | null
+          free_shipping: boolean
+          gross_weight_g: number | null
+          gtin: string | null
+          gtin_tax: string | null
+          height: number | null
           id: string
           is_active: boolean
+          items_per_box: number | null
           keywords: string[] | null
+          measurement_unit: string | null
           name: string
+          net_weight_g: number | null
           notes: string | null
+          price_lists: Json | null
+          production_type: string | null
+          sale_price: number | null
           sku: string | null
+          status: string | null
           supplier_id: string | null
+          type: string | null
+          unit: string | null
+          volumes: number | null
           weight_g: number | null
+          width: number | null
         }
         Insert: {
+          brand?: string | null
           category?: string | null
           common_questions?: string | null
+          condition?: string | null
           cost_price?: number | null
           created_at?: string
+          depth?: number | null
           description?: string | null
           dimensions?: string | null
+          expiration_date?: string | null
+          format?: string | null
+          free_shipping?: boolean
+          gross_weight_g?: number | null
+          gtin?: string | null
+          gtin_tax?: string | null
+          height?: number | null
           id?: string
           is_active?: boolean
+          items_per_box?: number | null
           keywords?: string[] | null
+          measurement_unit?: string | null
           name: string
+          net_weight_g?: number | null
           notes?: string | null
+          price_lists?: Json | null
+          production_type?: string | null
+          sale_price?: number | null
           sku?: string | null
+          status?: string | null
           supplier_id?: string | null
+          type?: string | null
+          unit?: string | null
+          volumes?: number | null
           weight_g?: number | null
+          width?: number | null
         }
         Update: {
+          brand?: string | null
           category?: string | null
           common_questions?: string | null
+          condition?: string | null
           cost_price?: number | null
           created_at?: string
+          depth?: number | null
           description?: string | null
           dimensions?: string | null
+          expiration_date?: string | null
+          format?: string | null
+          free_shipping?: boolean
+          gross_weight_g?: number | null
+          gtin?: string | null
+          gtin_tax?: string | null
+          height?: number | null
           id?: string
           is_active?: boolean
+          items_per_box?: number | null
           keywords?: string[] | null
+          measurement_unit?: string | null
           name?: string
+          net_weight_g?: number | null
           notes?: string | null
+          price_lists?: Json | null
+          production_type?: string | null
+          sale_price?: number | null
           sku?: string | null
+          status?: string | null
           supplier_id?: string | null
+          type?: string | null
+          unit?: string | null
+          volumes?: number | null
           weight_g?: number | null
+          width?: number | null
         }
         Relationships: [
           {
