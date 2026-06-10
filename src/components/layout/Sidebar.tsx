@@ -13,12 +13,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Truck,
+  Layers,
 } from "lucide-react";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/produtos", label: "Produtos", icon: Package },
   { to: "/anuncios/", label: "Anúncios", icon: Megaphone },
+  { to: "/kits/", label: "Kits", icon: Layers },
   { to: "/metricas", label: "Métricas", icon: BarChart2 },
   { to: "/compras", label: "Compras", icon: ShoppingCart },
   { to: "/vendas", label: "Vendas", icon: DollarSign },
