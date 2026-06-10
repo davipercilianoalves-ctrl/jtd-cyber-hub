@@ -240,14 +240,14 @@ export default function AnuncioForm() {
           <select 
             value={formData.product_id}
             onChange={e => setFormData({ ...formData, product_id: e.target.value })}
-            className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
           >
             <option value="">Selecionar Produto...</option>
             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
 
           {selectedProduct && (
-            <div className="bg-white/5 border border-sidebar-border rounded p-4 space-y-2 text-sm animate-in slide-in-from-top-2">
+            <div className="bg-internal-w5 border border-sidebar-border rounded p-4 space-y-2 text-sm animate-in slide-in-from-top-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">SKU:</span>
                 <span className="font-mono text-foreground">{selectedProduct.sku || "—"}</span>
@@ -302,14 +302,14 @@ export default function AnuncioForm() {
             return (
               <div 
                 key={i} 
-                className="flex items-center justify-between p-2 rounded hover:bg-white/[0.04] group transition-colors"
+                className="flex items-center justify-between p-2 rounded hover:bg-internal-w04 group transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <input 
                     type="checkbox" 
                     checked={selectedKeywords.includes(kw)}
                     onChange={() => toggleSelectedKeyword(kw)}
-                    className="w-4 h-4 rounded border-sidebar-border bg-black/20 text-primary focus:ring-primary"
+                    className="w-4 h-4 rounded border-sidebar-border bg-internal-20 text-primary focus:ring-primary"
                   />
                   <span className={`text-sm ${used ? "text-muted-foreground line-through opacity-50" : "text-lime-500 font-bold"}`}>
                     {kw}
@@ -333,7 +333,7 @@ export default function AnuncioForm() {
             value={newKeywordInput}
             onChange={e => setNewKeywordInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addKeyword(newKeywordInput), setNewKeywordInput(""))}
-            className="flex-1 rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none" 
+            className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none" 
             placeholder="Adicionar nova palavra..."
           />
           <button 
@@ -365,7 +365,7 @@ export default function AnuncioForm() {
                     autoResize(e.target);
                   }}
                   style={textareaStyle}
-                  className="flex-1 rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+                  className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
                   placeholder="Digite o título do anúncio..."
                 />
                 <button 
@@ -401,7 +401,7 @@ export default function AnuncioForm() {
               autoResize(e.target);
             }}
             style={textareaStyle}
-            className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
             placeholder="Crie uma breve descrição com as palavras-chave..."
           />
         </div>
@@ -412,7 +412,7 @@ export default function AnuncioForm() {
             <button 
               type="button"
               onClick={() => setShowTemplateModal(true)}
-              className="flex-1 bg-white/5 border border-sidebar-border rounded py-3 text-xs font-bold text-foreground hover:bg-white/10 transition-all"
+              className="flex-1 bg-internal-w5 border border-sidebar-border rounded py-3 text-xs font-bold text-foreground hover:bg-white/10 transition-all"
             >
               VER TEMPLATE
             </button>
@@ -423,7 +423,7 @@ export default function AnuncioForm() {
                 navigator.clipboard.writeText(template);
                 toast.success("Template copiado!");
               }}
-              className="px-6 bg-white/5 border border-sidebar-border rounded text-xs font-bold text-foreground hover:bg-white/10 transition-all"
+              className="px-6 bg-internal-w5 border border-sidebar-border rounded text-xs font-bold text-foreground hover:bg-white/10 transition-all"
             >
               <Copy size={16} />
             </button>
@@ -442,7 +442,7 @@ export default function AnuncioForm() {
               type="number" step="0.01"
               value={formData.cost_price}
               onChange={e => setFormData({ ...formData, cost_price: Number(e.target.value) })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary font-mono"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono"
             />
           </div>
           <div className="space-y-1.5">
@@ -451,7 +451,7 @@ export default function AnuncioForm() {
               type="number"
               value={formData.marketplace_fee}
               onChange={e => setFormData({ ...formData, marketplace_fee: Number(e.target.value) })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary font-mono"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono"
             />
           </div>
           <div className="space-y-1.5">
@@ -460,7 +460,7 @@ export default function AnuncioForm() {
               type="number" step="0.01"
               value={formData.shipping_cost}
               onChange={e => setFormData({ ...formData, shipping_cost: Number(e.target.value) })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary font-mono"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono"
             />
           </div>
           <div className="space-y-1.5">
@@ -469,7 +469,7 @@ export default function AnuncioForm() {
               type="number" step="0.01"
               value={formData.packaging_cost}
               onChange={e => setFormData({ ...formData, packaging_cost: Number(e.target.value) })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary font-mono"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono"
             />
           </div>
           <div className="space-y-1.5">
@@ -478,7 +478,7 @@ export default function AnuncioForm() {
               type="number" step="0.01"
               value={formData.transport_cost}
               onChange={e => setFormData({ ...formData, transport_cost: Number(e.target.value) })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary font-mono"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono"
             />
           </div>
           <div className="space-y-1.5">
@@ -487,7 +487,7 @@ export default function AnuncioForm() {
               type="number"
               value={formData.tax}
               onChange={e => setFormData({ ...formData, tax: Number(e.target.value) })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary font-mono"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono"
             />
           </div>
           <div className="space-y-1.5">
@@ -496,7 +496,7 @@ export default function AnuncioForm() {
               type="number"
               value={formData.profit_margin}
               onChange={e => setFormData({ ...formData, profit_margin: Number(e.target.value) })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary font-mono"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono"
             />
           </div>
           <div className="space-y-1.5">
@@ -505,12 +505,12 @@ export default function AnuncioForm() {
               type="number"
               value={formData.fake_discount}
               onChange={e => setFormData({ ...formData, fake_discount: Number(e.target.value) })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary font-mono"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono"
             />
           </div>
         </div>
 
-        <div className="bg-black/40 border border-primary/20 rounded p-6 space-y-4">
+        <div className="bg-internal-40 border border-primary/20 rounded p-6 space-y-4">
           <div className="grid grid-cols-2 gap-y-2 text-xs">
             <span className="text-muted-foreground">Custo Total:</span>
             <span className="text-right text-foreground">R$ {calcs.costTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -558,7 +558,7 @@ export default function AnuncioForm() {
             <input 
               value={formData.video_name || ""}
               onChange={e => setFormData({ ...formData, video_name: e.target.value })}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary"
               placeholder="Ex: Vídeo Unboxing Teclado"
             />
           </div>
@@ -572,7 +572,7 @@ export default function AnuncioForm() {
                 autoResize(e.target);
               }}
               style={textareaStyle}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary"
               placeholder="Digite o roteiro para o vídeo..."
             />
           </div>
@@ -583,7 +583,7 @@ export default function AnuncioForm() {
               <input 
                 value={formData.video_youtube_url || ""}
                 onChange={e => setFormData({ ...formData, video_youtube_url: e.target.value })}
-                className="flex-1 rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary"
+                className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary"
                 placeholder="https://youtube.com/watch?v=..."
               />
               {formData.video_youtube_url && (
@@ -606,7 +606,7 @@ export default function AnuncioForm() {
         <button 
           type="button" 
           onClick={() => navigate({ to: "/anuncios" })}
-          className="px-8 py-3 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-white/5 transition-all text-sm"
+          className="px-8 py-3 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-internal-w5 transition-all text-sm"
         >
           CANCELAR
         </button>
@@ -623,7 +623,7 @@ export default function AnuncioForm() {
 
       {/* Modal Template IA */}
       {showTemplateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-internal-80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="jtd-glass max-w-2xl w-full p-8 relative animate-in zoom-in-95 duration-200">
             <button 
               onClick={() => setShowTemplateModal(false)}
@@ -634,7 +634,7 @@ export default function AnuncioForm() {
             
             <h2 className="text-xl font-bold text-primary mb-6">Template para IA Externa</h2>
             
-            <div className="bg-black/50 border border-sidebar-border rounded p-6 font-mono text-sm leading-relaxed text-muted-foreground h-[400px] overflow-y-auto">
+            <div className="bg-internal-50 border border-sidebar-border rounded p-6 font-mono text-sm leading-relaxed text-muted-foreground h-[400px] overflow-y-auto">
               <p>Use as seguintes palavras-chave: <span className="text-lime-500">{formData.keywords.join(", ")}</span></p>
               <p className="mt-4">Crie uma descrição completa para marketplace com:</p>
               <ul className="list-disc ml-6 mt-2 space-y-1">
@@ -658,7 +658,7 @@ export default function AnuncioForm() {
               </button>
               <button 
                 onClick={() => setShowTemplateModal(false)}
-                className="flex-1 border border-sidebar-border text-muted-foreground font-bold py-3 rounded hover:bg-white/5"
+                className="flex-1 border border-sidebar-border text-muted-foreground font-bold py-3 rounded hover:bg-internal-w5"
               >
                 FECHAR
               </button>

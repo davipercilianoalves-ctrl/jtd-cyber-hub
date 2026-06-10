@@ -260,7 +260,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               required 
               value={formData.name} 
               onChange={e => setFormData({...formData, name: e.target.value})} 
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-lg font-bold focus:border-primary focus:outline-none transition-all" 
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-lg font-bold focus:border-primary focus:outline-none transition-all" 
               placeholder="Ex: Teclado Mecânico RGB"
             />
           </div>
@@ -271,7 +271,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               <input 
                 value={formData.sku} 
                 onChange={e => setFormData({...formData, sku: e.target.value})} 
-                className="flex-1 rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
+                className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
                 placeholder="SKU-001" 
               />
               <button 
@@ -289,7 +289,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             <input 
               value={formData.category || ""} 
               onChange={e => setFormData({...formData, category: e.target.value})} 
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
               placeholder="Ex: Eletrônicos"
             />
           </div>
@@ -299,7 +299,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             <select 
               value={formData.supplier_id || ""} 
               onChange={e => setFormData({...formData, supplier_id: e.target.value})} 
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
             >
               <option value="">Selecionar Fornecedor...</option>
               {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -322,7 +322,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 step="0.01" 
                 value={formData.cost_price || 0} 
                 onChange={e => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})} 
-                className="w-full rounded border border-sidebar-border bg-black/20 pl-8 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
+                className="w-full rounded border border-sidebar-border bg-internal-20 pl-8 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
               />
             </div>
           </div>
@@ -333,7 +333,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               type="number" 
               value={formData.weight_g || 0} 
               onChange={e => setFormData({...formData, weight_g: parseInt(e.target.value) || 0})} 
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono" 
             />
           </div>
 
@@ -342,7 +342,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             <input 
               value={formData.dimensions || ""} 
               onChange={e => setFormData({...formData, dimensions: e.target.value})} 
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
               placeholder="Ex: 30x20x10 cm"
             />
           </div>
@@ -366,7 +366,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 autoResize(e.target);
               }} 
               style={{ ...textareaStyle, minHeight: '120px' }}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
               placeholder="Digite a descrição interna completa do produto..."
             />
           </div>
@@ -380,7 +380,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 autoResize(e.target);
               }} 
               style={{ ...textareaStyle, minHeight: '120px' }}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
               placeholder="Liste as principais dúvidas dos compradores"
             />
           </div>
@@ -394,7 +394,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 autoResize(e.target);
               }} 
               style={{ ...textareaStyle, minHeight: '120px' }}
-              className="w-full rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none"
+              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
               placeholder="Anotações de uso exclusivo da equipe..."
             />
           </div>
@@ -498,7 +498,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                               autoResize(e.target);
                             }}
                             style={textareaStyle}
-                            className="w-full bg-black/20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none" 
+                            className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none" 
                             placeholder="Cole aqui a descrição do anúncio concorrente..."
                           />
                         </div>
@@ -529,7 +529,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           <button 
             type="button" 
             onClick={handleAddCompetitor}
-            className="w-full border-2 border-dashed border-sidebar-border rounded-lg py-6 text-muted-foreground hover:border-primary/50 hover:text-primary flex items-center justify-center gap-2 transition-all group bg-white/5"
+            className="w-full border-2 border-dashed border-sidebar-border rounded-lg py-6 text-muted-foreground hover:border-primary/50 hover:text-primary flex items-center justify-center gap-2 transition-all group bg-internal-w5"
           >
             <Plus size={20} className="group-hover:scale-110 transition-transform" />
             <span className="font-bold text-xs uppercase tracking-widest">ADICIONAR CONCORRENTE</span>
@@ -585,7 +585,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             value={newKeywordInput}
             onChange={e => setNewKeywordInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addKeyword(newKeywordInput), setNewKeywordInput(""))}
-            className="flex-1 rounded border border-sidebar-border bg-black/20 p-3 text-sm focus:border-primary focus:outline-none" 
+            className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none" 
             placeholder="Adicionar nova palavra-chave..."
           />
           <button 
@@ -622,7 +622,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             <button 
               type="button" 
               onClick={() => navigate({ to: "/produtos" })} 
-              className="px-6 py-2.5 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-white/5 transition-all text-sm"
+              className="px-6 py-2.5 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-internal-w5 transition-all text-sm"
             >
               CANCELAR
             </button>
