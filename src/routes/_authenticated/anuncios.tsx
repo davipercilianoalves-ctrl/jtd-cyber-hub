@@ -1,7 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Layout } from "@/components/layout/Layout";
-import Anuncios from "@/pages/Anuncios";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/anuncios")({
-  component: () => <Layout title="Anúncios"><Anuncios /></Layout>,
+  beforeLoad: () => {
+    throw redirect({
+      to: "/anuncios/",
+    });
+  },
 });
