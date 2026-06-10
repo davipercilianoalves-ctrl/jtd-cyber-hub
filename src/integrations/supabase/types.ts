@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      ads: {
+        Row: {
+          brief_description: string | null
+          cost_price: number | null
+          created_at: string
+          fake_discount: number | null
+          fake_price: number | null
+          final_price: number | null
+          full_description_template: string | null
+          id: string
+          is_active: boolean
+          marketplace: string
+          marketplace_fee: number | null
+          packaging_cost: number | null
+          product_id: string
+          profit_margin: number | null
+          shipping_cost: number | null
+          tax: number | null
+          titles: string[] | null
+          transport_cost: number | null
+          video_name: string | null
+          video_script: string | null
+          video_youtube_url: string | null
+        }
+        Insert: {
+          brief_description?: string | null
+          cost_price?: number | null
+          created_at?: string
+          fake_discount?: number | null
+          fake_price?: number | null
+          final_price?: number | null
+          full_description_template?: string | null
+          id?: string
+          is_active?: boolean
+          marketplace?: string
+          marketplace_fee?: number | null
+          packaging_cost?: number | null
+          product_id: string
+          profit_margin?: number | null
+          shipping_cost?: number | null
+          tax?: number | null
+          titles?: string[] | null
+          transport_cost?: number | null
+          video_name?: string | null
+          video_script?: string | null
+          video_youtube_url?: string | null
+        }
+        Update: {
+          brief_description?: string | null
+          cost_price?: number | null
+          created_at?: string
+          fake_discount?: number | null
+          fake_price?: number | null
+          final_price?: number | null
+          full_description_template?: string | null
+          id?: string
+          is_active?: boolean
+          marketplace?: string
+          marketplace_fee?: number | null
+          packaging_cost?: number | null
+          product_id?: string
+          profit_margin?: number | null
+          shipping_cost?: number | null
+          tax?: number | null
+          titles?: string[] | null
+          transport_cost?: number | null
+          video_name?: string | null
+          video_script?: string | null
+          video_youtube_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ads_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_competitors: {
         Row: {
           created_at: string
