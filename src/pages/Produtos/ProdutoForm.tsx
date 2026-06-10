@@ -315,7 +315,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
   // helpers de classes reutilizáveis
   const inputCls =
-    "w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none transition-all";
+    "w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none transition-all break-all";
   const labelCls =
     "text-[10px] font-bold uppercase tracking-wider text-muted-foreground";
   const sectionTitleCls =
