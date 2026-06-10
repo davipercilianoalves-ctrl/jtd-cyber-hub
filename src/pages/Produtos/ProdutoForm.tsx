@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Loader2,
@@ -18,6 +18,7 @@ import {
   BarChart3,
   CheckSquare,
   Square,
+  Highlighter,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
