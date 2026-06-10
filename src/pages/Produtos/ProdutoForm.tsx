@@ -144,7 +144,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         });
       }, 100);
     }
-  }, [loading, competitors, openCompetitorIndex]);
+  }, [loading, competitors, openCompetitorIndex, panelOpen]);
 
   async function fetchSuppliers() {
     const { data } = await supabase.from("suppliers").select("id, name, delivery_days, warranty_days").eq("is_active", true);
