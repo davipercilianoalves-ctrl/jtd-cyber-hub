@@ -49,11 +49,18 @@ function CopyBtn({ value }: { value: any }) {
 
 
 
+interface Highlight {
+  start: number;
+  end: number;
+  text: string;
+}
+
 interface Competitor {
   id?: string;
   title: string;
   description: string;
   keywords_found: string[];
+  highlights: Highlight[];
   price: number;
   url: string;
 }
@@ -72,7 +79,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [panelOpen, setPanelOpen] = useState<boolean>(false);
   const [newKeywordInput, setNewKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
-  const [selectionMenu, setSelectionMenu] = useState<{ x: number, y: number, text: string, competitorIdx: number } | null>(null);
+  const [selectionMenu, setSelectionMenu] = useState<{ x: number, y: number, text: string, start: number, end: number, competitorIdx: number, isExisting: boolean } | null>(null);
   const descriptionRefs = useRef<{ [key: number]: HTMLTextAreaElement | null }>({});
 
   const [formData, setFormData] = useState<any>({
@@ -162,6 +169,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         title: c.title || "",
         description: c.description || "",
         keywords_found: c.keywords_found || [],
+        highlights: Array.isArray(c.highlights) ? c.highlights : [],
         price: Number(c.price) || 0,
         url: c.url || ""
       })));
@@ -193,6 +201,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             title: c.title,
             description: c.description,
             keywords_found: c.keywords_found,
+            highlights: c.highlights as any,
             product_id: savedProductId,
             price: c.price,
             url: c.url
@@ -228,6 +237,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       title: "", 
       description: "", 
       keywords_found: [],
+      highlights: [],
       price: 0,
       url: ""
     }]);
@@ -237,6 +247,46 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const updateCompetitor = (idx: number, field: keyof Competitor, value: any) => {
     const newComps = [...competitors];
     (newComps[idx] as any)[field] = value;
+    setCompetitors(newComps);
+  };
+
+  // Ajusta os offsets dos highlights quando a descrição é editada
+  const updateCompetitorDescription = (idx: number, newValue: string) => {
+    const oldValue = competitors[idx].description || "";
+    const oldHighlights = competitors[idx].highlights || [];
+    
+    // Acha o ponto de divergência (prefixo comum)
+    let prefixLen = 0;
+    const minLen = Math.min(oldValue.length, newValue.length);
+    while (prefixLen < minLen && oldValue[prefixLen] === newValue[prefixLen]) prefixLen++;
+    
+    // Acha o sufixo comum
+    let suffixLen = 0;
+    while (
+      suffixLen < (minLen - prefixLen) &&
+      oldValue[oldValue.length - 1 - suffixLen] === newValue[newValue.length - 1 - suffixLen]
+    ) suffixLen++;
+    
+    const oldChangeEnd = oldValue.length - suffixLen;
+    const newChangeEnd = newValue.length - suffixLen;
+    const delta = newChangeEnd - oldChangeEnd; // positive if insert, negative if delete
+    
+    const newHighlights: Highlight[] = [];
+    for (const h of oldHighlights) {
+      if (h.end <= prefixLen) {
+        // edição depois deste highlight — mantém intacto
+        newHighlights.push(h);
+      } else if (h.start >= oldChangeEnd) {
+        // edição antes deste highlight — desloca
+        newHighlights.push({ ...h, start: h.start + delta, end: h.end + delta });
+      } else {
+        // edição dentro/sobrepondo o highlight — descarta
+      }
+    }
+    
+    const newComps = [...competitors];
+    newComps[idx].description = newValue;
+    newComps[idx].highlights = newHighlights;
     setCompetitors(newComps);
   };
 
@@ -276,13 +326,18 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     const selectedText = textarea.value.substring(start, end);
 
     if (selectedText && selectedText.trim().length > 0) {
-      const rect = textarea.getBoundingClientRect();
-      // Aproximação da posição do cursor para o menu flutuante
+      // Verifica se a seleção sobrepõe um highlight existente
+      const existing = (competitors[competitorIdx].highlights || []).find(
+        h => !(end <= h.start || start >= h.end)
+      );
       setSelectionMenu({
         x: e.clientX,
         y: e.clientY - 60,
-        text: selectedText.trim(),
-        competitorIdx
+        text: selectedText,
+        start,
+        end,
+        competitorIdx,
+        isExisting: !!existing
       });
     } else {
       setSelectionMenu(null);
@@ -291,15 +346,39 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
   const handleAddHighlightedKeyword = () => {
     if (!selectionMenu) return;
-    const { text, competitorIdx } = selectionMenu;
+    const { text, start, end, competitorIdx } = selectionMenu;
+    const trimmed = text.trim();
     const newComps = [...competitors];
-    if (!newComps[competitorIdx].keywords_found.includes(text)) {
-      newComps[competitorIdx].keywords_found.push(text);
-      setCompetitors(newComps);
-      toast.success(`"${text}" adicionada!`);
+    const comp = newComps[competitorIdx];
+    
+    // Remove highlights sobrepostos antes de adicionar o novo
+    const filteredHighlights = (comp.highlights || []).filter(
+      h => end <= h.start || start >= h.end
+    );
+    
+    comp.highlights = [...filteredHighlights, { start, end, text }].sort((a, b) => a.start - b.start);
+    
+    if (trimmed && !comp.keywords_found.includes(trimmed)) {
+      comp.keywords_found.push(trimmed);
     }
+    
+    setCompetitors(newComps);
+    toast.success(`"${trimmed}" marcada!`);
     setSelectionMenu(null);
   };
+
+  const handleRemoveHighlight = () => {
+    if (!selectionMenu) return;
+    const { start, end, competitorIdx } = selectionMenu;
+    const newComps = [...competitors];
+    newComps[competitorIdx].highlights = (newComps[competitorIdx].highlights || []).filter(
+      h => end <= h.start || start >= h.end
+    );
+    setCompetitors(newComps);
+    toast.success("Marcação removida!");
+    setSelectionMenu(null);
+  };
+
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -948,38 +1027,45 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                           Descrição do Concorrente
                         </label>
                         <div className="relative group">
-                          {/* Camada de Visualização (Highlights) */}
+                          {/* Camada de Visualização (Highlights por ranges) */}
                           <div 
-                            className="absolute inset-0 p-3 text-xs pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent"
-                            style={{ ...textareaStyle, height: '100%' }}
+                            data-highlight-layer
+                            className="absolute inset-0 p-3 text-xs pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent border border-transparent rounded"
+                            style={{ ...textareaStyle, height: '100%', fontFamily: 'inherit', lineHeight: 'inherit' }}
                           >
                             {(() => {
-                              let text = comp.description || "";
-                              const keywords = comp.keywords_found || [];
+                              const text = comp.description || "";
+                              const highlights = [...(comp.highlights || [])]
+                                .filter(h => h.start >= 0 && h.end <= text.length && h.start < h.end)
+                                .sort((a, b) => a.start - b.start);
                               
-                              if (keywords.length === 0) return text;
+                              if (highlights.length === 0) return text;
                               
-                              // Escapar regex e ordenar por tamanho para evitar conflitos
-                              const sortedKws = [...new Set(keywords)].sort((a, b) => b.length - a.length);
-                              const pattern = new RegExp(`(${sortedKws.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-                              
-                              const parts = text.split(pattern);
-                              return parts.map((part, i) => {
-                                const isMatch = sortedKws.some(kw => kw.toLowerCase() === part.toLowerCase());
-                                return isMatch ? (
-                                  <mark key={i} className="bg-yellow-400/60 text-transparent rounded-sm px-0.5">
-                                    {part}
+                              const parts: React.ReactNode[] = [];
+                              let cursor = 0;
+                              highlights.forEach((h, i) => {
+                                if (h.start > cursor) parts.push(text.slice(cursor, h.start));
+                                parts.push(
+                                  <mark key={i} className="bg-yellow-400/70 text-transparent rounded-sm">
+                                    {text.slice(h.start, h.end)}
                                   </mark>
-                                ) : part;
+                                );
+                                cursor = Math.max(cursor, h.end);
                               });
+                              if (cursor < text.length) parts.push(text.slice(cursor));
+                              return parts;
                             })()}
                           </div>
 
                           <textarea
                             value={comp.description}
                             onChange={(e) => {
-                              updateCompetitor(idx, "description", e.target.value);
+                              updateCompetitorDescription(idx, e.target.value);
                               autoResize(e.target);
+                            }}
+                            onScroll={(e) => {
+                              const layer = (e.currentTarget.previousElementSibling as HTMLElement);
+                              if (layer) layer.scrollTop = e.currentTarget.scrollTop;
                             }}
                             onMouseUp={(e) => handleTextSelection(e, idx)}
                             ref={(el) => { descriptionRefs.current[idx] = el; }}
@@ -1173,8 +1259,18 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:brightness-110 transition-all whitespace-nowrap"
           >
             <Highlighter size={12} />
-            Marcar Keyword
+            {selectionMenu.isExisting ? "Substituir Marca" : "Marcar Keyword"}
           </button>
+          {selectionMenu.isExisting && (
+            <button
+              type="button"
+              onClick={handleRemoveHighlight}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-black uppercase tracking-wider hover:bg-destructive/20 transition-all whitespace-nowrap"
+              title="Remover marcação"
+            >
+              <X size={12} /> Desmarcar
+            </button>
+          )}
           <div className="w-[1px] h-4 bg-sidebar-border mx-1" />
           <button
             type="button"
