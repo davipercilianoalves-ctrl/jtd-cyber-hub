@@ -510,7 +510,7 @@ export default function AnuncioForm() {
           </div>
         </div>
 
-        <div className="bg-internal-40 border border-primary/20 rounded p-6 space-y-4">
+        <div className="bg-internal-20 border border-border rounded p-6 space-y-4">
           <div className="grid grid-cols-2 gap-y-2 text-xs">
             <span className="text-muted-foreground">Custo Total:</span>
             <span className="text-right text-foreground">R$ {calcs.costTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
