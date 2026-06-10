@@ -804,38 +804,11 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       {/* 3. ANÁLISE DE CONCORRENTES                                   */}
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sidebar-border/30 pb-6">
-          <div>
-            <h3 className="font-bold text-lg text-foreground">Análise de Concorrentes</h3>
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
-              Analise preços e extraia keywords
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="bg-green-500/10 border border-green-500/30 px-3 py-1.5 rounded-lg text-center">
-              <p className="text-[8px] font-black uppercase text-green-500">MIN</p>
-              <p className="text-xs font-bold text-green-500 font-mono">
-                R$ {minPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="bg-cyan-500/10 border border-cyan-500/30 px-3 py-1.5 rounded-lg text-center">
-              <p className="text-[8px] font-black uppercase text-cyan-500">MED</p>
-              <p className="text-xs font-bold text-cyan-500 font-mono">
-                R$ {medPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div
-              className="px-3 py-1.5 rounded-lg text-center border"
-              style={{ backgroundColor: "rgba(255, 0, 255, 0.1)", borderColor: "rgba(255, 0, 255, 0.3)" }}
-            >
-              <p className="text-[8px] font-black uppercase" style={{ color: "#ff00ff" }}>
-                MAX
-              </p>
-              <p className="text-xs font-bold font-mono" style={{ color: "#ff00ff" }}>
-                R$ {maxPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
+        <div className="border-b border-sidebar-border/30 pb-6">
+          <h3 className="font-bold text-lg text-foreground">Análise de Concorrentes</h3>
+          <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+            Analise preços e extraia keywords
+          </p>
         </div>
 
         <div className="space-y-4">
