@@ -1259,8 +1259,18 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:brightness-110 transition-all whitespace-nowrap"
           >
             <Highlighter size={12} />
-            Marcar Keyword
+            {selectionMenu.isExisting ? "Substituir Marca" : "Marcar Keyword"}
           </button>
+          {selectionMenu.isExisting && (
+            <button
+              type="button"
+              onClick={handleRemoveHighlight}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-black uppercase tracking-wider hover:bg-destructive/20 transition-all whitespace-nowrap"
+              title="Remover marcação"
+            >
+              <X size={12} /> Desmarcar
+            </button>
+          )}
           <div className="w-[1px] h-4 bg-sidebar-border mx-1" />
           <button
             type="button"
