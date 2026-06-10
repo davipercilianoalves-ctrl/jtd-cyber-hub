@@ -813,127 +813,116 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         <div className="space-y-4">
           {competitors.map((comp, idx) => {
             const isOpen = openCompetitorIndex === idx;
-            const switchPanelTo = (target: number | null) => {
-              if (openPanel !== null && openPanel !== target && panelPending.trim()) {
-                const pend = panelPending.trim();
-                const newComps = [...competitors];
-                pend.split(",").map(s => s.trim()).filter(Boolean).forEach(kw => {
-                  if (!newComps[openPanel].keywords_found.includes(kw)) newComps[openPanel].keywords_found.push(kw);
-                });
-                setCompetitors(newComps);
-              }
-              setPanelPending("");
-              setOpenPanel(target);
-            };
+            const toggleOpen = () => setOpenCompetitorIndex(isOpen ? null : idx);
             return (
               <div
                 key={idx}
                 className="jtd-glass border border-sidebar-border rounded-lg overflow-hidden transition-all duration-300"
               >
-                <div className="p-4 flex items-start gap-4">
-                  <div className="flex flex-col items-center gap-1 shrink-0 w-8">
+                {/* HEADER BAR — toda clicável para abrir/fechar */}
+                <button
+                  type="button"
+                  onClick={toggleOpen}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/5 transition-colors border-b border-sidebar-border/30 text-left cursor-pointer"
+                  title={isOpen ? "Recolher" : "Expandir"}
+                >
+                  <span className="text-primary shrink-0">
+                    {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  </span>
+                  <input
+                    value={comp.title}
+                    onChange={(e) => updateCompetitor(idx, "title", e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="flex-1 min-w-0 bg-transparent border-none p-0 text-base font-bold text-foreground focus:ring-0 focus:outline-none placeholder:text-muted-foreground/30"
+                    placeholder="TÍTULO DO ANÚNCIO CONCORRENTE — editável"
+                  />
+                </button>
+
+                {/* LINHA META: #N, link, preço, lixeira */}
+                <div className="px-4 py-3 flex items-center gap-4">
+                  <span className="text-primary font-black text-sm shrink-0">#{idx + 1}</span>
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    <input
+                      value={comp.url}
+                      onChange={(e) => updateCompetitor(idx, "url", e.target.value)}
+                      className="text-[10px] text-muted-foreground bg-transparent border-none p-0 focus:ring-0 focus:outline-none w-full placeholder:text-muted-foreground/20"
+                      placeholder="Link do anúncio..."
+                    />
+                    {comp.url && (
+                      <a
+                        href={comp.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary shrink-0"
+                      >
+                        <ExternalLink size={10} />
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[10px] font-bold text-muted-foreground">R$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={comp.price}
+                      onChange={(e) => updateCompetitor(idx, "price", parseFloat(e.target.value) || 0)}
+                      className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-24 text-right focus:ring-0 focus:outline-none font-mono"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompetitors(competitors.filter((_, i) => i !== idx));
+                      if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
+                    }}
+                    className="text-muted-foreground hover:text-destructive p-1 shrink-0"
+                  >
+                    <Trash size={14} />
+                  </button>
+                </div>
+
+                {/* CONTEÚDO EXPANDIDO */}
+                {isOpen && (
+                  <div className="px-4 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                    <div className="border-t border-sidebar-border/30 pt-4">
+                      <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
+                        Descrição do Concorrente
+                      </label>
+                      <textarea
+                        value={comp.description}
+                        onChange={(e) => {
+                          updateCompetitor(idx, "description", e.target.value);
+                          autoResize(e.target);
+                        }}
+                        style={textareaStyle}
+                        className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none"
+                        placeholder="Cole aqui a descrição do anúncio concorrente..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* KEYWORDS */}
+                <div className="px-4 pb-4 flex flex-wrap items-center gap-2">
+                  <span className="text-[8px] font-black uppercase text-muted-foreground mr-2">Keywords:</span>
+                  {comp.keywords_found.map((kw, kIdx) => (
+                    <span
+                      key={kIdx}
+                      className="bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px] font-bold text-primary"
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                  {isOpen && (
                     <button
                       type="button"
-                      onClick={() => setOpenCompetitorIndex(isOpen ? null : idx)}
-                      className="text-muted-foreground hover:text-primary p-1 rounded hover:bg-primary/10"
-                      title={isOpen ? "Recolher" : "Expandir"}
+                      onClick={() => setPanelOpen(!panelOpen)}
+                      className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase"
                     >
-                      {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      {panelOpen ? "− Fechar painel" : "+ Adicionar Palavras-chave"}
                     </button>
-                    <span className="text-primary font-black text-sm">#{idx + 1}</span>
-                  </div>
-                  <div className="flex-1 space-y-1 min-w-0">
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <input
-                          value={comp.title}
-                          onChange={(e) => updateCompetitor(idx, "title", e.target.value)}
-                          className="w-full bg-transparent border-none p-0 text-base font-bold text-foreground focus:ring-0 placeholder:text-muted-foreground/30"
-                          placeholder="TÍTULO DO ANÚNCIO CONCORRENTE — editável"
-                        />
-                        <div className="flex items-center gap-2 mt-1">
-                          <input
-                            value={comp.url}
-                            onChange={(e) => updateCompetitor(idx, "url", e.target.value)}
-                            className="text-[10px] text-muted-foreground bg-transparent border-none p-0 focus:ring-0 w-full placeholder:text-muted-foreground/20"
-                            placeholder="Link do anúncio..."
-                          />
-                          {comp.url && (
-                            <a
-                              href={comp.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-muted-foreground hover:text-primary"
-                            >
-                              <ExternalLink size={10} />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3 shrink-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-muted-foreground">R$</span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={comp.price}
-                            onChange={(e) => updateCompetitor(idx, "price", parseFloat(e.target.value) || 0)}
-                            className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-24 text-right focus:ring-0 font-mono"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCompetitors(competitors.filter((_, i) => i !== idx));
-                            if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
-                            if (openPanel === idx) setOpenPanel(null);
-                          }}
-                          className="text-muted-foreground hover:text-destructive p-1"
-                        >
-                          <Trash size={14} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {isOpen && (
-                      <div className="pt-4 animate-in slide-in-from-top-2 duration-300">
-                        <div className="border-t border-sidebar-border/30 pt-4">
-                          <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
-                            Descrição do Concorrente
-                          </label>
-                          <textarea
-                            value={comp.description}
-                            onChange={(e) => {
-                              updateCompetitor(idx, "description", e.target.value);
-                              autoResize(e.target);
-                            }}
-                            style={textareaStyle}
-                            className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none"
-                            placeholder="Cole aqui a descrição do anúncio concorrente..."
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pt-4 flex flex-wrap items-center gap-2">
-                      <span className="text-[8px] font-black uppercase text-muted-foreground mr-2">Keywords:</span>
-                      {comp.keywords_found.map((kw, kIdx) => (
-                        <span
-                          key={kIdx}
-                          className="bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px] font-bold text-primary"
-                        >
-                          {kw}
-                        </span>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => switchPanelTo(openPanel === idx ? null : idx)}
-                        className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase"
-                      >
-                        {openPanel === idx ? "− Fechar painel" : "+ Adicionar Palavras-chave"}
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             );
