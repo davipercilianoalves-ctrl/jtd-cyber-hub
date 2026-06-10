@@ -68,7 +68,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [openCompetitorIndex, setOpenCompetitorIndex] = useState<number | null>(null);
-  const [openPanels, setOpenPanels] = useState<number[]>([]);
+  const [openPanel, setOpenPanel] = useState<number | null>(null);
+  const [panelPending, setPanelPending] = useState<string>("");
   const [newKeywordInput, setNewKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
