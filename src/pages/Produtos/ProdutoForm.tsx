@@ -44,7 +44,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [newKeywordInput, setNewKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     name: "",
     sku: "",
     supplier_id: "",
@@ -56,8 +56,31 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     common_questions: "",
     notes: "",
     is_active: true,
-    keywords: [] as string[]
+    keywords: [] as string[],
+    // novos campos
+    brand: "",
+    production_type: "propria",
+    expiration_date: "",
+    free_shipping: false,
+    net_weight_g: 0,
+    gross_weight_g: 0,
+    width: 0,
+    height: 0,
+    depth: 0,
+    volumes: 1,
+    items_per_box: 1,
+    measurement_unit: "cm",
+    gtin: "",
+    gtin_tax: "",
+    price_lists: [] as any[],
+    format: "simples",
+    type: "produto",
+    status: "ativo",
+    sale_price: 0,
+    unit: "UN",
+    condition: "novo",
   });
+
 
   function autoResize(target: HTMLElement | null) {
     if (!target) return;
