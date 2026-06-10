@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Layout } from "@/components/layout/Layout";
-import Anuncios from "@/pages/Anuncios";
+import Anuncios from "@/pages/Anuncios/index";
 
 export const Route = createFileRoute("/_authenticated/anuncios/")({
   component: () => (
-    <Layout title="Anúncios">
+    <Layout title="Anúncios" breadcrumb="Anúncios">
       <Anuncios />
     </Layout>
   ),
 });
+
