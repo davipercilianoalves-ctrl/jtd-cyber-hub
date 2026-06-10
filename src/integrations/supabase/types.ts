@@ -97,6 +97,111 @@ export type Database = {
           },
         ]
       }
+      kit_products: {
+        Row: {
+          id: string
+          kit_id: string
+          product_id: string
+          quantity: number
+        }
+        Insert: {
+          id?: string
+          kit_id: string
+          product_id: string
+          quantity?: number
+        }
+        Update: {
+          id?: string
+          kit_id?: string
+          product_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kit_products_kit_id_fkey"
+            columns: ["kit_id"]
+            isOneToOne: false
+            referencedRelation: "kits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kit_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kits: {
+        Row: {
+          brief_description: string | null
+          created_at: string
+          fake_discount: number | null
+          fake_price: number | null
+          final_price: number | null
+          id: string
+          is_active: boolean
+          keywords: string[] | null
+          marketplace_fee: number | null
+          name: string
+          packaging_cost: number | null
+          profit_margin: number | null
+          shipping_cost: number | null
+          sku: string | null
+          tax: number | null
+          titles: string[] | null
+          transport_cost: number | null
+          video_name: string | null
+          video_script: string | null
+          video_youtube_url: string | null
+        }
+        Insert: {
+          brief_description?: string | null
+          created_at?: string
+          fake_discount?: number | null
+          fake_price?: number | null
+          final_price?: number | null
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          marketplace_fee?: number | null
+          name: string
+          packaging_cost?: number | null
+          profit_margin?: number | null
+          shipping_cost?: number | null
+          sku?: string | null
+          tax?: number | null
+          titles?: string[] | null
+          transport_cost?: number | null
+          video_name?: string | null
+          video_script?: string | null
+          video_youtube_url?: string | null
+        }
+        Update: {
+          brief_description?: string | null
+          created_at?: string
+          fake_discount?: number | null
+          fake_price?: number | null
+          final_price?: number | null
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          marketplace_fee?: number | null
+          name?: string
+          packaging_cost?: number | null
+          profit_margin?: number | null
+          shipping_cost?: number | null
+          sku?: string | null
+          tax?: number | null
+          titles?: string[] | null
+          transport_cost?: number | null
+          video_name?: string | null
+          video_script?: string | null
+          video_youtube_url?: string | null
+        }
+        Relationships: []
+      }
       product_competitors: {
         Row: {
           created_at: string

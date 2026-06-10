@@ -20,10 +20,13 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated/compras'
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
 import { Route as AuthenticatedProdutosIndexRouteImport } from './routes/_authenticated/produtos/index'
+import { Route as AuthenticatedKitsIndexRouteImport } from './routes/_authenticated/kits/index'
 import { Route as AuthenticatedAnunciosIndexRouteImport } from './routes/_authenticated/anuncios/index'
 import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos/novo'
+import { Route as AuthenticatedKitsNovoRouteImport } from './routes/_authenticated/kits/novo'
 import { Route as AuthenticatedAnunciosNovoRouteImport } from './routes/_authenticated/anuncios/novo'
 import { Route as AuthenticatedProdutosIdEditarRouteImport } from './routes/_authenticated/produtos/$id.editar'
+import { Route as AuthenticatedKitsIdEditarRouteImport } from './routes/_authenticated/kits/$id.editar'
 import { Route as AuthenticatedAnunciosIdEditarRouteImport } from './routes/_authenticated/anuncios/$id.editar'
 
 const LoginRoute = LoginRouteImport.update({
@@ -83,6 +86,11 @@ const AuthenticatedProdutosIndexRoute =
     path: '/produtos/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedKitsIndexRoute = AuthenticatedKitsIndexRouteImport.update({
+  id: '/kits/',
+  path: '/kits/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnunciosIndexRoute =
   AuthenticatedAnunciosIndexRouteImport.update({
     id: '/anuncios/',
@@ -95,6 +103,11 @@ const AuthenticatedProdutosNovoRoute =
     path: '/produtos/novo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedKitsNovoRoute = AuthenticatedKitsNovoRouteImport.update({
+  id: '/kits/novo',
+  path: '/kits/novo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnunciosNovoRoute =
   AuthenticatedAnunciosNovoRouteImport.update({
     id: '/anuncios/novo',
@@ -105,6 +118,12 @@ const AuthenticatedProdutosIdEditarRoute =
   AuthenticatedProdutosIdEditarRouteImport.update({
     id: '/produtos/$id/editar',
     path: '/produtos/$id/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedKitsIdEditarRoute =
+  AuthenticatedKitsIdEditarRouteImport.update({
+    id: '/kits/$id/editar',
+    path: '/kits/$id/editar',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAnunciosIdEditarRoute =
@@ -125,10 +144,13 @@ export interface FileRoutesByFullPath {
   '/metricas': typeof AuthenticatedMetricasRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
+  '/kits/novo': typeof AuthenticatedKitsNovoRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
   '/anuncios/': typeof AuthenticatedAnunciosIndexRoute
+  '/kits/': typeof AuthenticatedKitsIndexRoute
   '/produtos/': typeof AuthenticatedProdutosIndexRoute
   '/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
+  '/kits/$id/editar': typeof AuthenticatedKitsIdEditarRoute
   '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRoutesByTo {
@@ -142,10 +164,13 @@ export interface FileRoutesByTo {
   '/metricas': typeof AuthenticatedMetricasRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
+  '/kits/novo': typeof AuthenticatedKitsNovoRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
   '/anuncios': typeof AuthenticatedAnunciosIndexRoute
+  '/kits': typeof AuthenticatedKitsIndexRoute
   '/produtos': typeof AuthenticatedProdutosIndexRoute
   '/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
+  '/kits/$id/editar': typeof AuthenticatedKitsIdEditarRoute
   '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRoutesById {
@@ -161,10 +186,13 @@ export interface FileRoutesById {
   '/_authenticated/metricas': typeof AuthenticatedMetricasRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
   '/_authenticated/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
+  '/_authenticated/kits/novo': typeof AuthenticatedKitsNovoRoute
   '/_authenticated/produtos/novo': typeof AuthenticatedProdutosNovoRoute
   '/_authenticated/anuncios/': typeof AuthenticatedAnunciosIndexRoute
+  '/_authenticated/kits/': typeof AuthenticatedKitsIndexRoute
   '/_authenticated/produtos/': typeof AuthenticatedProdutosIndexRoute
   '/_authenticated/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
+  '/_authenticated/kits/$id/editar': typeof AuthenticatedKitsIdEditarRoute
   '/_authenticated/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRouteTypes {
@@ -180,10 +208,13 @@ export interface FileRouteTypes {
     | '/metricas'
     | '/vendas'
     | '/anuncios/novo'
+    | '/kits/novo'
     | '/produtos/novo'
     | '/anuncios/'
+    | '/kits/'
     | '/produtos/'
     | '/anuncios/$id/editar'
+    | '/kits/$id/editar'
     | '/produtos/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -197,10 +228,13 @@ export interface FileRouteTypes {
     | '/metricas'
     | '/vendas'
     | '/anuncios/novo'
+    | '/kits/novo'
     | '/produtos/novo'
     | '/anuncios'
+    | '/kits'
     | '/produtos'
     | '/anuncios/$id/editar'
+    | '/kits/$id/editar'
     | '/produtos/$id/editar'
   id:
     | '__root__'
@@ -215,10 +249,13 @@ export interface FileRouteTypes {
     | '/_authenticated/metricas'
     | '/_authenticated/vendas'
     | '/_authenticated/anuncios/novo'
+    | '/_authenticated/kits/novo'
     | '/_authenticated/produtos/novo'
     | '/_authenticated/anuncios/'
+    | '/_authenticated/kits/'
     | '/_authenticated/produtos/'
     | '/_authenticated/anuncios/$id/editar'
+    | '/_authenticated/kits/$id/editar'
     | '/_authenticated/produtos/$id/editar'
   fileRoutesById: FileRoutesById
 }
@@ -307,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProdutosIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kits/': {
+      id: '/_authenticated/kits/'
+      path: '/kits'
+      fullPath: '/kits/'
+      preLoaderRoute: typeof AuthenticatedKitsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/anuncios/': {
       id: '/_authenticated/anuncios/'
       path: '/anuncios'
@@ -321,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProdutosNovoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kits/novo': {
+      id: '/_authenticated/kits/novo'
+      path: '/kits/novo'
+      fullPath: '/kits/novo'
+      preLoaderRoute: typeof AuthenticatedKitsNovoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/anuncios/novo': {
       id: '/_authenticated/anuncios/novo'
       path: '/anuncios/novo'
@@ -333,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/produtos/$id/editar'
       fullPath: '/produtos/$id/editar'
       preLoaderRoute: typeof AuthenticatedProdutosIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/kits/$id/editar': {
+      id: '/_authenticated/kits/$id/editar'
+      path: '/kits/$id/editar'
+      fullPath: '/kits/$id/editar'
+      preLoaderRoute: typeof AuthenticatedKitsIdEditarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/anuncios/$id/editar': {
@@ -354,10 +412,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMetricasRoute: typeof AuthenticatedMetricasRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
   AuthenticatedAnunciosNovoRoute: typeof AuthenticatedAnunciosNovoRoute
+  AuthenticatedKitsNovoRoute: typeof AuthenticatedKitsNovoRoute
   AuthenticatedProdutosNovoRoute: typeof AuthenticatedProdutosNovoRoute
   AuthenticatedAnunciosIndexRoute: typeof AuthenticatedAnunciosIndexRoute
+  AuthenticatedKitsIndexRoute: typeof AuthenticatedKitsIndexRoute
   AuthenticatedProdutosIndexRoute: typeof AuthenticatedProdutosIndexRoute
   AuthenticatedAnunciosIdEditarRoute: typeof AuthenticatedAnunciosIdEditarRoute
+  AuthenticatedKitsIdEditarRoute: typeof AuthenticatedKitsIdEditarRoute
   AuthenticatedProdutosIdEditarRoute: typeof AuthenticatedProdutosIdEditarRoute
 }
 
@@ -370,10 +431,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMetricasRoute: AuthenticatedMetricasRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
   AuthenticatedAnunciosNovoRoute: AuthenticatedAnunciosNovoRoute,
+  AuthenticatedKitsNovoRoute: AuthenticatedKitsNovoRoute,
   AuthenticatedProdutosNovoRoute: AuthenticatedProdutosNovoRoute,
   AuthenticatedAnunciosIndexRoute: AuthenticatedAnunciosIndexRoute,
+  AuthenticatedKitsIndexRoute: AuthenticatedKitsIndexRoute,
   AuthenticatedProdutosIndexRoute: AuthenticatedProdutosIndexRoute,
   AuthenticatedAnunciosIdEditarRoute: AuthenticatedAnunciosIdEditarRoute,
+  AuthenticatedKitsIdEditarRoute: AuthenticatedKitsIdEditarRoute,
   AuthenticatedProdutosIdEditarRoute: AuthenticatedProdutosIdEditarRoute,
 }
 
