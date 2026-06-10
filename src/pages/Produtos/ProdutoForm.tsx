@@ -949,7 +949,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                             autoResize(e.target);
                           }}
                           onMouseUp={(e) => handleTextSelection(e, idx)}
-                          ref={el => descriptionRefs.current[idx] = el}
+                          ref={(el) => { descriptionRefs.current[idx] = el; }}
                           style={textareaStyle}
                           className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-primary/30"
                           placeholder="Cole aqui a descrição do anúncio concorrente..."
