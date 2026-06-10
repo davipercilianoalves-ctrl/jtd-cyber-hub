@@ -1,0 +1,1 @@
+ALTER TABLE public.product_competitors ADD COLUMN IF NOT EXISTS highlights jsonb NOT NULL DEFAULT '[]'::jsonb;
