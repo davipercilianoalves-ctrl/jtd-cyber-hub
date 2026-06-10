@@ -956,45 +956,56 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           Textos do Produto
         </h3>
 
-        <div className="grid grid-cols-3 gap-6">
-          <div className="space-y-1.5">
+        <div className="flex flex-col gap-8">
+          <div className="space-y-3">
             <label className={labelCls}>Descrição Interna</label>
-            <textarea
-              value={formData.description || ""}
-              onChange={(e) => {
-                setFormData({ ...formData, description: e.target.value });
-                autoResize(e.target);
-              }}
-              style={{ ...textareaStyle, minHeight: "120px" }}
-              className={inputCls}
-              placeholder="Digite a descrição interna completa do produto..."
-            />
+            <div className="flex gap-2 items-start">
+              <textarea
+                value={formData.description || ""}
+                onChange={(e) => {
+                  setFormData({ ...formData, description: e.target.value });
+                  autoResize(e.target);
+                }}
+                style={textareaStyle}
+                className={`${inputCls} !min-h-0 py-1`}
+                placeholder="Digite a descrição interna completa do produto..."
+              />
+              <CopyBtn value={formData.description} />
+            </div>
           </div>
-          <div className="space-y-1.5">
+          
+          <div className="space-y-3">
             <label className={labelCls}>Perguntas Frequentes</label>
-            <textarea
-              value={formData.common_questions || ""}
-              onChange={(e) => {
-                setFormData({ ...formData, common_questions: e.target.value });
-                autoResize(e.target);
-              }}
-              style={{ ...textareaStyle, minHeight: "120px" }}
-              className={inputCls}
-              placeholder="Liste as principais dúvidas dos compradores"
-            />
+            <div className="flex gap-2 items-start">
+              <textarea
+                value={formData.common_questions || ""}
+                onChange={(e) => {
+                  setFormData({ ...formData, common_questions: e.target.value });
+                  autoResize(e.target);
+                }}
+                style={textareaStyle}
+                className={`${inputCls} !min-h-0 py-1`}
+                placeholder="Liste as principais dúvidas dos compradores"
+              />
+              <CopyBtn value={formData.common_questions} />
+            </div>
           </div>
-          <div className="space-y-1.5">
+          
+          <div className="space-y-3">
             <label className={labelCls}>Notas Internas</label>
-            <textarea
-              value={formData.notes || ""}
-              onChange={(e) => {
-                setFormData({ ...formData, notes: e.target.value });
-                autoResize(e.target);
-              }}
-              style={{ ...textareaStyle, minHeight: "120px" }}
-              className={inputCls}
-              placeholder="Anotações de uso exclusivo da equipe..."
-            />
+            <div className="flex gap-2 items-start">
+              <textarea
+                value={formData.notes || ""}
+                onChange={(e) => {
+                  setFormData({ ...formData, notes: e.target.value });
+                  autoResize(e.target);
+                }}
+                style={textareaStyle}
+                className={`${inputCls} !min-h-0 py-1`}
+                placeholder="Anotações de uso exclusivo da equipe..."
+              />
+              <CopyBtn value={formData.notes} />
+            </div>
           </div>
         </div>
       </section>
