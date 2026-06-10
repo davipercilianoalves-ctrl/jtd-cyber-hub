@@ -814,16 +814,38 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         <div className="space-y-4">
           {competitors.map((comp, idx) => {
             const isOpen = openCompetitorIndex === idx;
+            const switchPanelTo = (target: number | null) => {
+              if (openPanel !== null && openPanel !== target && panelPending.trim()) {
+                const pend = panelPending.trim();
+                const newComps = [...competitors];
+                pend.split(",").map(s => s.trim()).filter(Boolean).forEach(kw => {
+                  if (!newComps[openPanel].keywords_found.includes(kw)) newComps[openPanel].keywords_found.push(kw);
+                });
+                setCompetitors(newComps);
+              }
+              setPanelPending("");
+              setOpenPanel(target);
+            };
             return (
               <div
                 key={idx}
                 className="jtd-glass border border-sidebar-border rounded-lg overflow-hidden transition-all duration-300"
               >
                 <div className="p-4 flex items-start gap-4">
-                  <span className="text-primary font-black text-sm pt-1">#{idx + 1}</span>
-                  <div className="flex-1 space-y-1">
+                  <div className="flex flex-col items-center gap-1 shrink-0 w-8">
+                    <button
+                      type="button"
+                      onClick={() => setOpenCompetitorIndex(isOpen ? null : idx)}
+                      className="text-muted-foreground hover:text-primary p-1 rounded hover:bg-primary/10"
+                      title={isOpen ? "Recolher" : "Expandir"}
+                    >
+                      {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </button>
+                    <span className="text-primary font-black text-sm">#{idx + 1}</span>
+                  </div>
+                  <div className="flex-1 space-y-1 min-w-0">
                     <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <input
                           value={comp.title}
                           onChange={(e) => updateCompetitor(idx, "title", e.target.value)}
@@ -849,7 +871,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-start gap-3 shrink-0">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-bold text-muted-foreground">R$</span>
                           <input
@@ -860,25 +882,17 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                             className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-24 text-right focus:ring-0 font-mono"
                           />
                         </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCompetitors(competitors.filter((_, i) => i !== idx));
-                              if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
-                            }}
-                            className="text-muted-foreground hover:text-destructive p-1"
-                          >
-                            <Trash size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOpenCompetitorIndex(isOpen ? null : idx)}
-                            className="text-muted-foreground hover:text-foreground p-1"
-                          >
-                            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCompetitors(competitors.filter((_, i) => i !== idx));
+                            if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
+                            if (openPanel === idx) setOpenPanel(null);
+                          }}
+                          className="text-muted-foreground hover:text-destructive p-1"
+                        >
+                          <Trash size={14} />
+                        </button>
                       </div>
                     </div>
 
@@ -914,10 +928,10 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                       ))}
                       <button
                         type="button"
-                        onClick={() => !openPanels.includes(idx) && setOpenPanels([...openPanels, idx])}
+                        onClick={() => switchPanelTo(openPanel === idx ? null : idx)}
                         className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase"
                       >
-                        + Adicionar Palavras-chave
+                        {openPanel === idx ? "− Fechar painel" : "+ Adicionar Palavras-chave"}
                       </button>
                     </div>
                   </div>
