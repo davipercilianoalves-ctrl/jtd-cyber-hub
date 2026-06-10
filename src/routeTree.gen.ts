@@ -21,8 +21,11 @@ import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedApiRouteImport } from './routes/_authenticated/api'
 import { Route as AuthenticatedAnunciosRouteImport } from './routes/_authenticated/anuncios'
 import { Route as AuthenticatedProdutosIndexRouteImport } from './routes/_authenticated/produtos/index'
+import { Route as AuthenticatedAnunciosIndexRouteImport } from './routes/_authenticated/anuncios/index'
 import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos/novo'
+import { Route as AuthenticatedAnunciosNovoRouteImport } from './routes/_authenticated/anuncios/novo'
 import { Route as AuthenticatedProdutosIdEditarRouteImport } from './routes/_authenticated/produtos/$id.editar'
+import { Route as AuthenticatedAnunciosIdEditarRouteImport } from './routes/_authenticated/anuncios/$id.editar'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -86,11 +89,23 @@ const AuthenticatedProdutosIndexRoute =
     path: '/produtos/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAnunciosIndexRoute =
+  AuthenticatedAnunciosIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAnunciosRoute,
+  } as any)
 const AuthenticatedProdutosNovoRoute =
   AuthenticatedProdutosNovoRouteImport.update({
     id: '/produtos/novo',
     path: '/produtos/novo',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAnunciosNovoRoute =
+  AuthenticatedAnunciosNovoRouteImport.update({
+    id: '/novo',
+    path: '/novo',
+    getParentRoute: () => AuthenticatedAnunciosRoute,
   } as any)
 const AuthenticatedProdutosIdEditarRoute =
   AuthenticatedProdutosIdEditarRouteImport.update({
@@ -98,11 +113,17 @@ const AuthenticatedProdutosIdEditarRoute =
     path: '/produtos/$id/editar',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAnunciosIdEditarRoute =
+  AuthenticatedAnunciosIdEditarRouteImport.update({
+    id: '/$id/editar',
+    path: '/$id/editar',
+    getParentRoute: () => AuthenticatedAnunciosRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/anuncios': typeof AuthenticatedAnunciosRoute
+  '/anuncios': typeof AuthenticatedAnunciosRouteWithChildren
   '/api': typeof AuthenticatedApiRoute
   '/compras': typeof AuthenticatedComprasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -110,14 +131,16 @@ export interface FileRoutesByFullPath {
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
   '/vendas': typeof AuthenticatedVendasRoute
+  '/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/anuncios/': typeof AuthenticatedAnunciosIndexRoute
   '/produtos/': typeof AuthenticatedProdutosIndexRoute
+  '/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
   '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/anuncios': typeof AuthenticatedAnunciosRoute
   '/api': typeof AuthenticatedApiRoute
   '/compras': typeof AuthenticatedComprasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -125,8 +148,11 @@ export interface FileRoutesByTo {
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
   '/vendas': typeof AuthenticatedVendasRoute
+  '/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/anuncios': typeof AuthenticatedAnunciosIndexRoute
   '/produtos': typeof AuthenticatedProdutosIndexRoute
+  '/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
   '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRoutesById {
@@ -134,7 +160,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/anuncios': typeof AuthenticatedAnunciosRoute
+  '/_authenticated/anuncios': typeof AuthenticatedAnunciosRouteWithChildren
   '/_authenticated/api': typeof AuthenticatedApiRoute
   '/_authenticated/compras': typeof AuthenticatedComprasRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -142,8 +168,11 @@ export interface FileRoutesById {
   '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/_authenticated/metricas': typeof AuthenticatedMetricasRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
+  '/_authenticated/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
   '/_authenticated/produtos/novo': typeof AuthenticatedProdutosNovoRoute
+  '/_authenticated/anuncios/': typeof AuthenticatedAnunciosIndexRoute
   '/_authenticated/produtos/': typeof AuthenticatedProdutosIndexRoute
+  '/_authenticated/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
   '/_authenticated/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
 }
 export interface FileRouteTypes {
@@ -159,14 +188,16 @@ export interface FileRouteTypes {
     | '/fornecedores'
     | '/metricas'
     | '/vendas'
+    | '/anuncios/novo'
     | '/produtos/novo'
+    | '/anuncios/'
     | '/produtos/'
+    | '/anuncios/$id/editar'
     | '/produtos/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
-    | '/anuncios'
     | '/api'
     | '/compras'
     | '/configuracoes'
@@ -174,8 +205,11 @@ export interface FileRouteTypes {
     | '/fornecedores'
     | '/metricas'
     | '/vendas'
+    | '/anuncios/novo'
     | '/produtos/novo'
+    | '/anuncios'
     | '/produtos'
+    | '/anuncios/$id/editar'
     | '/produtos/$id/editar'
   id:
     | '__root__'
@@ -190,8 +224,11 @@ export interface FileRouteTypes {
     | '/_authenticated/fornecedores'
     | '/_authenticated/metricas'
     | '/_authenticated/vendas'
+    | '/_authenticated/anuncios/novo'
     | '/_authenticated/produtos/novo'
+    | '/_authenticated/anuncios/'
     | '/_authenticated/produtos/'
+    | '/_authenticated/anuncios/$id/editar'
     | '/_authenticated/produtos/$id/editar'
   fileRoutesById: FileRoutesById
 }
@@ -287,12 +324,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProdutosIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/anuncios/': {
+      id: '/_authenticated/anuncios/'
+      path: '/'
+      fullPath: '/anuncios/'
+      preLoaderRoute: typeof AuthenticatedAnunciosIndexRouteImport
+      parentRoute: typeof AuthenticatedAnunciosRoute
+    }
     '/_authenticated/produtos/novo': {
       id: '/_authenticated/produtos/novo'
       path: '/produtos/novo'
       fullPath: '/produtos/novo'
       preLoaderRoute: typeof AuthenticatedProdutosNovoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/anuncios/novo': {
+      id: '/_authenticated/anuncios/novo'
+      path: '/novo'
+      fullPath: '/anuncios/novo'
+      preLoaderRoute: typeof AuthenticatedAnunciosNovoRouteImport
+      parentRoute: typeof AuthenticatedAnunciosRoute
     }
     '/_authenticated/produtos/$id/editar': {
       id: '/_authenticated/produtos/$id/editar'
@@ -301,11 +352,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProdutosIdEditarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/anuncios/$id/editar': {
+      id: '/_authenticated/anuncios/$id/editar'
+      path: '/$id/editar'
+      fullPath: '/anuncios/$id/editar'
+      preLoaderRoute: typeof AuthenticatedAnunciosIdEditarRouteImport
+      parentRoute: typeof AuthenticatedAnunciosRoute
+    }
   }
 }
 
+interface AuthenticatedAnunciosRouteChildren {
+  AuthenticatedAnunciosNovoRoute: typeof AuthenticatedAnunciosNovoRoute
+  AuthenticatedAnunciosIndexRoute: typeof AuthenticatedAnunciosIndexRoute
+  AuthenticatedAnunciosIdEditarRoute: typeof AuthenticatedAnunciosIdEditarRoute
+}
+
+const AuthenticatedAnunciosRouteChildren: AuthenticatedAnunciosRouteChildren = {
+  AuthenticatedAnunciosNovoRoute: AuthenticatedAnunciosNovoRoute,
+  AuthenticatedAnunciosIndexRoute: AuthenticatedAnunciosIndexRoute,
+  AuthenticatedAnunciosIdEditarRoute: AuthenticatedAnunciosIdEditarRoute,
+}
+
+const AuthenticatedAnunciosRouteWithChildren =
+  AuthenticatedAnunciosRoute._addFileChildren(
+    AuthenticatedAnunciosRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAnunciosRoute: typeof AuthenticatedAnunciosRoute
+  AuthenticatedAnunciosRoute: typeof AuthenticatedAnunciosRouteWithChildren
   AuthenticatedApiRoute: typeof AuthenticatedApiRoute
   AuthenticatedComprasRoute: typeof AuthenticatedComprasRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -319,7 +394,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAnunciosRoute: AuthenticatedAnunciosRoute,
+  AuthenticatedAnunciosRoute: AuthenticatedAnunciosRouteWithChildren,
   AuthenticatedApiRoute: AuthenticatedApiRoute,
   AuthenticatedComprasRoute: AuthenticatedComprasRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
