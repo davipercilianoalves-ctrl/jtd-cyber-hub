@@ -315,7 +315,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
   // helpers de classes reutilizáveis
   const inputCls =
-    "w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none transition-all";
+    "w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none transition-all break-all";
   const labelCls =
     "text-[10px] font-bold uppercase tracking-wider text-muted-foreground";
   const sectionTitleCls =
@@ -950,7 +950,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                           onMouseUp={(e) => handleTextSelection(e, idx)}
                           ref={(el) => { descriptionRefs.current[idx] = el; }}
                           style={textareaStyle}
-                          className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-primary/30"
+                          className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400 selection:text-black break-all"
                           placeholder="Cole aqui a descrição do anúncio concorrente..."
                         />
                       </div>
@@ -959,25 +959,27 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 )}
 
                 {/* KEYWORDS */}
-                <div className="px-4 pb-4 flex flex-wrap items-center gap-2">
-                  <span className="text-[8px] font-black uppercase text-muted-foreground mr-2">Keywords:</span>
-                  {comp.keywords_found.map((kw, kIdx) => (
-                    <span
-                      key={kIdx}
-                      className="bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px] font-bold text-primary"
-                    >
-                      {kw}
-                    </span>
-                  ))}
-                  {isOpen && (
-                    <button
-                      type="button"
-                      onClick={() => setPanelOpen(!panelOpen)}
-                      className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase"
-                    >
-                      {panelOpen ? "− Fechar painel" : "+ Adicionar Palavras-chave"}
-                    </button>
-                  )}
+                <div className="px-4 pb-4 flex flex-wrap items-center gap-2 overflow-hidden">
+                  <span className="text-[8px] font-black uppercase text-muted-foreground mr-2 shrink-0">Keywords:</span>
+                  <div className="flex flex-wrap gap-2 items-center min-w-0">
+                    {comp.keywords_found.map((kw, kIdx) => (
+                      <span
+                        key={kIdx}
+                        className="bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px] font-bold text-primary break-all max-w-full"
+                      >
+                        {kw}
+                      </span>
+                    ))}
+                    {isOpen && (
+                      <button
+                        type="button"
+                        onClick={() => setPanelOpen(!panelOpen)}
+                        className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase shrink-0"
+                      >
+                        {panelOpen ? "− Fechar painel" : "+ Adicionar Palavras-chave"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
