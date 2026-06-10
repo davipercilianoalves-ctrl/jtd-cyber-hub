@@ -1027,38 +1027,45 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                           Descrição do Concorrente
                         </label>
                         <div className="relative group">
-                          {/* Camada de Visualização (Highlights) */}
+                          {/* Camada de Visualização (Highlights por ranges) */}
                           <div 
-                            className="absolute inset-0 p-3 text-xs pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent"
-                            style={{ ...textareaStyle, height: '100%' }}
+                            data-highlight-layer
+                            className="absolute inset-0 p-3 text-xs pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent border border-transparent rounded"
+                            style={{ ...textareaStyle, height: '100%', fontFamily: 'inherit', lineHeight: 'inherit' }}
                           >
                             {(() => {
-                              let text = comp.description || "";
-                              const keywords = comp.keywords_found || [];
+                              const text = comp.description || "";
+                              const highlights = [...(comp.highlights || [])]
+                                .filter(h => h.start >= 0 && h.end <= text.length && h.start < h.end)
+                                .sort((a, b) => a.start - b.start);
                               
-                              if (keywords.length === 0) return text;
+                              if (highlights.length === 0) return text;
                               
-                              // Escapar regex e ordenar por tamanho para evitar conflitos
-                              const sortedKws = [...new Set(keywords)].sort((a, b) => b.length - a.length);
-                              const pattern = new RegExp(`(${sortedKws.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-                              
-                              const parts = text.split(pattern);
-                              return parts.map((part, i) => {
-                                const isMatch = sortedKws.some(kw => kw.toLowerCase() === part.toLowerCase());
-                                return isMatch ? (
-                                  <mark key={i} className="bg-yellow-400/60 text-transparent rounded-sm px-0.5">
-                                    {part}
+                              const parts: React.ReactNode[] = [];
+                              let cursor = 0;
+                              highlights.forEach((h, i) => {
+                                if (h.start > cursor) parts.push(text.slice(cursor, h.start));
+                                parts.push(
+                                  <mark key={i} className="bg-yellow-400/70 text-transparent rounded-sm">
+                                    {text.slice(h.start, h.end)}
                                   </mark>
-                                ) : part;
+                                );
+                                cursor = Math.max(cursor, h.end);
                               });
+                              if (cursor < text.length) parts.push(text.slice(cursor));
+                              return parts;
                             })()}
                           </div>
 
                           <textarea
                             value={comp.description}
                             onChange={(e) => {
-                              updateCompetitor(idx, "description", e.target.value);
+                              updateCompetitorDescription(idx, e.target.value);
                               autoResize(e.target);
+                            }}
+                            onScroll={(e) => {
+                              const layer = (e.currentTarget.previousElementSibling as HTMLElement);
+                              if (layer) layer.scrollTop = e.currentTarget.scrollTop;
                             }}
                             onMouseUp={(e) => handleTextSelection(e, idx)}
                             ref={(el) => { descriptionRefs.current[idx] = el; }}
