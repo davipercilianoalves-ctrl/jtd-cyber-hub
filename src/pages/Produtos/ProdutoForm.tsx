@@ -1031,7 +1031,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                           <div 
                             data-highlight-layer
                             className="absolute inset-0 p-3 text-xs pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent border border-transparent rounded"
-                            style={{ ...textareaStyle, height: '100%', fontFamily: 'inherit', lineHeight: 'inherit' }}
+                            style={{ ...textareaStyle, height: '100%', fontFamily: 'inherit', lineHeight: '1.5', letterSpacing: 'normal' }}
                           >
                             {(() => {
                               const text = comp.description || "";
@@ -1046,7 +1046,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                               highlights.forEach((h, i) => {
                                 if (h.start > cursor) parts.push(text.slice(cursor, h.start));
                                 parts.push(
-                                  <mark key={i} className="bg-yellow-400/70 text-transparent rounded-sm">
+                                  <mark key={i} className="bg-yellow-400 text-transparent rounded-sm">
                                     {text.slice(h.start, h.end)}
                                   </mark>
                                 );
@@ -1069,8 +1069,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                             }}
                             onMouseUp={(e) => handleTextSelection(e, idx)}
                             ref={(el) => { descriptionRefs.current[idx] = el; }}
-                            style={{ ...textareaStyle, background: 'transparent' }}
-                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400 selection:text-black break-all"
+                            style={{ ...textareaStyle, background: 'transparent', lineHeight: '1.5', letterSpacing: 'normal' }}
+                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400/30 selection:text-current break-all"
                             placeholder="Cole aqui a descrição do anúncio concorrente..."
                           />
                         </div>
