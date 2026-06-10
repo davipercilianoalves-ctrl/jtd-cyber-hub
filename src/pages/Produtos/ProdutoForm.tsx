@@ -1066,34 +1066,49 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         </button>
       </div>
 
-      {/* Painéis Flutuantes Arrastáveis (Concorrentes) */}
-      {openPanels.map((compIdx) => (
+      {/* Painel Flutuante Único (Concorrente) */}
+      {openPanel !== null && competitors[openPanel] && (
         <FloatingKeywordPanel
-          key={`panel-${compIdx}`}
-          title={`CONCORRENTE #${compIdx + 1}`}
-          keywords={competitors[compIdx].keywords_found}
-          onClose={() => setOpenPanels(openPanels.filter((id) => id !== compIdx))}
+          key={`panel-${openPanel}`}
+          title={`CONCORRENTE #${openPanel + 1}`}
+          keywords={competitors[openPanel].keywords_found}
+          allKeywords={Array.from(new Set([
+            ...competitors.flatMap((c, i) => i === openPanel ? [] : c.keywords_found),
+            ...(formData.keywords as string[]),
+          ]))}
+          onPendingChange={setPanelPending}
+          onClose={() => {
+            if (panelPending.trim() && openPanel !== null) {
+              const newComps = [...competitors];
+              panelPending.trim().split(",").map(s => s.trim()).filter(Boolean).forEach(kw => {
+                if (!newComps[openPanel].keywords_found.includes(kw)) newComps[openPanel].keywords_found.push(kw);
+              });
+              setCompetitors(newComps);
+            }
+            setPanelPending("");
+            setOpenPanel(null);
+          }}
           onAddKeyword={(kw) => {
             const newComps = [...competitors];
-            if (!newComps[compIdx].keywords_found.includes(kw)) {
-              newComps[compIdx].keywords_found.push(kw);
+            if (!newComps[openPanel].keywords_found.includes(kw)) {
+              newComps[openPanel].keywords_found.push(kw);
               setCompetitors(newComps);
             }
           }}
           onRemoveKeyword={(kw) => {
             const newComps = [...competitors];
-            newComps[compIdx].keywords_found = newComps[compIdx].keywords_found.filter((k) => k !== kw);
+            newComps[openPanel].keywords_found = newComps[openPanel].keywords_found.filter((k) => k !== kw);
             setCompetitors(newComps);
           }}
           onSendToProduct={(kws) => {
-            const uniqueKeywords = Array.from(new Set([...formData.keywords, ...kws]));
+            const uniqueKeywords = Array.from(new Set([...(formData.keywords as string[]), ...kws]));
             setFormData({ ...formData, keywords: uniqueKeywords });
             toast.success("Keywords enviadas para o produto!");
           }}
-          initialX={100 + compIdx * 30}
-          initialY={100 + compIdx * 30}
+          initialX={120}
+          initialY={140}
         />
-      ))}
+      )}
     </div>
   );
 }
