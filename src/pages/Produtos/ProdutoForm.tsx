@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Loader2,
@@ -18,6 +18,7 @@ import {
   BarChart3,
   CheckSquare,
   Square,
+  Highlighter,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -71,6 +72,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [panelOpen, setPanelOpen] = useState<boolean>(false);
   const [newKeywordInput, setNewKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [selectionMenu, setSelectionMenu] = useState<{ x: number, y: number, text: string, competitorIdx: number } | null>(null);
+  const descriptionRefs = useRef<{ [key: number]: HTMLTextAreaElement | null }>({});
 
   const [formData, setFormData] = useState<any>({
     name: "",
@@ -259,6 +262,48 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   };
 
   const selectedSupplier = suppliers.find(s => s.id === formData.supplier_id);
+
+  const handleTextSelection = (e: React.MouseEvent<HTMLTextAreaElement>, competitorIdx: number) => {
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+
+    if (selectedText && selectedText.trim().length > 0) {
+      const rect = textarea.getBoundingClientRect();
+      // Aproximação da posição do cursor para o menu flutuante
+      setSelectionMenu({
+        x: e.clientX,
+        y: e.clientY - 60,
+        text: selectedText.trim(),
+        competitorIdx
+      });
+    } else {
+      setSelectionMenu(null);
+    }
+  };
+
+  const handleAddHighlightedKeyword = () => {
+    if (!selectionMenu) return;
+    const { text, competitorIdx } = selectionMenu;
+    const newComps = [...competitors];
+    if (!newComps[competitorIdx].keywords_found.includes(text)) {
+      newComps[competitorIdx].keywords_found.push(text);
+      setCompetitors(newComps);
+      toast.success(`"${text}" adicionada!`);
+    }
+    setSelectionMenu(null);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.selection-menu')) {
+        setSelectionMenu(null);
+      }
+    };
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Price analysis
   const prices = competitors.map(c => c.price).filter(p => p > 0);
@@ -902,8 +947,10 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                             updateCompetitor(idx, "description", e.target.value);
                             autoResize(e.target);
                           }}
+                          onMouseUp={(e) => handleTextSelection(e, idx)}
+                          ref={(el) => { descriptionRefs.current[idx] = el; }}
                           style={textareaStyle}
-                          className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none"
+                          className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-primary/30"
                           placeholder="Cole aqui a descrição do anúncio concorrente..."
                         />
                       </div>
@@ -1072,6 +1119,47 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           Salvar Produto
         </button>
       </div>
+
+      {/* Menu de seleção flutuante */}
+      {selectionMenu && (
+        <div 
+          className="selection-menu fixed z-[9999] flex items-center gap-1 bg-background border border-sidebar-border shadow-2xl rounded-full p-1.5 animate-in fade-in zoom-in duration-150"
+          style={{ 
+            left: `${selectionMenu.x}px`, 
+            top: `${selectionMenu.y}px`,
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleAddHighlightedKeyword}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:brightness-110 transition-all whitespace-nowrap"
+          >
+            <Highlighter size={12} />
+            Marcar Keyword
+          </button>
+          <div className="w-[1px] h-4 bg-sidebar-border mx-1" />
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(selectionMenu.text);
+              toast.success("Copiado!");
+              setSelectionMenu(null);
+            }}
+            className="p-1.5 rounded-full hover:bg-internal-20 text-muted-foreground hover:text-primary transition-colors"
+            title="Copiar texto"
+          >
+            <Copy size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectionMenu(null)}
+            className="p-1.5 rounded-full hover:bg-internal-20 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
 
       {/* Painel Flutuante Universal — sempre envia ao concorrente atualmente aberto */}
       {panelOpen && (
