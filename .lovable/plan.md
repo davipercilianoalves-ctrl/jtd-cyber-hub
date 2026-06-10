@@ -1,73 +1,72 @@
+# Reorganização do ProdutoForm + UX de Palavras-Chave
 
-## Objetivo
+Escopo: somente `src/pages/Produtos/ProdutoForm.tsx`, `src/components/FloatingKeywordPanel.tsx` e `src/pages/Anuncios/AnuncioForm.tsx` (remoção do bloco de preço). Sem mudar banco nem lógica de salvamento.
 
-Adicionar todos os campos solicitados ao bloco **Informações Básicas** de `src/pages/Produtos/ProdutoForm.tsx`, mantendo 100% o design Acid Cyber e sem alterar outras telas.
+## 1. Nova ordem dos blocos no ProdutoForm
 
-## 1. Migração no Supabase (tabela `products`)
-
-Adicionar as colunas que ainda não existem:
-
-| Campo | Coluna | Tipo |
-|---|---|---|
-| Marca | `brand` | text |
-| Produção | `production_type` | text (`propria` \| `terceiros`) |
-| Data de validade | `expiration_date` | date |
-| Frete Grátis | `free_shipping` | boolean default false |
-| Peso Líquido (g) | `net_weight_g` | numeric |
-| Peso Bruto (g) | `gross_weight_g` | numeric |
-| Largura | `width` | numeric |
-| Altura | `height` | numeric |
-| Profundidade | `depth` | numeric |
-| Volumes | `volumes` | integer default 1 |
-| Itens por caixa | `items_per_box` | integer default 1 |
-| Unidade de medida | `measurement_unit` | text (`m` \| `cm` \| `mm`) default `cm` |
-| GTIN/EAN | `gtin` | text |
-| GTIN/EAN tributário | `gtin_tax` | text |
-| Listas de preço | `price_lists` | jsonb default `[]` |
-| Formato | `format` | text (`simples` \| `variacoes` \| `composicao`) default `simples` |
-| Tipo | `type` | text (`produto` \| `servico`) default `produto` |
-| Situação | `status` | text (`ativo` \| `inativo`) default `ativo` |
-| Preço de venda | `sale_price` | numeric |
-| Unidade | `unit` | text (ex.: UN, PC, KG) default `UN` |
-| Condição | `condition` | text (`novo` \| `usado` \| `recondicionado`) default `novo` |
-
-Manter colunas existentes (`weight_g`, `dimensions`, etc.) intactas para compatibilidade.
-
-## 2. Reformular bloco "Informações Básicas"
-
-Em `src/pages/Produtos/ProdutoForm.tsx`, substituir o grid atual do bloco 1 por uma estrutura organizada em sub-seções dentro do mesmo card `jtd-glass`:
-
-```
-Informações Básicas
-├── Identificação:     Nome*, Código (SKU), Marca, Categoria, Fornecedor
-├── Classificação:     Formato, Tipo, Situação, Condição, Unidade
-├── Preço:             Preço de Venda, Preço de Custo, Listas de Preço
-├── Códigos fiscais:   GTIN/EAN, GTIN/EAN tributário
-├── Logística:         Frete Grátis, Volumes, Itens p/ caixa, Data de Validade
-└── Dimensões & Peso:  Unidade de Medida, Largura, Altura, Profundidade,
-                       Peso Líquido, Peso Bruto
+```text
+1. Informações Básicas (com botão copiar ao lado de cada campo)
+2. Palavras-Chave do Produto (lista selecionável + copiar)
+3. Análise de Concorrentes (com painéis flutuantes)
+4. Textos do Produto (descrição, FAQ, notas)
+5. Análise Geral do Produto (substitui a barra fixa)
+6. Rodapé com botões Cancelar / Salvar (não-fixo, no fim da página)
 ```
 
-Padrão visual (idêntico aos campos atuais):
-- `label` com `text-[10px] font-bold uppercase tracking-wider text-muted-foreground`
-- `input/select` com `rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary`
-- Selects nativos com `appearance-none cursor-pointer`
-- Toggles iguais ao do `is_active` para "Frete Grátis"
-- Botão "GERAR" também para GTIN quando vazio (opcional, mantendo coerência com SKU)
-- Grid `grid-cols-3 gap-x-6 gap-y-4`, com separadores sutis `border-t border-sidebar-border/20 pt-4` entre sub-seções e mini-títulos em `text-[10px] font-black uppercase text-primary/70`
+## 2. Remover barra fixa inferior
 
-## 3. Estado do formulário
+- Apagar o `<footer fixed bottom-0 ...>` atual.
+- Criar nova seção `jtd-glass` **"Análise Geral do Produto"** no fim do form contendo os mesmos contadores (Keywords cadastradas, Concorrentes analisados, Faixa de Preço Min/Med/Max) em layout de cards horizontais com o visual Acid Cyber (mesmas cores verde/ciano/magenta usadas em concorrentes).
+- Botões **Cancelar** e **Salvar Produto** passam para uma barra normal logo abaixo dessa análise (não fixa), mantendo o mesmo estilo dos botões atuais.
 
-Expandir o `useState` `formData` com todos os novos campos e respectivos defaults. Atualizar `handleSubmit` automaticamente (já usa spread `...formData`).
+## 3. Preço: mover de Anúncios para Produtos
 
-## 4. Fora de escopo
+- Em `src/pages/Anuncios/AnuncioForm.tsx`: remover qualquer bloco/campo de precificação do anúncio (preço sugerido, preço do anúncio, etc.). Manter restante intacto.
+- Em Produtos: a sub-seção **Preço** já existe em Informações Básicas (Preço de Venda, Custo, Listas) — confirmar que cobre o que era exibido nos anúncios. Sem novos campos no schema.
 
-- Não mexer no bloco "Textos do Produto", "Análise de Concorrentes" nem em listagens/outras telas.
-- Não alterar lógica de keywords, concorrentes, salvamento ou navegação.
-- Não tocar em Kits/Anúncios.
+## 4. Ícone de copiar em cada campo das Informações Básicas
 
-## Confirmação necessária
+- Adicionar componente local `CopyButton` (ícone `Copy` da lucide-react, 14px) à direita de cada input/select/textarea das 6 sub-seções (Identificação, Classificação, Preço, Códigos Fiscais, Logística, Dimensões & Peso).
+- Implementação: wrapper `relative`, botão `absolute right-2 top-1/2`, on click → `navigator.clipboard.writeText(value)` + `toast.success("Copiado!")`.
+- Toggles (Frete Grátis, Ativo) ficam sem botão de copiar.
 
-Antes de implementar:
-1. Confirma a criação da migração com os ~21 campos acima na tabela `products`?
-2. Manter os campos antigos `weight_g` e `dimensions` apenas como legado (sem mostrar no form), usando os novos `net_weight_g` / `gross_weight_g` / `width` / `height` / `depth`?
+## 5. Lista de Palavras-Chave melhorada
+
+- Manter chips clicáveis para selecionar.
+- Adicionar acima da lista uma barra de ações maior e mais visível com:
+  - Contador "X selecionadas de Y"
+  - Botão **Selecionar Todas** / **Desmarcar Todas**
+  - Botões **COPIAR SELECIONADAS** e **COPIAR TODAS** em destaque (estilo botão primário outline em vez de link texto)
+  - Botão **LIMPAR** discreto à direita
+- Chips selecionados ficam com fundo `bg-primary text-black` (já existe) — aumentar levemente o tamanho e contraste para melhor visibilidade.
+
+## 6. Painel flutuante de keywords (`FloatingKeywordPanel.tsx`)
+
+Problema atual: fundo opaco que tapa o conteúdo, baixo contraste, pouca mobilidade.
+
+Ajustes:
+- Trocar `bg-black/95` por `bg-card` + `backdrop-blur-xl` + `border-2 border-primary` + `shadow-[0_0_40px_rgba(191,255,0,0.3)]` → respeita tema claro/escuro automaticamente.
+- Adicionar handle de redimensionar no canto inferior direito (resize via mouse: largura 280–600px, altura 200–600px).
+- Limitar arrasto à viewport (clamp x/y para não sair da tela).
+- Adicionar botão **Minimizar** (colapsa para apenas header).
+- Aumentar contraste dos chips dentro do painel usando as mesmas cores `bg-primary/15 border-primary/40 text-primary`.
+- Botão **ENVIAR PARA LISTA DO PRODUTO** ganha destaque maior (já tem, manter).
+
+## 7. Análise Geral do Produto (novo bloco)
+
+Cards em grid `grid-cols-4`:
+
+```text
+┌──────────────┬──────────────┬──────────────┬──────────────┐
+│ KEYWORDS     │ CONCORRENTES │ FAIXA PREÇO  │ PREÇO VENDA  │
+│ X cadastr.   │ X analisados │ R$ min — max │ R$ X,XX      │
+└──────────────┴──────────────┴──────────────┴──────────────┘
+```
+
+Cada card no padrão Acid Cyber (`jtd-glass`, borda colorida, label uppercase 10px, valor em destaque).
+
+## Fora de escopo
+
+- Não alterar schema do Supabase.
+- Não tocar em Kits, Dashboard, Fornecedores, outras telas.
+- Não alterar lógica de save, navegação ou keywords (apenas reorganização visual e UX).

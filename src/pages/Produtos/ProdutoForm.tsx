@@ -1,24 +1,52 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { 
-  Loader2, 
-  Plus, 
-  X, 
-  Save, 
-  ArrowLeft, 
-  Trash2, 
-  Package, 
+import {
+  Loader2,
+  Plus,
+  X,
+  Save,
+  ArrowLeft,
+  Package,
   FileText,
   ChevronDown,
   ChevronUp,
   DollarSign,
   Trash,
   ExternalLink,
-  Tag
+  Tag,
+  Copy,
+  BarChart3,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
+
+// Botão pequeno de copiar — usado ao lado de cada campo
+function CopyBtn({ value }: { value: any }) {
+  const text = value === null || value === undefined ? "" : String(value);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (!text) {
+          toast.error("Campo vazio");
+          return;
+        }
+        navigator.clipboard.writeText(text);
+        toast.success("Copiado!");
+      }}
+      title="Copiar"
+      className="shrink-0 w-9 h-[44px] flex items-center justify-center rounded border border-sidebar-border bg-internal-20 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all"
+    >
+      <Copy size={13} />
+    </button>
+  );
+}
+
+
+
 
 interface Competitor {
   id?: string;
@@ -240,19 +268,56 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
   if (loading) return <div className="flex h-[60vh] items-center justify-center"><Loader2 size={32} className="animate-spin text-primary" /></div>;
 
+  // helpers de classes reutilizáveis
+  const inputCls =
+    "w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none transition-all";
+  const labelCls =
+    "text-[10px] font-bold uppercase tracking-wider text-muted-foreground";
+  const sectionTitleCls =
+    "text-[10px] font-black uppercase tracking-wider text-primary/70";
+
+  // Field wrapper — adiciona botão copiar à direita
+  const Field = ({
+    label,
+    value,
+    children,
+    span = 1,
+  }: {
+    label: string;
+    value: any;
+    children: React.ReactNode;
+    span?: number;
+  }) => (
+    <div className={`space-y-1.5 ${span === 2 ? "col-span-2" : span === 3 ? "col-span-3" : ""}`}>
+      <label className={labelCls}>{label}</label>
+      <div className="flex gap-2 items-start">
+        <div className="flex-1 min-w-0">{children}</div>
+        <CopyBtn value={value} />
+      </div>
+    </div>
+  );
+
+  const allSelected =
+    formData.keywords.length > 0 && selectedKeywords.length === formData.keywords.length;
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedKeywords([]);
+    else setSelectedKeywords([...formData.keywords]);
+  };
+
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in duration-300">
-      
-      {/* BLOCO 0 — Navegação */}
-      <button 
-        type="button" 
-        onClick={() => navigate({ to: "/produtos" })} 
+    <div className="max-w-5xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
+      {/* Voltar */}
+      <button
+        type="button"
+        onClick={() => navigate({ to: "/produtos" })}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
       >
         <ArrowLeft size={16} /> Voltar para Produtos
       </button>
 
-      {/* BLOCO 1 — Informações Básicas */}
+      {/* ============================================================ */}
+      {/* 1. INFORMAÇÕES BÁSICAS                                       */}
+      {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6 relative">
         <div className="flex justify-between items-start">
           <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
@@ -260,7 +325,11 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             Informações Básicas
           </h3>
           <div className="flex items-center gap-3">
-            <span className={`text-[10px] font-black uppercase ${formData.is_active ? "text-primary" : "text-muted-foreground"}`}>
+            <span
+              className={`text-[10px] font-black uppercase ${
+                formData.is_active ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
               {formData.is_active ? "Ativo" : "Inativo"}
             </span>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -278,242 +347,242 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
         {/* IDENTIFICAÇÃO */}
         <div className="space-y-3">
-          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Identificação</h4>
+          <h4 className={sectionTitleCls}>Identificação</h4>
           <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-            <div className="col-span-3 space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Nome do Produto*</label>
+            <Field label="Nome do Produto*" value={formData.name} span={3}>
               <input
                 required
                 value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-lg font-bold focus:border-primary focus:outline-none transition-all"
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className={`${inputCls} text-lg font-bold`}
                 placeholder="Ex: Teclado Mecânico RGB"
               />
-            </div>
+            </Field>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Código (SKU)</label>
+              <label className={labelCls}>Código (SKU)</label>
               <div className="flex gap-2">
                 <input
                   value={formData.sku}
-                  onChange={e => setFormData({ ...formData, sku: e.target.value })}
-                  className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  className={`flex-1 ${inputCls} font-mono`}
                   placeholder="SKU-001"
                 />
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, sku: `PRD-${Math.random().toString(36).substr(2, 5).toUpperCase()}` })}
-                  className="bg-primary text-black font-bold px-4 rounded text-xs hover:brightness-110 transition-all uppercase whitespace-nowrap"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      sku: `PRD-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+                    })
+                  }
+                  className="bg-primary text-primary-foreground font-bold px-3 rounded text-xs hover:brightness-110 transition-all uppercase whitespace-nowrap"
                 >
                   GERAR
                 </button>
+                <CopyBtn value={formData.sku} />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Marca</label>
+            <Field label="Marca" value={formData.brand}>
               <input
                 value={formData.brand || ""}
-                onChange={e => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                className={inputCls}
                 placeholder="Ex: Logitech"
               />
-            </div>
+            </Field>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Categoria</label>
+            <Field label="Categoria" value={formData.category}>
               <input
                 value={formData.category || ""}
-                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className={inputCls}
                 placeholder="Ex: Eletrônicos"
               />
-            </div>
+            </Field>
 
-            <div className="space-y-1.5 col-span-2">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Fornecedor</label>
+            <Field label="Fornecedor" value={selectedSupplier?.name || ""} span={2}>
               <select
                 value={formData.supplier_id || ""}
-                onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                className={`${inputCls} appearance-none cursor-pointer`}
               >
                 <option value="">Selecionar Fornecedor...</option>
-                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
-              {selectedSupplier && (
-                <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-primary animate-in fade-in">
-                  <span>🚚 {selectedSupplier.delivery_days} dias entrega</span>
-                  <span className="opacity-30">•</span>
-                  <span>🛡️ {selectedSupplier.warranty_days} dias garantia</span>
-                </div>
-              )}
-            </div>
+            </Field>
+            {selectedSupplier && (
+              <div className="col-span-3 -mt-2 flex items-center gap-2 text-[10px] font-bold text-primary animate-in fade-in">
+                <span>🚚 {selectedSupplier.delivery_days} dias entrega</span>
+                <span className="opacity-30">•</span>
+                <span>🛡️ {selectedSupplier.warranty_days} dias garantia</span>
+              </div>
+            )}
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Produção</label>
+            <Field label="Produção" value={formData.production_type}>
               <select
                 value={formData.production_type || "propria"}
-                onChange={e => setFormData({ ...formData, production_type: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                onChange={(e) => setFormData({ ...formData, production_type: e.target.value })}
+                className={`${inputCls} appearance-none cursor-pointer`}
               >
                 <option value="propria">Própria</option>
                 <option value="terceiros">Terceiros</option>
               </select>
-            </div>
+            </Field>
           </div>
         </div>
 
         {/* CLASSIFICAÇÃO */}
         <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
-          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Classificação</h4>
+          <h4 className={sectionTitleCls}>Classificação</h4>
           <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Formato</label>
+            <Field label="Formato" value={formData.format}>
               <select
                 value={formData.format || "simples"}
-                onChange={e => setFormData({ ...formData, format: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                onChange={(e) => setFormData({ ...formData, format: e.target.value })}
+                className={`${inputCls} appearance-none cursor-pointer`}
               >
                 <option value="simples">Simples (item único)</option>
                 <option value="variacoes">Com variações</option>
                 <option value="composicao">Com composição (kit)</option>
               </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tipo</label>
+            </Field>
+            <Field label="Tipo" value={formData.type}>
               <select
                 value={formData.type || "produto"}
-                onChange={e => setFormData({ ...formData, type: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                className={`${inputCls} appearance-none cursor-pointer`}
               >
                 <option value="produto">Produto</option>
                 <option value="servico">Serviço</option>
               </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Situação</label>
+            </Field>
+            <Field label="Situação" value={formData.status}>
               <select
                 value={formData.status || "ativo"}
-                onChange={e => setFormData({ ...formData, status: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className={`${inputCls} appearance-none cursor-pointer`}
               >
                 <option value="ativo">Ativo</option>
                 <option value="inativo">Inativo</option>
               </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Condição</label>
+            </Field>
+            <Field label="Condição" value={formData.condition}>
               <select
                 value={formData.condition || "novo"}
-                onChange={e => setFormData({ ...formData, condition: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                className={`${inputCls} appearance-none cursor-pointer`}
               >
                 <option value="novo">Novo</option>
                 <option value="usado">Usado</option>
                 <option value="recondicionado">Recondicionado</option>
               </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Unidade</label>
+            </Field>
+            <Field label="Unidade" value={formData.unit}>
               <input
                 value={formData.unit || "UN"}
-                onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono uppercase"
+                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                className={`${inputCls} font-mono uppercase`}
                 placeholder="UN"
               />
-            </div>
+            </Field>
           </div>
         </div>
 
         {/* PREÇO */}
         <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
-          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Preço</h4>
+          <h4 className={sectionTitleCls}>Preço</h4>
           <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preço de Venda (R$)</label>
+            <Field label="Preço de Venda (R$)" value={formData.sale_price}>
               <div className="relative">
                 <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="number"
                   step="0.01"
                   value={formData.sale_price || 0}
-                  onChange={e => setFormData({ ...formData, sale_price: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded border border-sidebar-border bg-internal-20 pl-8 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                  onChange={(e) => setFormData({ ...formData, sale_price: parseFloat(e.target.value) || 0 })}
+                  className={`${inputCls} pl-8 font-mono`}
                 />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preço de Custo (R$)</label>
+            </Field>
+            <Field label="Preço de Custo (R$)" value={formData.cost_price}>
               <div className="relative">
                 <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="number"
                   step="0.01"
                   value={formData.cost_price || 0}
-                  onChange={e => setFormData({ ...formData, cost_price: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded border border-sidebar-border bg-internal-20 pl-8 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                  onChange={(e) => setFormData({ ...formData, cost_price: parseFloat(e.target.value) || 0 })}
+                  className={`${inputCls} pl-8 font-mono`}
                 />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Listas de Preço</label>
+            </Field>
+            <Field
+              label="Listas de Preço"
+              value={Array.isArray(formData.price_lists) ? formData.price_lists.join(", ") : ""}
+            >
               <input
                 value={Array.isArray(formData.price_lists) ? formData.price_lists.join(", ") : ""}
-                onChange={e => setFormData({ ...formData, price_lists: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    price_lists: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                  })
+                }
+                className={inputCls}
                 placeholder="Ex: Atacado, Varejo"
               />
-            </div>
+            </Field>
           </div>
         </div>
 
         {/* CÓDIGOS FISCAIS */}
         <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
-          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Códigos Fiscais</h4>
+          <h4 className={sectionTitleCls}>Códigos Fiscais</h4>
           <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">GTIN/EAN</label>
+            <Field label="GTIN/EAN" value={formData.gtin}>
               <input
                 value={formData.gtin || ""}
-                onChange={e => setFormData({ ...formData, gtin: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, gtin: e.target.value })}
+                className={`${inputCls} font-mono`}
                 placeholder="7891234567890"
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">GTIN/EAN Tributário</label>
+            </Field>
+            <Field label="GTIN/EAN Tributário" value={formData.gtin_tax}>
               <input
                 value={formData.gtin_tax || ""}
-                onChange={e => setFormData({ ...formData, gtin_tax: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, gtin_tax: e.target.value })}
+                className={`${inputCls} font-mono`}
                 placeholder="7891234567890"
               />
-            </div>
+            </Field>
           </div>
         </div>
 
         {/* LOGÍSTICA */}
         <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
-          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Logística</h4>
+          <h4 className={sectionTitleCls}>Logística</h4>
           <div className="grid grid-cols-4 gap-x-6 gap-y-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Frete Grátis</label>
+              <label className={labelCls}>Frete Grátis</label>
               <div className="flex items-center gap-3 h-[44px]">
-                <span className={`text-[10px] font-black uppercase ${formData.free_shipping ? "text-primary" : "text-muted-foreground"}`}>
+                <span
+                  className={`text-[10px] font-black uppercase ${
+                    formData.free_shipping ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
                   {formData.free_shipping ? "Sim" : "Não"}
                 </span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={!!formData.free_shipping}
-                    onChange={e => setFormData({ ...formData, free_shipping: e.target.checked })}
+                    onChange={(e) => setFormData({ ...formData, free_shipping: e.target.checked })}
                     className="sr-only peer"
                   />
                   <div className="w-10 h-5 bg-muted rounded-full peer peer-checked:bg-primary transition-all duration-300"></div>
@@ -521,186 +590,249 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 </label>
               </div>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Volumes</label>
+            <Field label="Volumes" value={formData.volumes}>
               <input
                 type="number"
                 value={formData.volumes || 1}
-                onChange={e => setFormData({ ...formData, volumes: parseInt(e.target.value) || 1 })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, volumes: parseInt(e.target.value) || 1 })}
+                className={`${inputCls} font-mono`}
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Itens p/ Caixa</label>
+            </Field>
+            <Field label="Itens p/ Caixa" value={formData.items_per_box}>
               <input
                 type="number"
                 value={formData.items_per_box || 1}
-                onChange={e => setFormData({ ...formData, items_per_box: parseInt(e.target.value) || 1 })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, items_per_box: parseInt(e.target.value) || 1 })}
+                className={`${inputCls} font-mono`}
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Data de Validade</label>
+            </Field>
+            <Field label="Data de Validade" value={formData.expiration_date}>
               <input
                 type="date"
                 value={formData.expiration_date || ""}
-                onChange={e => setFormData({ ...formData, expiration_date: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, expiration_date: e.target.value })}
+                className={`${inputCls} font-mono`}
               />
-            </div>
+            </Field>
           </div>
         </div>
 
         {/* DIMENSÕES & PESO */}
         <div className="space-y-3 border-t border-sidebar-border/20 pt-6">
-          <h4 className="text-[10px] font-black uppercase tracking-wider text-primary/70">Dimensões & Peso</h4>
+          <h4 className={sectionTitleCls}>Dimensões & Peso</h4>
           <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Unidade de Medida</label>
+            <Field label="Unidade de Medida" value={formData.measurement_unit}>
               <select
                 value={formData.measurement_unit || "cm"}
-                onChange={e => setFormData({ ...formData, measurement_unit: e.target.value })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                onChange={(e) => setFormData({ ...formData, measurement_unit: e.target.value })}
+                className={`${inputCls} appearance-none cursor-pointer`}
               >
                 <option value="m">Metros</option>
                 <option value="cm">Centímetros</option>
                 <option value="mm">Milímetros</option>
               </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Largura</label>
+            </Field>
+            <Field label="Largura" value={formData.width}>
               <input
                 type="number"
                 step="0.01"
                 value={formData.width || 0}
-                onChange={e => setFormData({ ...formData, width: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, width: parseFloat(e.target.value) || 0 })}
+                className={`${inputCls} font-mono`}
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Altura</label>
+            </Field>
+            <Field label="Altura" value={formData.height}>
               <input
                 type="number"
                 step="0.01"
                 value={formData.height || 0}
-                onChange={e => setFormData({ ...formData, height: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, height: parseFloat(e.target.value) || 0 })}
+                className={`${inputCls} font-mono`}
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Profundidade</label>
+            </Field>
+            <Field label="Profundidade" value={formData.depth}>
               <input
                 type="number"
                 step="0.01"
                 value={formData.depth || 0}
-                onChange={e => setFormData({ ...formData, depth: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, depth: parseFloat(e.target.value) || 0 })}
+                className={`${inputCls} font-mono`}
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Peso Líquido (g)</label>
+            </Field>
+            <Field label="Peso Líquido (g)" value={formData.net_weight_g}>
               <input
                 type="number"
                 step="0.01"
                 value={formData.net_weight_g || 0}
-                onChange={e => setFormData({ ...formData, net_weight_g: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, net_weight_g: parseFloat(e.target.value) || 0 })}
+                className={`${inputCls} font-mono`}
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Peso Bruto (g)</label>
+            </Field>
+            <Field label="Peso Bruto (g)" value={formData.gross_weight_g}>
               <input
                 type="number"
                 step="0.01"
                 value={formData.gross_weight_g || 0}
-                onChange={e => setFormData({ ...formData, gross_weight_g: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none font-mono"
+                onChange={(e) => setFormData({ ...formData, gross_weight_g: parseFloat(e.target.value) || 0 })}
+                className={`${inputCls} font-mono`}
               />
-            </div>
-          </div>
-        </div>
-
-      </section>
-
-      {/* BLOCO 2 — Textos do Produto */}
-      <section className="jtd-glass p-6 space-y-6">
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
-          <FileText size={20} className="text-primary" />
-          Textos do Produto
-        </h3>
-
-        <div className="grid grid-cols-3 gap-6">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Descrição Interna</label>
-            <textarea 
-              value={formData.description || ""} 
-              onChange={e => {
-                setFormData({...formData, description: e.target.value});
-                autoResize(e.target);
-              }} 
-              style={{ ...textareaStyle, minHeight: '120px' }}
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="Digite a descrição interna completa do produto..."
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Perguntas Frequentes</label>
-            <textarea 
-              value={formData.common_questions || ""} 
-              onChange={e => {
-                setFormData({...formData, common_questions: e.target.value});
-                autoResize(e.target);
-              }} 
-              style={{ ...textareaStyle, minHeight: '120px' }}
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="Liste as principais dúvidas dos compradores"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Notas Internas</label>
-            <textarea 
-              value={formData.notes || ""} 
-              onChange={e => {
-                setFormData({...formData, notes: e.target.value});
-                autoResize(e.target);
-              }} 
-              style={{ ...textareaStyle, minHeight: '120px' }}
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="Anotações de uso exclusivo da equipe..."
-            />
+            </Field>
           </div>
         </div>
       </section>
 
-      {/* BLOCO 3 — Análise de Concorrentes */}
+      {/* ============================================================ */}
+      {/* 2. PALAVRAS-CHAVE DO PRODUTO                                 */}
+      {/* ============================================================ */}
+      <section className="jtd-glass p-6 space-y-5">
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+            <Tag size={20} className="text-primary" />
+            Palavras-Chave do Produto
+            <span className="bg-primary/20 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/40">
+              {formData.keywords.length}
+            </span>
+          </h3>
+          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            {selectedKeywords.length} de {formData.keywords.length} selecionadas
+          </div>
+        </div>
+
+        {/* Barra de ações */}
+        <div className="flex flex-wrap gap-2 items-center bg-internal-w5 border border-sidebar-border rounded-lg p-3">
+          <button
+            type="button"
+            onClick={toggleSelectAll}
+            disabled={formData.keywords.length === 0}
+            className="flex items-center gap-2 px-3 py-2 rounded border border-sidebar-border bg-internal-20 text-[10px] font-black uppercase tracking-wider text-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {allSelected ? <CheckSquare size={13} /> : <Square size={13} />}
+            {allSelected ? "Desmarcar Todas" : "Selecionar Todas"}
+          </button>
+          <button
+            type="button"
+            onClick={copySelectedKeywords}
+            disabled={selectedKeywords.length === 0}
+            className="flex items-center gap-2 px-3 py-2 rounded border border-primary/50 bg-primary/10 text-[10px] font-black uppercase tracking-wider text-primary hover:bg-primary/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary/10"
+          >
+            <Copy size={13} /> Copiar Selecionadas
+          </button>
+          <button
+            type="button"
+            onClick={copyAllKeywords}
+            disabled={formData.keywords.length === 0}
+            className="flex items-center gap-2 px-3 py-2 rounded bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Copy size={13} /> Copiar Todas
+          </button>
+          <div className="flex-1" />
+          <button
+            type="button"
+            onClick={clearAllKeywords}
+            disabled={formData.keywords.length === 0}
+            className="flex items-center gap-2 px-3 py-2 rounded border border-sidebar-border text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:text-destructive hover:border-destructive transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Trash size={13} /> Limpar
+          </button>
+        </div>
+
+        {/* Lista de chips */}
+        <div className="flex flex-wrap gap-2 min-h-[60px]">
+          {formData.keywords.map((kw: string, i: number) => {
+            const sel = selectedKeywords.includes(kw);
+            return (
+              <div
+                key={i}
+                onClick={() => toggleSelectedKeyword(kw)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-all text-[12px] ${
+                  sel
+                    ? "bg-primary text-primary-foreground border-primary font-black shadow-[0_0_12px_rgba(191,255,0,0.4)]"
+                    : "bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 font-bold"
+                }`}
+              >
+                {sel && <CheckSquare size={12} />}
+                <span>{kw}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeKeyword(kw);
+                  }}
+                  className={`transition-colors ${
+                    sel ? "text-primary-foreground/70 hover:text-primary-foreground" : "text-primary/60 hover:text-primary"
+                  }`}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            );
+          })}
+          {formData.keywords.length === 0 && (
+            <p className="text-xs italic text-muted-foreground/50 py-2">
+              Nenhuma palavra-chave adicionada ainda. Adicione abaixo ou colete dos concorrentes.
+            </p>
+          )}
+        </div>
+
+        {/* Adicionar nova */}
+        <div className="flex gap-2 pt-2">
+          <input
+            type="text"
+            value={newKeywordInput}
+            onChange={(e) => setNewKeywordInput(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && (e.preventDefault(), addKeyword(newKeywordInput), setNewKeywordInput(""))
+            }
+            className={inputCls}
+            placeholder="Adicionar nova palavra-chave..."
+          />
+          <button
+            type="button"
+            onClick={() => {
+              addKeyword(newKeywordInput);
+              setNewKeywordInput("");
+            }}
+            className="bg-primary text-primary-foreground font-bold px-8 rounded hover:brightness-110 transition-all text-xs uppercase tracking-wider whitespace-nowrap"
+          >
+            Adicionar
+          </button>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 3. ANÁLISE DE CONCORRENTES                                   */}
+      {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sidebar-border/30 pb-6">
           <div>
             <h3 className="font-bold text-lg text-foreground">Análise de Concorrentes</h3>
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Analise preços e extraia keywords</p>
+            <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+              Analise preços e extraia keywords
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="bg-green-500/10 border border-green-500/30 px-3 py-1.5 rounded-lg text-center">
               <p className="text-[8px] font-black uppercase text-green-500">MIN</p>
-              <p className="text-xs font-bold text-green-500 font-mono">R$ {minPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs font-bold text-green-500 font-mono">
+                R$ {minPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
             </div>
             <div className="bg-cyan-500/10 border border-cyan-500/30 px-3 py-1.5 rounded-lg text-center">
               <p className="text-[8px] font-black uppercase text-cyan-500">MED</p>
-              <p className="text-xs font-bold text-cyan-500 font-mono">R$ {medPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs font-bold text-cyan-500 font-mono">
+                R$ {medPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
             </div>
-            <div className="bg-magenta-500/10 border border-magenta-500/30 px-3 py-1.5 rounded-lg text-center" style={{ backgroundColor: 'rgba(255, 0, 255, 0.1)', borderColor: 'rgba(255, 0, 255, 0.3)' }}>
-              <p className="text-[8px] font-black uppercase text-magenta-500" style={{ color: '#ff00ff' }}>MAX</p>
-              <p className="text-xs font-bold font-mono" style={{ color: '#ff00ff' }}>R$ {maxPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <div
+              className="px-3 py-1.5 rounded-lg text-center border"
+              style={{ backgroundColor: "rgba(255, 0, 255, 0.1)", borderColor: "rgba(255, 0, 255, 0.3)" }}
+            >
+              <p className="text-[8px] font-black uppercase" style={{ color: "#ff00ff" }}>
+                MAX
+              </p>
+              <p className="text-xs font-bold font-mono" style={{ color: "#ff00ff" }}>
+                R$ {maxPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
             </div>
           </div>
         </div>
@@ -709,27 +841,35 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           {competitors.map((comp, idx) => {
             const isOpen = openCompetitorIndex === idx;
             return (
-              <div key={idx} className="jtd-glass border border-sidebar-border rounded-lg overflow-hidden transition-all duration-300">
+              <div
+                key={idx}
+                className="jtd-glass border border-sidebar-border rounded-lg overflow-hidden transition-all duration-300"
+              >
                 <div className="p-4 flex items-start gap-4">
                   <span className="text-primary font-black text-sm pt-1">#{idx + 1}</span>
                   <div className="flex-1 space-y-1">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
-                        <input 
+                        <input
                           value={comp.title}
-                          onChange={e => updateCompetitor(idx, 'title', e.target.value)}
+                          onChange={(e) => updateCompetitor(idx, "title", e.target.value)}
                           className="w-full bg-transparent border-none p-0 text-base font-bold text-foreground focus:ring-0 placeholder:text-muted-foreground/30"
                           placeholder="TÍTULO DO ANÚNCIO CONCORRENTE — editável"
                         />
                         <div className="flex items-center gap-2 mt-1">
-                          <input 
+                          <input
                             value={comp.url}
-                            onChange={e => updateCompetitor(idx, 'url', e.target.value)}
+                            onChange={(e) => updateCompetitor(idx, "url", e.target.value)}
                             className="text-[10px] text-muted-foreground bg-transparent border-none p-0 focus:ring-0 w-full placeholder:text-muted-foreground/20"
                             placeholder="Link do anúncio..."
                           />
                           {comp.url && (
-                            <a href={comp.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                            <a
+                              href={comp.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-muted-foreground hover:text-primary"
+                            >
                               <ExternalLink size={10} />
                             </a>
                           )}
@@ -738,27 +878,27 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                       <div className="flex flex-col items-end gap-2">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-bold text-muted-foreground">R$</span>
-                          <input 
+                          <input
                             type="number"
                             step="0.01"
                             value={comp.price}
-                            onChange={e => updateCompetitor(idx, 'price', parseFloat(e.target.value) || 0)}
+                            onChange={(e) => updateCompetitor(idx, "price", parseFloat(e.target.value) || 0)}
                             className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-24 text-right focus:ring-0 font-mono"
                           />
                         </div>
                         <div className="flex items-center gap-1">
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             onClick={() => {
                               setCompetitors(competitors.filter((_, i) => i !== idx));
                               if (openCompetitorIndex === idx) setOpenCompetitorIndex(null);
-                            }} 
-                            className="text-muted-foreground hover:text-red-500 p-1"
+                            }}
+                            className="text-muted-foreground hover:text-destructive p-1"
                           >
                             <Trash size={14} />
                           </button>
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             onClick={() => setOpenCompetitorIndex(isOpen ? null : idx)}
                             className="text-muted-foreground hover:text-foreground p-1"
                           >
@@ -771,15 +911,17 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                     {isOpen && (
                       <div className="pt-4 animate-in slide-in-from-top-2 duration-300">
                         <div className="border-t border-sidebar-border/30 pt-4">
-                          <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">Descrição do Concorrente</label>
-                          <textarea 
-                            value={comp.description} 
-                            onChange={e => {
-                              updateCompetitor(idx, 'description', e.target.value);
+                          <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
+                            Descrição do Concorrente
+                          </label>
+                          <textarea
+                            value={comp.description}
+                            onChange={(e) => {
+                              updateCompetitor(idx, "description", e.target.value);
                               autoResize(e.target);
                             }}
                             style={textareaStyle}
-                            className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none" 
+                            className="w-full bg-internal-20 border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none"
                             placeholder="Cole aqui a descrição do anúncio concorrente..."
                           />
                         </div>
@@ -789,11 +931,14 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                     <div className="pt-4 flex flex-wrap items-center gap-2">
                       <span className="text-[8px] font-black uppercase text-muted-foreground mr-2">Keywords:</span>
                       {comp.keywords_found.map((kw, kIdx) => (
-                        <span key={kIdx} className="bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px] font-bold text-primary">
+                        <span
+                          key={kIdx}
+                          className="bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px] font-bold text-primary"
+                        >
                           {kw}
                         </span>
                       ))}
-                      <button 
+                      <button
                         type="button"
                         onClick={() => !openPanels.includes(idx) && setOpenPanels([...openPanels, idx])}
                         className="text-[10px] font-bold text-primary hover:underline ml-2 uppercase"
@@ -807,8 +952,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             );
           })}
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={handleAddCompetitor}
             className="w-full border-2 border-dashed border-sidebar-border rounded-lg py-6 text-muted-foreground hover:border-primary/50 hover:text-primary flex items-center justify-center gap-2 transition-all group bg-internal-w5"
           >
@@ -818,126 +963,128 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         </div>
       </section>
 
-      {/* BLOCO 4 — Palavras-Chave do Produto */}
+      {/* ============================================================ */}
+      {/* 4. TEXTOS DO PRODUTO                                         */}
+      {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
-            Palavras-Chave do Produto
-            <span className="bg-primary/20 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/40">
-              {formData.keywords.length}
-            </span>
-          </h3>
-          <div className="flex gap-4">
-            <button type="button" onClick={copyAllKeywords} className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase">Copiar Todas</button>
-            <button type="button" onClick={copySelectedKeywords} disabled={selectedKeywords.length === 0} className={`text-[10px] font-bold uppercase transition-colors ${selectedKeywords.length === 0 ? "text-muted-foreground/40 cursor-not-allowed" : "text-muted-foreground hover:text-primary"}`}>Copiar Selecionadas</button>
-            <button type="button" onClick={clearAllKeywords} className="text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors uppercase">Limpar Todas</button>
+        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <FileText size={20} className="text-primary" />
+          Textos do Produto
+        </h3>
+
+        <div className="grid grid-cols-3 gap-6">
+          <div className="space-y-1.5">
+            <label className={labelCls}>Descrição Interna</label>
+            <textarea
+              value={formData.description || ""}
+              onChange={(e) => {
+                setFormData({ ...formData, description: e.target.value });
+                autoResize(e.target);
+              }}
+              style={{ ...textareaStyle, minHeight: "120px" }}
+              className={inputCls}
+              placeholder="Digite a descrição interna completa do produto..."
+            />
           </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 min-h-[40px]">
-          {formData.keywords.map((kw: string, i: number) => (
-            <div 
-              key={i} 
-              onClick={() => toggleSelectedKeyword(kw)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer transition-all ${
-                selectedKeywords.includes(kw) 
-                ? "bg-primary text-black border-primary font-bold" 
-                : "bg-primary/10 border-primary/40 text-primary hover:bg-primary/20"
-              }`}
-            >
-              <span className="text-[11px] font-bold">{kw}</span>
-              <button 
-                type="button" 
-                onClick={(e) => { e.stopPropagation(); removeKeyword(kw); }} 
-                className={`transition-colors ${selectedKeywords.includes(kw) ? "text-black/60 hover:text-black" : "text-primary/60 hover:text-primary"}`}
-              >
-                <X size={12} />
-              </button>
-            </div>
-          ))}
-          {formData.keywords.length === 0 && (
-            <p className="text-xs italic text-muted-foreground/50 py-2">Nenhuma palavra-chave adicionada ainda...</p>
-          )}
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <input 
-            type="text"
-            value={newKeywordInput}
-            onChange={e => setNewKeywordInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addKeyword(newKeywordInput), setNewKeywordInput(""))}
-            className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none" 
-            placeholder="Adicionar nova palavra-chave..."
-          />
-          <button 
-            type="button" 
-            onClick={() => { addKeyword(newKeywordInput); setNewKeywordInput(""); }}
-            className="bg-primary text-black font-bold px-8 rounded hover:brightness-110 transition-all text-xs"
-          >
-            ADICIONAR
-          </button>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Perguntas Frequentes</label>
+            <textarea
+              value={formData.common_questions || ""}
+              onChange={(e) => {
+                setFormData({ ...formData, common_questions: e.target.value });
+                autoResize(e.target);
+              }}
+              style={{ ...textareaStyle, minHeight: "120px" }}
+              className={inputCls}
+              placeholder="Liste as principais dúvidas dos compradores"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Notas Internas</label>
+            <textarea
+              value={formData.notes || ""}
+              onChange={(e) => {
+                setFormData({ ...formData, notes: e.target.value });
+                autoResize(e.target);
+              }}
+              style={{ ...textareaStyle, minHeight: "120px" }}
+              className={inputCls}
+              placeholder="Anotações de uso exclusivo da equipe..."
+            />
+          </div>
         </div>
       </section>
 
-      {/* RODAPÉ FIXO */}
-      <footer className="fixed bottom-0 left-0 right-0 z-40 bg-sidebar/95 backdrop-blur-sm border-t border-sidebar-border p-4 shadow-2xl">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-6">
-          <div className="flex items-center gap-8 text-xs">
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Keywords</span>
-              <span className="font-bold text-primary">{formData.keywords.length} cadastradas</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Concorrentes</span>
-              <span className="font-bold text-cyan-400">{competitors.length} analisados</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Faixa de Preço</span>
-              <span className="font-bold text-foreground">
-                R$ {minPrice.toFixed(0)} — R$ {maxPrice.toFixed(0)}
-              </span>
-            </div>
+      {/* ============================================================ */}
+      {/* 5. ANÁLISE GERAL DO PRODUTO                                  */}
+      {/* ============================================================ */}
+      <section className="jtd-glass p-6 space-y-5">
+        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <BarChart3 size={20} className="text-primary" />
+          Análise Geral do Produto
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+            <p className="text-[10px] font-black uppercase tracking-wider text-primary/70">Keywords</p>
+            <p className="text-2xl font-black text-primary font-mono mt-1">{formData.keywords.length}</p>
+            <p className="text-[10px] text-muted-foreground uppercase">cadastradas</p>
           </div>
-          
-          <div className="flex gap-4">
-            <button 
-              type="button" 
-              onClick={() => navigate({ to: "/produtos" })} 
-              className="px-6 py-2.5 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-internal-w5 transition-all text-sm"
-            >
-              CANCELAR
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleSubmit()} 
-              disabled={saving} 
-              className="bg-primary px-8 py-2.5 rounded font-bold text-black text-sm hover:brightness-110 active:scale-[0.98] transition-all shadow-lg flex items-center gap-2"
-            >
-              {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              SALVAR PRODUTO
-            </button>
+          <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+            <p className="text-[10px] font-black uppercase tracking-wider text-cyan-500/70">Concorrentes</p>
+            <p className="text-2xl font-black text-cyan-500 font-mono mt-1">{competitors.length}</p>
+            <p className="text-[10px] text-muted-foreground uppercase">analisados</p>
+          </div>
+          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+            <p className="text-[10px] font-black uppercase tracking-wider text-green-500/70">Faixa de Preço</p>
+            <p className="text-base font-black text-green-500 font-mono mt-1">
+              R$ {minPrice.toFixed(0)} — R$ {maxPrice.toFixed(0)}
+            </p>
+            <p className="text-[10px] text-muted-foreground uppercase">min / max</p>
+          </div>
+          <div
+            className="rounded-lg p-4 border"
+            style={{ backgroundColor: "rgba(255, 0, 255, 0.08)", borderColor: "rgba(255, 0, 255, 0.3)" }}
+          >
+            <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(255,0,255,0.7)" }}>
+              Preço de Venda
+            </p>
+            <p className="text-2xl font-black font-mono mt-1" style={{ color: "#ff00ff" }}>
+              R$ {(formData.sale_price || 0).toFixed(2)}
+            </p>
+            <p className="text-[10px] text-muted-foreground uppercase">configurado</p>
           </div>
         </div>
-      </footer>
+      </section>
 
-      {/* Botão Flutuante Palavras-Chave (acima da barra fixa) */}
-      <div className="fixed bottom-24 right-8 z-50">
-        <button 
+      {/* ============================================================ */}
+      {/* 6. AÇÕES — barra inline (não fixa)                           */}
+      {/* ============================================================ */}
+      <div className="flex justify-end gap-4 pt-4">
+        <button
           type="button"
-          onClick={() => toast.info("Painel de palavras-chave flutuante em breve...")}
-          className="w-14 h-14 rounded-full bg-primary text-black shadow-[0_0_20px_rgba(191,255,0,0.4)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+          onClick={() => navigate({ to: "/produtos" })}
+          className="px-8 py-3 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-internal-w5 transition-all text-sm uppercase tracking-wider"
         >
-          <Tag size={24} />
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={() => handleSubmit()}
+          disabled={saving}
+          className="bg-primary px-10 py-3 rounded font-black text-primary-foreground text-sm hover:brightness-110 active:scale-[0.98] transition-all shadow-lg flex items-center gap-2 uppercase tracking-wider"
+        >
+          {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+          Salvar Produto
         </button>
       </div>
 
-      {/* Painéis Flutuantes Arrastáveis (Apenas para Concorrentes) */}
+      {/* Painéis Flutuantes Arrastáveis (Concorrentes) */}
       {openPanels.map((compIdx) => (
         <FloatingKeywordPanel
           key={`panel-${compIdx}`}
           title={`CONCORRENTE #${compIdx + 1}`}
           keywords={competitors[compIdx].keywords_found}
-          onClose={() => setOpenPanels(openPanels.filter(id => id !== compIdx))}
+          onClose={() => setOpenPanels(openPanels.filter((id) => id !== compIdx))}
           onAddKeyword={(kw) => {
             const newComps = [...competitors];
             if (!newComps[compIdx].keywords_found.includes(kw)) {
@@ -947,13 +1094,13 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           }}
           onRemoveKeyword={(kw) => {
             const newComps = [...competitors];
-            newComps[compIdx].keywords_found = newComps[compIdx].keywords_found.filter(k => k !== kw);
+            newComps[compIdx].keywords_found = newComps[compIdx].keywords_found.filter((k) => k !== kw);
             setCompetitors(newComps);
           }}
           onSendToProduct={(kws) => {
             const uniqueKeywords = Array.from(new Set([...formData.keywords, ...kws]));
             setFormData({ ...formData, keywords: uniqueKeywords });
-            toast.success(`Keywords enviadas para o produto!`);
+            toast.success("Keywords enviadas para o produto!");
           }}
           initialX={100 + compIdx * 30}
           initialY={100 + compIdx * 30}
@@ -962,3 +1109,4 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     </div>
   );
 }
+
