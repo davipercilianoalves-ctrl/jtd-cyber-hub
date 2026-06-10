@@ -18,7 +18,7 @@ import {
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/produtos", label: "Produtos", icon: Package },
-  { to: "/anuncios", label: "Anúncios", icon: Megaphone },
+  { to: "/anuncios/", label: "Anúncios", icon: Megaphone },
   { to: "/metricas", label: "Métricas", icon: BarChart2 },
   { to: "/compras", label: "Compras", icon: ShoppingCart },
   { to: "/vendas", label: "Vendas", icon: DollarSign },
