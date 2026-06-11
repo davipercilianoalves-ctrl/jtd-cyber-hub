@@ -17,6 +17,8 @@ import {
   HelpCircle,
   Users,
   Info,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 import {
@@ -1119,29 +1121,35 @@ function CompetitorsTab({
 
       {/* Estratégias sugeridas */}
       <div>
-        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">Estratégias de Preço Sugeridas</h4>
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-3 flex items-center gap-2">
+          <Target size={14} className="text-primary" /> Estratégias Recomendadas com Base no Mercado
+        </h4>
         <div className="grid md:grid-cols-3 gap-3">
           <StrategyCard
             title="Agressivo"
-            subtitle="Ganhar volume — 3% abaixo do menor"
+            subtitle="Ganhar volume e desbancar concorrentes"
+            description="Preço definido como 3% abaixo do menor preço encontrado no mercado."
             price={recommended.agressivo}
             tone="good"
-            warn={recommended.agressivo < result.minPrice ? "Abaixo do preço mínimo!" : undefined}
+            warn={recommended.agressivo < result.minPrice ? "Preço abaixo do seu custo operacional!" : undefined}
           />
           <StrategyCard
             title="Competitivo"
-            subtitle="Alinhado à média do mercado"
+            subtitle="Equilíbrio e estabilidade"
+            description="Preço alinhado à média exata praticada pelos seus concorrentes."
             price={recommended.competitivo}
             tone="primary"
           />
           <StrategyCard
             title="Premium"
-            subtitle="5% acima do maior — posicionamento alto"
+            subtitle="Posicionamento de marca e exclusividade"
+            description="Preço definido como 5% acima do maior preço do mercado."
             price={recommended.premium}
             tone="warn"
           />
         </div>
       </div>
+
 
       <div className="rounded border border-sidebar-border bg-internal-w04 p-4">
         <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">
@@ -1161,12 +1169,14 @@ function CompetitorsTab({
 function StrategyCard({
   title,
   subtitle,
+  description,
   price,
   tone,
   warn,
 }: {
   title: string;
   subtitle: string;
+  description?: string;
   price: number;
   tone: "good" | "primary" | "warn";
   warn?: string;
@@ -1179,14 +1189,18 @@ function StrategyCard({
       : "border-yellow-500/40 bg-yellow-500/5";
   const color = tone === "good" ? "text-lime-400" : tone === "primary" ? "text-primary" : "text-yellow-400";
   return (
-    <div className={`rounded border p-3 ${border}`}>
+    <div className={`rounded border p-3 flex flex-col ${border}`}>
       <div className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</div>
-      <div className="text-[10px] text-muted-foreground mb-2">{subtitle}</div>
-      <div className={`font-mono font-bold text-lg ${color}`}>{fmtBRL(price)}</div>
-      {warn && <div className="text-[10px] text-red-400 mt-1">⚠ {warn}</div>}
+      <div className="text-[10px] text-muted-foreground mb-1">{subtitle}</div>
+      {description && <div className="text-[10px] text-muted-foreground/70 mb-2 italic">{description}</div>}
+      <div className={`font-mono font-bold text-lg mt-auto ${color}`}>{fmtBRL(price)}</div>
+      {warn && <div className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+        <AlertTriangle size={10} /> {warn}
+      </div>}
     </div>
   );
 }
+
 
 // =============================================================
 // ABA GUIA — explica cada conceito e o que ele influencia
@@ -1255,23 +1269,48 @@ function GuideTab() {
         </code>
       </div>
 
-      {sections.map((sec) => (
-        <div key={sec.title} className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-primary">{sec.title}</h4>
-          <div className="space-y-3">
-            {sec.items.map((it) => (
-              <div key={it.term} className="border-l-2 border-primary/40 pl-3 py-1">
-                <div className="text-sm font-bold text-foreground">{it.term}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{it.desc}</div>
-                <div className="text-[11px] text-lime-400 mt-1">
-                  <strong>Impacto:</strong> {it.impact}
+      <div className="space-y-3">
+        {sections.map((sec) => (
+          <CollapsibleSection key={sec.title} title={sec.title}>
+            <div className="space-y-4 pt-2">
+              {sec.items.map((it) => (
+                <div key={it.term} className="border-l-2 border-primary/40 pl-3 py-1 bg-white/5 p-3 rounded-r">
+                  <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                    {it.term}
+                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                      Influência: direta
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{it.desc}</div>
+                  <div className="text-[11px] text-lime-400 mt-2 flex items-start gap-1">
+                    <TrendingUp size={10} className="mt-0.5 shrink-0" />
+                    <span><strong>O que ele faz:</strong> {it.impact}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+              ))}
+            </div>
+          </CollapsibleSection>
+        ))}
+      </div>
     </div>
   );
 }
+
+function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+      >
+        <h4 className="text-xs font-bold uppercase tracking-widest text-primary">{title}</h4>
+        {open ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+      </button>
+      {open && <div className="p-4 pt-0">{children}</div>}
+    </div>
+  );
+}
+
 
