@@ -8,10 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { useLocation } from "@tanstack/react-router";
 import { ThemeProvider } from "../contexts/JtdThemeContext";
 
-import { SessionNavBar } from "../components/ui/SessionNavBar";
 
 
 import appCss from "../styles.css?url";
