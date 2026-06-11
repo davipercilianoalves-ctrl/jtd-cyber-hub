@@ -598,89 +598,96 @@ function CostTable({
 }) {
   return (
     <div className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden">
-      <div className="grid grid-cols-[1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
+      <div className="grid grid-cols-[20px_1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
+        <div></div>
         <div className="inline-flex items-center gap-1.5">Nome <Help title="Nome do custo" text="Identificação do item. Ex: 'Custo do produto', 'Frete fornecedor', 'Embalagem', 'Marketing'." /></div>
         <div className="text-center inline-flex items-center gap-1.5 justify-center">Tipo <Help title="Tipo de custo" text="R$ = valor fixo (não muda com o preço). % = proporcional ao preço de venda (ex: marketing, royalties)." /></div>
         <div className="text-right inline-flex items-center gap-1.5 justify-end">Valor <Help title="Valor do custo" text="Quanto este item custa por unidade vendida — em reais ou percentual conforme o tipo escolhido." /></div>
         <div className="text-center inline-flex items-center gap-1.5 justify-center">Ativo <Help title="Considerar no cálculo" text="Desative para simular sem este custo, sem perder o valor cadastrado." /></div>
         <div></div>
-
       </div>
       <div className="divide-y divide-sidebar-border/30">
-        {rows.map((r) => (
-          <div
-            key={r.id}
-            className="grid grid-cols-[1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 items-center"
-          >
-            <input
-              value={r.name}
-              onChange={(e) => onChange(r.id, { name: e.target.value })}
-              placeholder="Nome do custo"
-              className={inputCls}
-              disabled={r.builtin}
-            />
-            {allowKind ? (
-              <div className="flex gap-1 justify-center">
-                <button
-                  type="button"
-                  onClick={() => onChange(r.id, { kind: "fixed" })}
-                  className={`${chipBtn} ${
-                    r.kind === "fixed"
-                      ? "bg-primary text-black border-primary"
-                      : "border-sidebar-border text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  R$
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onChange(r.id, { kind: "percent" })}
-                  className={`${chipBtn} ${
-                    r.kind === "percent"
-                      ? "bg-primary text-black border-primary"
-                      : "border-sidebar-border text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  %
-                </button>
-              </div>
-            ) : (
-              <div className="text-center text-xs text-muted-foreground">%</div>
-            )}
-            <div className="relative">
-              <input
-                type="number"
-                step="0.01"
-                value={r.value || ""}
-                onChange={(e) => onChange(r.id, { value: parseFloat(e.target.value) || 0 })}
-                className={`${cellNumCls} ${r.kind === "fixed" ? "pl-7" : "pr-6"}`}
-              />
-              {r.kind === "fixed" ? (
-                <DollarSign size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              ) : (
-                <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex justify-center">
-              <ToggleActive value={r.active} onChange={(v) => onChange(r.id, { active: v })} />
-            </div>
-            <button
-              type="button"
-              onClick={() => !r.builtin && onRemove(r.id)}
-              disabled={r.builtin}
-              className={`flex justify-center ${
-                r.builtin
-                  ? "text-muted-foreground/20 cursor-not-allowed"
-                  : "text-muted-foreground hover:text-red-500"
-              }`}
-              title={r.builtin ? "Custo padrão" : "Remover"}
+        {rows.map((r) => {
+          const info = describeItem(r.name, "cost");
+          return (
+            <div
+              key={r.id}
+              className="grid grid-cols-[20px_1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 items-center"
             >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        ))}
+              <div className="flex justify-center">
+                <Help title={info.title} text={info.text} />
+              </div>
+              <input
+                value={r.name}
+                onChange={(e) => onChange(r.id, { name: e.target.value })}
+                placeholder="Nome do custo"
+                className={inputCls}
+                disabled={r.builtin}
+              />
+              {allowKind ? (
+                <div className="flex gap-1 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => onChange(r.id, { kind: "fixed" })}
+                    className={`${chipBtn} ${
+                      r.kind === "fixed"
+                        ? "bg-primary text-black border-primary"
+                        : "border-sidebar-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    R$
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onChange(r.id, { kind: "percent" })}
+                    className={`${chipBtn} ${
+                      r.kind === "percent"
+                        ? "bg-primary text-black border-primary"
+                        : "border-sidebar-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    %
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center text-xs text-muted-foreground">%</div>
+              )}
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={r.value || ""}
+                  onChange={(e) => onChange(r.id, { value: parseFloat(e.target.value) || 0 })}
+                  className={`${cellNumCls} ${r.kind === "fixed" ? "pl-7" : "pr-6"}`}
+                />
+                {r.kind === "fixed" ? (
+                  <DollarSign size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                ) : (
+                  <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex justify-center">
+                <ToggleActive value={r.active} onChange={(v) => onChange(r.id, { active: v })} />
+              </div>
+              <button
+                type="button"
+                onClick={() => !r.builtin && onRemove(r.id)}
+                disabled={r.builtin}
+                className={`flex justify-center ${
+                  r.builtin
+                    ? "text-muted-foreground/20 cursor-not-allowed"
+                    : "text-muted-foreground hover:text-red-500"
+                }`}
+                title={r.builtin ? "Custo padrão" : "Remover"}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          );
+        })}
         {!rows.length && <p className="text-xs text-muted-foreground py-4 text-center">{emptyMsg}</p>}
       </div>
+
     </div>
   );
 }
