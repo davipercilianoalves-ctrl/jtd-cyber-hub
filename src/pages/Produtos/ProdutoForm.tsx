@@ -1154,8 +1154,17 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 4. TEXTOS DO PRODUTO                                         */}
+      {/* 4. PRECIFICAÇÃO INTELIGENTE                                 */}
       {/* ============================================================ */}
+      <PricingModule
+        value={formData.pricing as PricingState}
+        onChange={(next) => setFormData({ ...formData, pricing: next })}
+      />
+
+      {/* ============================================================ */}
+      {/* 5. TEXTOS DO PRODUTO                                         */}
+      {/* ============================================================ */}
+
       <section className="jtd-glass p-6 space-y-6">
         <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
           <FileText size={20} className="text-primary" />
