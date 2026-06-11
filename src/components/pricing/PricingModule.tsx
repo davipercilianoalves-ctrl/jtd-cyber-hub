@@ -195,7 +195,17 @@ function Help({ text }: { text: string }) {
 // =============================================================
 // ALERTAS
 // =============================================================
-function Alerts({ result, state }: { result: PricingResult; state: PricingState }) {
+function Alerts({
+  result,
+  state,
+  competitorStats,
+  positioning,
+}: {
+  result: PricingResult;
+  state: PricingState;
+  competitorStats: CompetitorStats;
+  positioning: Positioning;
+}) {
   const alerts: { type: "error" | "warn"; msg: string }[] = [];
   if (result.invalid) alerts.push({ type: "error", msg: "Soma de taxas, impostos e lucro ≥ 100%. Reduza algum percentual." });
   if (!result.invalid && result.netMarginPct < state.minMarginPct)
@@ -207,6 +217,11 @@ function Alerts({ result, state }: { result: PricingResult; state: PricingState 
   const freight = state.costs.find((c) => c.active && c.name.toLowerCase().includes("frete"));
   if (freight && result.costFixedTotal > 0 && freight.value / result.costFixedTotal > 0.3)
     alerts.push({ type: "warn", msg: "Frete representa mais de 30% do custo total." });
+  if (competitorStats && positioning && positioning.tone === "bad")
+    alerts.push({ type: "warn", msg: `Preço ${fmtPct(positioning.diffAvg, 1)} acima da média dos concorrentes (${fmtBRL(competitorStats.avg)}).` });
+  if (competitorStats && positioning && positioning.tone === "warn" && positioning.diffAvg < 0)
+    alerts.push({ type: "warn", msg: `Preço abaixo do menor concorrente (${fmtBRL(competitorStats.min)}). Verifique se está deixando margem na mesa.` });
+
 
   if (!alerts.length) return null;
   return (
