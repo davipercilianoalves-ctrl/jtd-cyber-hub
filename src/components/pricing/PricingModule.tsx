@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useLayoutEffect } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -224,7 +224,7 @@ function Help({ text, title }: { text: string; title?: string }) {
     });
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!open) return;
     positionTooltip();
     window.addEventListener("scroll", positionTooltip, true);
@@ -242,7 +242,10 @@ function Help({ text, title }: { text: string; title?: string }) {
       const width = Math.min(260, window.innerWidth - 24);
       setCoords({
         top: Math.max(10, r.top - 102),
-        left: Math.max(10, Math.min(window.innerWidth - width - 10, r.left + r.width / 2 - width / 2)),
+        left: Math.max(
+          10,
+          Math.min(window.innerWidth - width - 10, r.left + r.width / 2 - width / 2),
+        ),
         width,
         arrowLeft: width / 2,
         placement: "top",
@@ -271,24 +274,26 @@ function Help({ text, title }: { text: string; title?: string }) {
         <div
           ref={tooltipRef}
           role="tooltip"
-          style={{ 
-            position: "fixed", 
-            top: coords.top, 
-            left: coords.left, 
+          style={{
+            position: "fixed",
+            top: coords.top,
+            left: coords.left,
             width: coords.width,
             zIndex: 99999,
           }}
           className="pointer-events-none animate-in fade-in zoom-in-95 slide-in-from-bottom-1 duration-150"
         >
           <div
-            style={{ 
+            style={{
               top: coords.placement === "top" ? "calc(100% - 5px)" : -5,
               left: coords.arrowLeft,
-              position: "absolute"
+              position: "absolute",
             }}
-            className={`-ml-1.5 h-3 w-3 rotate-45 bg-popover border-primary/35 ${coords.placement === "top" ? "border-r border-b" : "border-l border-t"}`}
+            className={`-ml-1.5 h-3 w-3 rotate-45 border-primary/35 bg-popover ${
+              coords.placement === "top" ? "border-r border-b" : "border-l border-t"
+            }`}
           />
-          <div className="relative rounded-md border border-primary/35 bg-popover/98 px-3 py-2.5 text-[11px] leading-relaxed text-popover-foreground shadow-2xl shadow-primary/15 ring-1 ring-primary/10 backdrop-blur-md">
+          <div className="relative rounded-md border border-primary/35 bg-popover/95 px-3 py-2.5 text-[11px] leading-relaxed text-popover-foreground shadow-2xl shadow-primary/15 ring-1 ring-primary/10 backdrop-blur-md">
             {title && (
               <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-primary">
                 {title}
