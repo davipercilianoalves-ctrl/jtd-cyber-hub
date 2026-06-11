@@ -174,7 +174,7 @@ export default function PricingModule({ value, onChange, competitorPrices = [] }
       {tab === "costs" && <CostsTab value={value} patch={patch} />}
       {tab === "feestax" && <FeesTaxesTab value={value} patch={patch} />}
       {tab === "promo" && <PromoTab value={value} patch={patch} result={result} competitorStats={competitorStats} />}
-      {tab === "scenarios" && <ScenariosTab value={value} patch={patch} />}
+      {tab === "scenarios" && <ScenariosTab value={value} patch={patch} result={result} competitorStats={competitorStats} />}
       {tab === "report" && <ReportTab value={value} result={result} />}
       {tab === "guide" && <GuideTab />}
     </section>
