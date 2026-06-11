@@ -654,13 +654,44 @@ function PromoTab({
   value,
   patch,
   result,
+  competitorStats,
 }: {
   value: PricingState;
   patch: (p: Partial<PricingState>) => void;
   result: PricingResult;
+  competitorStats: CompetitorStats;
 }) {
+  // Sugestões de preço de vitrine baseadas nos concorrentes
+  const suggestShowcase = (target: number) => {
+    if (result.idealPrice <= 0) return;
+    const pct = ((target - result.idealPrice) / result.idealPrice) * 100;
+    patch({ promo: { strategicMarkupPct: Math.max(0, +pct.toFixed(2)) } });
+  };
+
   return (
     <div className="space-y-5">
+      {competitorStats && (
+        <div className="rounded border border-primary/30 bg-primary/5 p-4 space-y-2">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Users size={14} className="text-primary" /> Sugestões com base nos concorrentes
+          </h4>
+          <p className="text-xs text-muted-foreground">
+            Use um destes valores como Preço Vitrine — o desconto exibido será calculado automaticamente para voltar ao seu preço ideal.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => suggestShowcase(competitorStats.max)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
+              = Maior ({fmtBRL(competitorStats.max)})
+            </button>
+            <button type="button" onClick={() => suggestShowcase(competitorStats.avg)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
+              = Médio ({fmtBRL(competitorStats.avg)})
+            </button>
+            <button type="button" onClick={() => suggestShowcase(competitorStats.max * 1.05)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
+              +5% acima do maior
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-4">
         <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
           <Target size={14} className="text-primary" /> Objetivo de Lucro
