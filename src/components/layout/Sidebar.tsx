@@ -37,12 +37,15 @@ export function Sidebar() {
   return (
     <aside
       style={{ width: collapsed ? 64 : 220 }}
-      className="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width,background-color] duration-200"
+      className="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width,background-color] duration-200 h-screen sticky top-0 overflow-hidden"
     >
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between px-4">
+      <div className="flex h-16 items-center px-4 gap-2">
+        <div className="flex h-8 w-12 items-center justify-center rounded bg-[#FF00FF] font-black text-white shrink-0">
+          JTD
+        </div>
         {!collapsed && (
-          <span className="jtd-text-gradient text-2xl font-extrabold tracking-tight">JTD</span>
+          <span className="font-bold tracking-tight text-foreground truncate">Gestão</span>
         )}
         <button
           onClick={() => setCollapsed((c) => !c)}
@@ -52,6 +55,7 @@ export function Sidebar() {
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
+
 
       {/* Navegação */}
       <nav className="flex-1 space-y-1 px-2 py-2">
