@@ -126,18 +126,24 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
 
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <div className="flex min-h-screen w-full">
-          <SessionNavBar />
-          <div className="flex-1 pl-[3.5rem]">
-            <Outlet />
+        {isLoginPage ? (
+          <Outlet />
+        ) : (
+          <div className="flex min-h-screen w-full">
+            <SessionNavBar />
+            <div className="flex-1 pl-[3.5rem]">
+              <Outlet />
+            </div>
           </div>
-        </div>
+        )}
       </QueryClientProvider>
     </ThemeProvider>
-
   );
 }
+
