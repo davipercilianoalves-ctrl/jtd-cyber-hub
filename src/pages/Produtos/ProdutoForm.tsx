@@ -1268,8 +1268,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 6. AÇÕES — barra inline (não fixa)                           */}
+      {/* 7. AÇÕES — barra inline (não fixa)                           */}
       {/* ============================================================ */}
+
       <div className="flex justify-end gap-4 pt-4">
         <button
           type="button"
