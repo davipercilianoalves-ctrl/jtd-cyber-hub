@@ -535,37 +535,47 @@ function PercentList({
       </div>
 
       <div className="space-y-1">
-        {items.map((i) => (
-          <div key={i.id} className="grid grid-cols-[1fr_90px_36px_28px] gap-2 items-center">
-            <input
-              value={i.name}
-              onChange={(e) => update(i.id, { name: e.target.value })}
-              placeholder="Nome"
-              className={inputCls}
-            />
-            <div className="relative">
+        {items.map((i) => {
+          const isTax = title.toLowerCase().includes("imposto");
+          const info = describeItem(i.name, isTax ? "tax" : "fee");
+          return (
+            <div key={i.id} className="grid grid-cols-[20px_1fr_90px_44px_28px] gap-2 items-center">
+              <div className="flex justify-center">
+                <Help title={info.title} text={info.text} />
+              </div>
               <input
-                type="number"
-                step="0.01"
-                value={i.value || ""}
-                onChange={(e) => update(i.id, { value: parseFloat(e.target.value) || 0 })}
-                className={`${cellNumCls} pr-6`}
+                value={i.name}
+                onChange={(e) => update(i.id, { name: e.target.value })}
+                placeholder="Nome"
+                className={inputCls}
               />
-              <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={i.value || ""}
+                  onChange={(e) => update(i.id, { value: parseFloat(e.target.value) || 0 })}
+                  className={`${cellNumCls} pr-6`}
+                />
+                <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              </div>
+              <div className="flex justify-center">
+                <ToggleActive value={i.active} onChange={(v) => update(i.id, { active: v })} />
+              </div>
+              <button
+                type="button"
+                onClick={() => remove(i.id)}
+                className="text-muted-foreground hover:text-red-500 flex justify-center"
+                title="Remover"
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
-            <ToggleActive value={i.active} onChange={(v) => update(i.id, { active: v })} />
-            <button
-              type="button"
-              onClick={() => remove(i.id)}
-              className="text-muted-foreground hover:text-red-500 flex justify-center"
-              title="Remover"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        ))}
+          );
+        })}
         {!items.length && <p className="text-xs text-muted-foreground py-2 text-center">Nenhum item.</p>}
       </div>
+
     </div>
   );
 }
