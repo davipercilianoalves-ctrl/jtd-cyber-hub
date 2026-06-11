@@ -535,37 +535,47 @@ function PercentList({
       </div>
 
       <div className="space-y-1">
-        {items.map((i) => (
-          <div key={i.id} className="grid grid-cols-[1fr_90px_36px_28px] gap-2 items-center">
-            <input
-              value={i.name}
-              onChange={(e) => update(i.id, { name: e.target.value })}
-              placeholder="Nome"
-              className={inputCls}
-            />
-            <div className="relative">
+        {items.map((i) => {
+          const isTax = title.toLowerCase().includes("imposto");
+          const info = describeItem(i.name, isTax ? "tax" : "fee");
+          return (
+            <div key={i.id} className="grid grid-cols-[20px_1fr_90px_44px_28px] gap-2 items-center">
+              <div className="flex justify-center">
+                <Help title={info.title} text={info.text} />
+              </div>
               <input
-                type="number"
-                step="0.01"
-                value={i.value || ""}
-                onChange={(e) => update(i.id, { value: parseFloat(e.target.value) || 0 })}
-                className={`${cellNumCls} pr-6`}
+                value={i.name}
+                onChange={(e) => update(i.id, { name: e.target.value })}
+                placeholder="Nome"
+                className={inputCls}
               />
-              <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={i.value || ""}
+                  onChange={(e) => update(i.id, { value: parseFloat(e.target.value) || 0 })}
+                  className={`${cellNumCls} pr-6`}
+                />
+                <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              </div>
+              <div className="flex justify-center">
+                <ToggleActive value={i.active} onChange={(v) => update(i.id, { active: v })} />
+              </div>
+              <button
+                type="button"
+                onClick={() => remove(i.id)}
+                className="text-muted-foreground hover:text-red-500 flex justify-center"
+                title="Remover"
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
-            <ToggleActive value={i.active} onChange={(v) => update(i.id, { active: v })} />
-            <button
-              type="button"
-              onClick={() => remove(i.id)}
-              className="text-muted-foreground hover:text-red-500 flex justify-center"
-              title="Remover"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        ))}
+          );
+        })}
         {!items.length && <p className="text-xs text-muted-foreground py-2 text-center">Nenhum item.</p>}
       </div>
+
     </div>
   );
 }
@@ -588,89 +598,96 @@ function CostTable({
 }) {
   return (
     <div className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden">
-      <div className="grid grid-cols-[1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
+      <div className="grid grid-cols-[20px_1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
+        <div></div>
         <div className="inline-flex items-center gap-1.5">Nome <Help title="Nome do custo" text="Identificação do item. Ex: 'Custo do produto', 'Frete fornecedor', 'Embalagem', 'Marketing'." /></div>
         <div className="text-center inline-flex items-center gap-1.5 justify-center">Tipo <Help title="Tipo de custo" text="R$ = valor fixo (não muda com o preço). % = proporcional ao preço de venda (ex: marketing, royalties)." /></div>
         <div className="text-right inline-flex items-center gap-1.5 justify-end">Valor <Help title="Valor do custo" text="Quanto este item custa por unidade vendida — em reais ou percentual conforme o tipo escolhido." /></div>
         <div className="text-center inline-flex items-center gap-1.5 justify-center">Ativo <Help title="Considerar no cálculo" text="Desative para simular sem este custo, sem perder o valor cadastrado." /></div>
         <div></div>
-
       </div>
       <div className="divide-y divide-sidebar-border/30">
-        {rows.map((r) => (
-          <div
-            key={r.id}
-            className="grid grid-cols-[1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 items-center"
-          >
-            <input
-              value={r.name}
-              onChange={(e) => onChange(r.id, { name: e.target.value })}
-              placeholder="Nome do custo"
-              className={inputCls}
-              disabled={r.builtin}
-            />
-            {allowKind ? (
-              <div className="flex gap-1 justify-center">
-                <button
-                  type="button"
-                  onClick={() => onChange(r.id, { kind: "fixed" })}
-                  className={`${chipBtn} ${
-                    r.kind === "fixed"
-                      ? "bg-primary text-black border-primary"
-                      : "border-sidebar-border text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  R$
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onChange(r.id, { kind: "percent" })}
-                  className={`${chipBtn} ${
-                    r.kind === "percent"
-                      ? "bg-primary text-black border-primary"
-                      : "border-sidebar-border text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  %
-                </button>
-              </div>
-            ) : (
-              <div className="text-center text-xs text-muted-foreground">%</div>
-            )}
-            <div className="relative">
-              <input
-                type="number"
-                step="0.01"
-                value={r.value || ""}
-                onChange={(e) => onChange(r.id, { value: parseFloat(e.target.value) || 0 })}
-                className={`${cellNumCls} ${r.kind === "fixed" ? "pl-7" : "pr-6"}`}
-              />
-              {r.kind === "fixed" ? (
-                <DollarSign size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              ) : (
-                <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex justify-center">
-              <ToggleActive value={r.active} onChange={(v) => onChange(r.id, { active: v })} />
-            </div>
-            <button
-              type="button"
-              onClick={() => !r.builtin && onRemove(r.id)}
-              disabled={r.builtin}
-              className={`flex justify-center ${
-                r.builtin
-                  ? "text-muted-foreground/20 cursor-not-allowed"
-                  : "text-muted-foreground hover:text-red-500"
-              }`}
-              title={r.builtin ? "Custo padrão" : "Remover"}
+        {rows.map((r) => {
+          const info = describeItem(r.name, "cost");
+          return (
+            <div
+              key={r.id}
+              className="grid grid-cols-[20px_1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 items-center"
             >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        ))}
+              <div className="flex justify-center">
+                <Help title={info.title} text={info.text} />
+              </div>
+              <input
+                value={r.name}
+                onChange={(e) => onChange(r.id, { name: e.target.value })}
+                placeholder="Nome do custo"
+                className={inputCls}
+                disabled={r.builtin}
+              />
+              {allowKind ? (
+                <div className="flex gap-1 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => onChange(r.id, { kind: "fixed" })}
+                    className={`${chipBtn} ${
+                      r.kind === "fixed"
+                        ? "bg-primary text-black border-primary"
+                        : "border-sidebar-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    R$
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onChange(r.id, { kind: "percent" })}
+                    className={`${chipBtn} ${
+                      r.kind === "percent"
+                        ? "bg-primary text-black border-primary"
+                        : "border-sidebar-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    %
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center text-xs text-muted-foreground">%</div>
+              )}
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={r.value || ""}
+                  onChange={(e) => onChange(r.id, { value: parseFloat(e.target.value) || 0 })}
+                  className={`${cellNumCls} ${r.kind === "fixed" ? "pl-7" : "pr-6"}`}
+                />
+                {r.kind === "fixed" ? (
+                  <DollarSign size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                ) : (
+                  <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex justify-center">
+                <ToggleActive value={r.active} onChange={(v) => onChange(r.id, { active: v })} />
+              </div>
+              <button
+                type="button"
+                onClick={() => !r.builtin && onRemove(r.id)}
+                disabled={r.builtin}
+                className={`flex justify-center ${
+                  r.builtin
+                    ? "text-muted-foreground/20 cursor-not-allowed"
+                    : "text-muted-foreground hover:text-red-500"
+                }`}
+                title={r.builtin ? "Custo padrão" : "Remover"}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          );
+        })}
         {!rows.length && <p className="text-xs text-muted-foreground py-4 text-center">{emptyMsg}</p>}
       </div>
+
     </div>
   );
 }
@@ -679,18 +696,55 @@ function ToggleActive({ value, onChange }: { value: boolean; onChange: (v: boole
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={value}
       onClick={() => onChange(!value)}
-      className={`h-5 w-9 rounded-full transition-colors relative ${value ? "bg-primary" : "bg-sidebar-border"}`}
-      title={value ? "Ativo" : "Inativo"}
+      title={value ? "Ativo — clique para desativar" : "Inativo — clique para ativar"}
+      className={`group relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+        value
+          ? "bg-primary/90 border-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
+          : "bg-internal-20 border-sidebar-border hover:border-muted-foreground"
+      }`}
     >
       <span
-        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-          value ? "translate-x-4" : "translate-x-0.5"
+        className={`absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-200 ${
+          value ? "left-[calc(100%-1.125rem)]" : "left-[2px]"
         }`}
       />
     </button>
   );
 }
+
+// Texto de ajuda contextual para itens de custo/taxa/imposto pelo nome
+function describeItem(name: string, kind: "cost" | "fee" | "tax"): { title: string; text: string } {
+  const n = (name || "").toLowerCase().trim();
+  const dict: Record<string, { title: string; text: string }> = {
+    "custo do produto": { title: "Custo do Produto", text: "Quanto você paga ao fornecedor por unidade. Base de toda a precificação." },
+    "frete": { title: "Frete", text: "Custo logístico por unidade (fornecedor até você ou você até o cliente, se grátis para o comprador)." },
+    "embalagem": { title: "Embalagem", text: "Caixa, plástico-bolha, fita, etiqueta — tudo que protege o produto no envio." },
+    "armazenagem": { title: "Armazenagem", text: "Aluguel/galpão/fulfillment rateado por unidade vendida." },
+    "operacional": { title: "Operacional", text: "Pró-labore, conta de luz, internet, sistema — custos fixos do negócio rateados." },
+    "marketing": { title: "Marketing", text: "Anúncios e tráfego pago. Costuma ser um % do preço, varia conforme campanha." },
+    "marketplace": { title: "Comissão Marketplace", text: "Percentual cobrado por Mercado Livre, Shopee, Amazon etc. Varia por categoria." },
+    "cartão": { title: "Taxa do Cartão", text: "Taxa da maquininha/gateway por venda no cartão. Geralmente 2-5%." },
+    "gateway": { title: "Gateway de Pagamento", text: "Taxa do processador (Stripe, Pagar.me, Asaas, etc.) por transação." },
+    "simples": { title: "Simples Nacional", text: "Alíquota do Simples sobre o faturamento. Confira sua faixa atual no DAS." },
+    "icms": { title: "ICMS", text: "Imposto estadual sobre circulação de mercadorias. Varia por estado/produto." },
+    "iss": { title: "ISS", text: "Imposto municipal sobre serviços. 2 a 5% normalmente." },
+    "pis": { title: "PIS", text: "Contribuição federal. 0,65% no lucro presumido, 1,65% no lucro real." },
+    "cofins": { title: "COFINS", text: "Contribuição federal. 3% no lucro presumido, 7,6% no lucro real." },
+  };
+  for (const key of Object.keys(dict)) {
+    if (n.includes(key)) return dict[key];
+  }
+  const fallback = {
+    cost: { title: name || "Custo personalizado", text: "Custo adicional por unidade. Use R$ para valor fixo ou % para custos proporcionais ao preço." },
+    fee: { title: name || "Taxa personalizada", text: "Comissão ou taxa percentual cobrada sobre o preço de venda." },
+    tax: { title: name || "Imposto personalizado", text: "Tributo percentual incidente sobre a venda." },
+  };
+  return fallback[kind];
+}
+
 
 // =============================================================
 // PROMOÇÃO
