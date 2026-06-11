@@ -1156,7 +1156,7 @@ function ScenariosTab({
           </div>
           <div className="grid md:grid-cols-3 gap-3">
             {competitorScenarios.map((sc) => (
-              <MarketScenarioCard key={sc.key} {...sc} />
+              <MarketScenarioCard key={sc.key} title={sc.title} subtitle={sc.subtitle} description={sc.description} tone={sc.tone} icon={sc.icon} sim={sc.sim} />
             ))}
           </div>
         </div>
