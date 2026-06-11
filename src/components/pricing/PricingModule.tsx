@@ -184,14 +184,45 @@ export default function PricingModule({ value, onChange, competitorPrices = [] }
 type CompetitorStats = { min: number; max: number; avg: number; median: number; count: number; all: number[] } | null;
 type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: number } | null;
 
-// Tooltip de ajuda inline
-function Help({ text }: { text: string }) {
+// Tooltip de ajuda — caixinha estilizada que aparece no hover
+function Help({ text, title }: { text: string; title?: string }) {
   return (
-    <span title={text} className="inline-flex items-center text-muted-foreground/60 hover:text-primary cursor-help">
-      <Info size={11} />
+    <span className="relative inline-flex items-center group/help align-middle">
+      <span
+        tabIndex={0}
+        aria-label={title || "Ajuda"}
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground/70 hover:text-primary hover:bg-primary/10 cursor-help transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+      >
+        <Info size={11} />
+      </span>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 max-w-[16rem] opacity-0 group-hover/help:opacity-100 group-focus-within/help:opacity-100 transition-opacity duration-150"
+      >
+        <span className="block rounded-md border border-primary/40 bg-popover text-popover-foreground shadow-lg p-3 text-[11px] leading-relaxed">
+          {title && (
+            <span className="block text-[10px] font-bold uppercase tracking-widest text-primary mb-1">
+              {title}
+            </span>
+          )}
+          <span className="block text-foreground/90">{text}</span>
+        </span>
+        <span className="block w-2 h-2 bg-popover border-r border-b border-primary/40 rotate-45 mx-auto -mt-1" />
+      </span>
     </span>
   );
 }
+
+// Wrapper para labels de campos com ajuda
+function FieldLabel({ children, help, helpTitle }: { children: React.ReactNode; help?: string; helpTitle?: string }) {
+  return (
+    <label className="text-[10px] uppercase tracking-widest text-muted-foreground inline-flex items-center gap-1.5">
+      <span>{children}</span>
+      {help && <Help text={help} title={helpTitle} />}
+    </label>
+  );
+}
+
 
 
 // =============================================================
