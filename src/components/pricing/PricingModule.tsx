@@ -679,18 +679,55 @@ function ToggleActive({ value, onChange }: { value: boolean; onChange: (v: boole
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={value}
       onClick={() => onChange(!value)}
-      className={`h-5 w-9 rounded-full transition-colors relative ${value ? "bg-primary" : "bg-sidebar-border"}`}
-      title={value ? "Ativo" : "Inativo"}
+      title={value ? "Ativo — clique para desativar" : "Inativo — clique para ativar"}
+      className={`group relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+        value
+          ? "bg-primary/90 border-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
+          : "bg-internal-20 border-sidebar-border hover:border-muted-foreground"
+      }`}
     >
       <span
-        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-          value ? "translate-x-4" : "translate-x-0.5"
+        className={`absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-200 ${
+          value ? "left-[calc(100%-1.125rem)]" : "left-[2px]"
         }`}
       />
     </button>
   );
 }
+
+// Texto de ajuda contextual para itens de custo/taxa/imposto pelo nome
+function describeItem(name: string, kind: "cost" | "fee" | "tax"): { title: string; text: string } {
+  const n = (name || "").toLowerCase().trim();
+  const dict: Record<string, { title: string; text: string }> = {
+    "custo do produto": { title: "Custo do Produto", text: "Quanto você paga ao fornecedor por unidade. Base de toda a precificação." },
+    "frete": { title: "Frete", text: "Custo logístico por unidade (fornecedor até você ou você até o cliente, se grátis para o comprador)." },
+    "embalagem": { title: "Embalagem", text: "Caixa, plástico-bolha, fita, etiqueta — tudo que protege o produto no envio." },
+    "armazenagem": { title: "Armazenagem", text: "Aluguel/galpão/fulfillment rateado por unidade vendida." },
+    "operacional": { title: "Operacional", text: "Pró-labore, conta de luz, internet, sistema — custos fixos do negócio rateados." },
+    "marketing": { title: "Marketing", text: "Anúncios e tráfego pago. Costuma ser um % do preço, varia conforme campanha." },
+    "marketplace": { title: "Comissão Marketplace", text: "Percentual cobrado por Mercado Livre, Shopee, Amazon etc. Varia por categoria." },
+    "cartão": { title: "Taxa do Cartão", text: "Taxa da maquininha/gateway por venda no cartão. Geralmente 2-5%." },
+    "gateway": { title: "Gateway de Pagamento", text: "Taxa do processador (Stripe, Pagar.me, Asaas, etc.) por transação." },
+    "simples": { title: "Simples Nacional", text: "Alíquota do Simples sobre o faturamento. Confira sua faixa atual no DAS." },
+    "icms": { title: "ICMS", text: "Imposto estadual sobre circulação de mercadorias. Varia por estado/produto." },
+    "iss": { title: "ISS", text: "Imposto municipal sobre serviços. 2 a 5% normalmente." },
+    "pis": { title: "PIS", text: "Contribuição federal. 0,65% no lucro presumido, 1,65% no lucro real." },
+    "cofins": { title: "COFINS", text: "Contribuição federal. 3% no lucro presumido, 7,6% no lucro real." },
+  };
+  for (const key of Object.keys(dict)) {
+    if (n.includes(key)) return dict[key];
+  }
+  const fallback = {
+    cost: { title: name || "Custo personalizado", text: "Custo adicional por unidade. Use R$ para valor fixo ou % para custos proporcionais ao preço." },
+    fee: { title: name || "Taxa personalizada", text: "Comissão ou taxa percentual cobrada sobre o preço de venda." },
+    tax: { title: name || "Imposto personalizado", text: "Tributo percentual incidente sobre a venda." },
+  };
+  return fallback[kind];
+}
+
 
 // =============================================================
 // PROMOÇÃO
