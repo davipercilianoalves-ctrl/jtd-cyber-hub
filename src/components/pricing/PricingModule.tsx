@@ -201,37 +201,69 @@ function Help({ text, title }: { text: string; title?: string }) {
     const el = triggerRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const tooltipWidth = Math.min(288, window.innerWidth - 24);
-    const tooltipHeight = 124;
-    const gap = 12;
-    const margin = 12;
+    
+    // Dimensões estimadas do tooltip para cálculo
+    const tooltipWidth = Math.min(280, window.innerWidth - 32);
+    const tooltipHeight = 110; 
+    const gap = 8; // Distância menor para ficar mais "colado"
+    const margin = 16;
+    
     const spaceRight = window.innerWidth - r.right;
     const spaceLeft = r.left;
-    const placement: "right" | "left" | "top" | "bottom" =
-      spaceRight >= tooltipWidth + gap + margin
-        ? "right"
-        : spaceLeft >= tooltipWidth + gap + margin
-        ? "left"
-        : window.innerHeight - r.bottom >= tooltipHeight + gap + margin
-        ? "bottom"
-        : "top";
+    const spaceBottom = window.innerHeight - r.bottom;
+    const spaceTop = r.top;
 
-    const rawLeft =
-      placement === "right"
-        ? r.right + gap
-        : placement === "left"
-        ? r.left - tooltipWidth - gap
-        : r.left + r.width / 2 - tooltipWidth / 2;
-    const rawTop =
-      placement === "right" || placement === "left"
-        ? r.top + r.height / 2 - tooltipHeight / 2
-        : placement === "bottom"
-        ? r.bottom + gap
-        : r.top - tooltipHeight - gap;
-    const left = Math.max(margin, Math.min(window.innerWidth - tooltipWidth - margin, rawLeft));
-    const top = Math.max(margin, Math.min(window.innerHeight - tooltipHeight - margin, rawTop));
-    const arrowLeft = Math.max(14, Math.min(tooltipWidth - 14, r.left + r.width / 2 - left));
-    const arrowTop = Math.max(14, Math.min(tooltipHeight - 14, r.top + r.height / 2 - top));
+    // Lógica de posicionamento: Prioridade Direita -> Esquerda -> Topo -> Baixo
+    let placement: "right" | "left" | "top" | "bottom" = "right";
+    
+    if (spaceRight >= tooltipWidth + gap + margin) {
+      placement = "right";
+    } else if (spaceLeft >= tooltipWidth + gap + margin) {
+      placement = "left";
+    } else if (spaceTop >= tooltipHeight + gap + margin) {
+      placement = "top";
+    } else {
+      placement = "bottom";
+    }
+
+    let top = 0;
+    let left = 0;
+    let arrowTop = 0;
+    let arrowLeft = 0;
+
+    if (placement === "right") {
+      left = r.right + gap;
+      top = r.top + r.height / 2 - tooltipHeight / 2;
+      arrowLeft = -5;
+      arrowTop = tooltipHeight / 2 - 5;
+    } else if (placement === "left") {
+      left = r.left - tooltipWidth - gap;
+      top = r.top + r.height / 2 - tooltipHeight / 2;
+      arrowLeft = tooltipWidth - 5;
+      arrowTop = tooltipHeight / 2 - 5;
+    } else if (placement === "top") {
+      left = r.left + r.width / 2 - tooltipWidth / 2;
+      top = r.top - tooltipHeight - gap;
+      arrowLeft = tooltipWidth / 2 - 5;
+      arrowTop = tooltipHeight - 5;
+    } else {
+      left = r.left + r.width / 2 - tooltipWidth / 2;
+      top = r.bottom + gap;
+      arrowLeft = tooltipWidth / 2 - 5;
+      arrowTop = -5;
+    }
+
+    // Ajustes de borda da tela
+    left = Math.max(margin, Math.min(window.innerWidth - tooltipWidth - margin, left));
+    top = Math.max(margin, Math.min(window.innerHeight - tooltipHeight - margin, top));
+
+    // Recalcula posição da seta relativa ao trigger real após ajuste de borda
+    if (placement === "right" || placement === "left") {
+      arrowTop = Math.max(12, Math.min(tooltipHeight - 12, r.top + r.height / 2 - top - 5));
+    } else {
+      arrowLeft = Math.max(12, Math.min(tooltipWidth - 12, r.left + r.width / 2 - left - 5));
+    }
+
     setCoords({ top, left, width: tooltipWidth, arrowLeft, arrowTop, placement });
     setOpen(true);
   };
@@ -248,39 +280,44 @@ function Help({ text, title }: { text: string; title?: string }) {
         onMouseLeave={hide}
         onFocus={show}
         onBlur={hide}
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-primary/25 bg-primary/10 text-primary/85 hover:text-primary hover:bg-primary/20 hover:border-primary/50 cursor-help transition-all focus:outline-none focus:ring-2 focus:ring-primary/35 align-middle shadow-sm"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-primary/20 bg-primary/5 text-primary/70 hover:text-primary hover:bg-primary/15 hover:border-primary/40 cursor-help transition-all focus:outline-none focus:ring-2 focus:ring-primary/25 align-middle shadow-sm"
       >
-        <Info size={12} />
+        <Info size={11} />
       </span>
       {open && coords && (
         <div
           role="tooltip"
-          style={{ position: "fixed", top: coords.top, left: coords.left, width: coords.width }}
-          className="z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-150"
+          style={{ 
+            position: "fixed", 
+            top: coords.top, 
+            left: coords.left, 
+            width: coords.width,
+            zIndex: 99999,
+          }}
+          className="pointer-events-none animate-in fade-in zoom-in-95 duration-200"
         >
+          {/* Arrow */}
           <div
-            style={
-              coords.placement === "right" || coords.placement === "left"
-                ? { top: coords.arrowTop }
-                : { left: coords.arrowLeft }
-            }
-            className={`absolute h-2.5 w-2.5 rotate-45 border-primary/45 bg-popover ${
-              coords.placement === "right"
-                ? "-left-1 border-l border-b"
-                : coords.placement === "left"
-                ? "-right-1 border-r border-t"
-                : coords.placement === "bottom"
-                ? "-top-1 border-l border-t"
-                : "-bottom-1 border-r border-b"
+            style={{ 
+              top: coords.arrowTop, 
+              left: coords.arrowLeft,
+              position: "absolute"
+            }}
+            className={`h-2.5 w-2.5 rotate-45 bg-popover border-primary/30 ${
+              coords.placement === "right" ? "border-l border-b" :
+              coords.placement === "left" ? "border-r border-t" :
+              coords.placement === "top" ? "border-r border-b" :
+              "border-l border-t"
             }`}
           />
-          <div className="rounded-lg border border-primary/45 bg-popover text-popover-foreground shadow-2xl shadow-primary/10 p-3.5 text-[11px] leading-relaxed ring-1 ring-primary/10">
+          {/* Content */}
+          <div className="relative rounded-lg border border-primary/30 bg-popover/95 backdrop-blur-sm text-popover-foreground shadow-xl p-3 text-[11px] leading-relaxed ring-1 ring-primary/5">
             {title && (
-              <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1.5">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-primary/90 mb-1">
                 {title}
               </div>
             )}
-            <div className="text-foreground/90">{text}</div>
+            <div className="text-foreground/90 font-medium">{text}</div>
           </div>
         </div>
       )}
