@@ -153,7 +153,14 @@
   --bg-internal-w5: hsl(var(--muted) / 0.2);
   --bg-internal-w03: hsl(var(--muted) / 0.1);
   --bg-internal-w04: hsl(var(--muted) / 0.15);
+
+  /* Mudança na cor de seleção de texto para o tema Light (Arctic Cyber) */
+  ::selection {
+    background-color: var(--cyan);
+    color: #FFFFFF;
+  }
 }
+
 
 @layer base {
   * {
@@ -167,6 +174,13 @@
     -webkit-font-smoothing: antialiased;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
+
+  /* Mudança na cor de seleção de texto (Acid Cyber / Dark) */
+  ::selection {
+    background-color: var(--magenta);
+    color: #FFFFFF;
+  }
+
 
   /* Tipografia numérica */
   .font-mono, code, kbd, pre, samp, [data-numeric] {
