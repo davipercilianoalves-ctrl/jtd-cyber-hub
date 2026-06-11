@@ -901,37 +901,58 @@ function PromoTab({
       )}
 
       {/* Objetivo de Lucro */}
-      <div className="rounded-xl border border-sidebar-border bg-gradient-to-b from-internal-w04 to-internal-w04/40 p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
-            <Target size={15} className="text-primary" />
+      <div className="relative overflow-hidden rounded-xl border border-primary/25 bg-gradient-to-br from-primary/8 via-internal-w04 to-internal-w04/30 p-5 space-y-5">
+        <div className="absolute -top-16 -left-16 w-48 h-48 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -right-10 w-40 h-40 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+
+        <div className="relative flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/40 flex items-center justify-center shadow-[0_0_20px_-4px_hsl(var(--primary)/0.4)]">
+            <Target size={17} className="text-primary" />
           </div>
-          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Objetivo de Lucro</h4>
+          <div className="flex-1">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Objetivo de Lucro</h4>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Defina como o sistema deve calcular seu preço ideal</p>
+          </div>
         </div>
-        <div className="grid md:grid-cols-3 gap-2">
+
+        {/* Seletor de modo — segmented control */}
+        <div className="relative grid grid-cols-3 gap-1 p-1 rounded-xl border border-sidebar-border bg-background/60 backdrop-blur-sm">
           {(
             [
-              { mode: "marginPct", label: "Margem (%)" },
-              { mode: "profitPct", label: "Lucro (%)" },
-              { mode: "profitBRL", label: "Lucro (R$)" },
+              { mode: "marginPct", label: "Margem", suffix: "%", icon: Percent, desc: "Lucro sobre o preço" },
+              { mode: "profitPct", label: "Lucro", suffix: "%", icon: TrendingUp, desc: "% sobre o preço" },
+              { mode: "profitBRL", label: "Lucro", suffix: "R$", icon: DollarSign, desc: "Valor fixo por unidade" },
             ] as const
-          ).map((opt) => (
-            <button
-              key={opt.mode}
-              type="button"
-              onClick={() => patch({ goal: { ...value.goal, mode: opt.mode } })}
-              className={`relative p-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all overflow-hidden ${
-                value.goal.mode === opt.mode
-                  ? "border-primary bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.3)]"
-                  : "border-sidebar-border bg-background/30 text-muted-foreground hover:text-foreground hover:border-primary/40"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+          ).map((opt) => {
+            const active = value.goal.mode === opt.mode;
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.mode}
+                type="button"
+                onClick={() => patch({ goal: { ...value.goal, mode: opt.mode } })}
+                className={`group relative px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                  active
+                    ? "bg-gradient-to-b from-primary/25 to-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.4),0_4px_16px_-4px_hsl(var(--primary)/0.4)]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1.5">
+                  <Icon size={13} className={active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider">{opt.label}</span>
+                  <span className={`text-[10px] font-mono ${active ? "text-primary/70" : "text-muted-foreground/60"}`}>({opt.suffix})</span>
+                </div>
+                <div className={`text-[9px] mt-0.5 uppercase tracking-wider ${active ? "text-primary/70" : "text-muted-foreground/50"}`}>
+                  {opt.desc}
+                </div>
+              </button>
+            );
+          })}
         </div>
+
+        {/* Campos */}
         <div className="grid md:grid-cols-2 gap-3">
-          <div>
+          <div className="group relative rounded-xl border border-primary/30 bg-background/40 p-3 hover:border-primary/60 transition-colors">
             <FieldLabel
               helpTitle={`Valor desejado ${value.goal.mode === "profitBRL" ? "(R$)" : "(%)"}`}
               help={
@@ -942,32 +963,48 @@ function PromoTab({
                   : "Lucro absoluto em reais por unidade vendida. Útil quando você sabe quanto quer ganhar fixo por venda."
               }
             >
-              Valor desejado {value.goal.mode === "profitBRL" ? "(R$)" : "(%)"}
+              <span className="flex items-center gap-1.5">
+                <Target size={11} className="text-primary" />
+                Valor desejado
+              </span>
             </FieldLabel>
-            <input
-              type="number"
-              step="0.01"
-              value={value.goal.value || ""}
-              onChange={(e) => patch({ goal: { ...value.goal, value: parseFloat(e.target.value) || 0 } })}
-              className={`${cellNumCls} mt-1`}
-            />
+            <div className="relative mt-1.5">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-primary/60 pointer-events-none">
+                {value.goal.mode === "profitBRL" ? "R$" : "%"}
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                value={value.goal.value || ""}
+                onChange={(e) => patch({ goal: { ...value.goal, value: parseFloat(e.target.value) || 0 } })}
+                className={`${cellNumCls} pl-9 text-base font-bold text-primary`}
+              />
+            </div>
           </div>
-          <div>
+
+          <div className="group relative rounded-xl border border-yellow-500/25 bg-background/40 p-3 hover:border-yellow-500/50 transition-colors">
             <FieldLabel
               helpTitle="Margem mínima de alerta"
               help="Se a margem líquida calculada ficar abaixo deste valor, o sistema mostra um alerta amarelo. Não bloqueia a venda — apenas avisa."
             >
-              Margem mínima de alerta (%)
+              <span className="flex items-center gap-1.5">
+                <AlertTriangle size={11} className="text-yellow-400" />
+                Margem mínima de alerta
+              </span>
             </FieldLabel>
-            <input
-              type="number"
-              step="0.1"
-              value={value.minMarginPct || ""}
-              onChange={(e) => patch({ minMarginPct: parseFloat(e.target.value) || 0 })}
-              className={`${cellNumCls} mt-1`}
-            />
+            <div className="relative mt-1.5">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-yellow-400/60 pointer-events-none">%</span>
+              <input
+                type="number"
+                step="0.1"
+                value={value.minMarginPct || ""}
+                onChange={(e) => patch({ minMarginPct: parseFloat(e.target.value) || 0 })}
+                className={`${cellNumCls} pl-9 text-base font-bold text-yellow-400`}
+              />
+            </div>
           </div>
         </div>
+
       </div>
 
       {/* Estratégia Promocional */}
