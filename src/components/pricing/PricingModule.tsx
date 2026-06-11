@@ -174,7 +174,7 @@ export default function PricingModule({ value, onChange, competitorPrices = [] }
       {tab === "costs" && <CostsTab value={value} patch={patch} />}
       {tab === "feestax" && <FeesTaxesTab value={value} patch={patch} />}
       {tab === "promo" && <PromoTab value={value} patch={patch} result={result} competitorStats={competitorStats} />}
-      {tab === "scenarios" && <ScenariosTab value={value} patch={patch} />}
+      {tab === "scenarios" && <ScenariosTab value={value} patch={patch} result={result} competitorStats={competitorStats} />}
       {tab === "report" && <ReportTab value={value} result={result} />}
       {tab === "guide" && <GuideTab />}
     </section>
@@ -864,33 +864,50 @@ function PromoTab({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Sugestões com base nos concorrentes */}
       {competitorStats && (
-        <div className="rounded border border-primary/30 bg-primary/5 p-4 space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-            <Users size={14} className="text-primary" /> Sugestões com base nos concorrentes
-          </h4>
-          <p className="text-xs text-muted-foreground">
-            Use um destes valores como Preço Vitrine — o desconto exibido será calculado automaticamente para voltar ao seu preço ideal.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => suggestShowcase(competitorStats.max)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
-              = Maior ({fmtBRL(competitorStats.max)})
-            </button>
-            <button type="button" onClick={() => suggestShowcase(competitorStats.avg)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
-              = Médio ({fmtBRL(competitorStats.avg)})
-            </button>
-            <button type="button" onClick={() => suggestShowcase(competitorStats.max * 1.05)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
-              +5% acima do maior
-            </button>
+        <div className="relative overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5">
+          <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+          <div className="relative space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+                <Users size={15} className="text-primary" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Sugestões de Vitrine</h4>
+                <p className="text-[11px] text-muted-foreground">Baseadas nos preços dos seus concorrentes</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground/90 leading-relaxed">
+              Clique para usar como <strong className="text-foreground">Preço Vitrine</strong> — o desconto exibido é recalculado para voltar ao seu preço ideal.
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button type="button" onClick={() => suggestShowcase(competitorStats.max)} className="group px-3 py-1.5 rounded-lg border border-primary/40 bg-background/40 hover:bg-primary/15 hover:border-primary transition-all text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-hover:text-primary">= Maior</span>
+                <span className="font-mono text-primary">{fmtBRL(competitorStats.max)}</span>
+              </button>
+              <button type="button" onClick={() => suggestShowcase(competitorStats.avg)} className="group px-3 py-1.5 rounded-lg border border-primary/40 bg-background/40 hover:bg-primary/15 hover:border-primary transition-all text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-hover:text-primary">= Médio</span>
+                <span className="font-mono text-primary">{fmtBRL(competitorStats.avg)}</span>
+              </button>
+              <button type="button" onClick={() => suggestShowcase(competitorStats.max * 1.05)} className="group px-3 py-1.5 rounded-lg border border-primary/40 bg-background/40 hover:bg-primary/15 hover:border-primary transition-all text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-hover:text-primary">+5% acima</span>
+                <span className="font-mono text-primary">{fmtBRL(competitorStats.max * 1.05)}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-4">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-          <Target size={14} className="text-primary" /> Objetivo de Lucro
-        </h4>
+      {/* Objetivo de Lucro */}
+      <div className="rounded-xl border border-sidebar-border bg-gradient-to-b from-internal-w04 to-internal-w04/40 p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+            <Target size={15} className="text-primary" />
+          </div>
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Objetivo de Lucro</h4>
+        </div>
         <div className="grid md:grid-cols-3 gap-2">
           {(
             [
@@ -903,10 +920,10 @@ function PromoTab({
               key={opt.mode}
               type="button"
               onClick={() => patch({ goal: { ...value.goal, mode: opt.mode } })}
-              className={`p-2 rounded border text-xs font-bold uppercase tracking-wider transition-all ${
+              className={`relative p-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all overflow-hidden ${
                 value.goal.mode === opt.mode
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-sidebar-border text-muted-foreground hover:text-foreground"
+                  ? "border-primary bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.3)]"
+                  : "border-sidebar-border bg-background/30 text-muted-foreground hover:text-foreground hover:border-primary/40"
               }`}
             >
               {opt.label}
@@ -953,14 +970,33 @@ function PromoTab({
         </div>
       </div>
 
-      <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-4">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-          <Sparkles size={14} className="text-primary" /> Estratégia Promocional
-        </h4>
-        <p className="text-xs text-muted-foreground">
-          O preço final volta exatamente ao preço real. O desconto exibido é calculado matematicamente — nunca
-          igual ao aumento.
-        </p>
+      {/* Estratégia Promocional */}
+      <div className="rounded-xl border border-sidebar-border bg-gradient-to-b from-internal-w04 to-internal-w04/40 p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+            <Sparkles size={15} className="text-primary" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Estratégia Promocional</h4>
+            <p className="text-[11px] text-muted-foreground">
+              Preço final volta ao real. Desconto exibido nunca é igual ao aumento.
+            </p>
+          </div>
+        </div>
+
+        {/* Fluxo visual */}
+        <div className="hidden md:flex items-center justify-between gap-2 px-2 py-3 rounded-lg bg-background/40 border border-sidebar-border/50">
+          <FlowStep label="Real" value={fmtBRL(result.idealPrice)} tone="primary" />
+          <FlowArrow />
+          <FlowStep label="× Aumento" value={`+${value.promo.strategicMarkupPct || 0}%`} tone="muted" />
+          <FlowArrow />
+          <FlowStep label="Vitrine" value={fmtBRL(result.showcasePrice)} tone="default" />
+          <FlowArrow />
+          <FlowStep label="− Desconto" value={fmtPct(result.promoDiscountPct)} tone="good" />
+          <FlowArrow />
+          <FlowStep label="Final" value={fmtBRL(result.promoFinalPrice)} tone="primary" />
+        </div>
+
         <div className="grid md:grid-cols-5 gap-3">
           <PromoField label="Preço Real" value={fmtBRL(result.idealPrice)} readOnly tone="primary" help="Seu preço ideal calculado. É o que você efetivamente recebe — a vitrine só infla para criar percepção de desconto." />
           <div>
@@ -987,6 +1023,24 @@ function PromoTab({
       </div>
     </div>
   );
+}
+
+function FlowStep({ label, value, tone }: { label: string; value: string; tone: "primary" | "good" | "muted" | "default" }) {
+  const color =
+    tone === "primary" ? "text-primary"
+    : tone === "good" ? "text-lime-400"
+    : tone === "muted" ? "text-muted-foreground"
+    : "text-foreground";
+  return (
+    <div className="flex flex-col items-center min-w-0 flex-1">
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className={`font-mono font-bold text-xs ${color} truncate`}>{value}</div>
+    </div>
+  );
+}
+
+function FlowArrow() {
+  return <ChevronRight size={14} className="text-muted-foreground/50 shrink-0" />;
 }
 
 
@@ -1028,9 +1082,13 @@ function PromoField({
 function ScenariosTab({
   value,
   patch,
+  result,
+  competitorStats,
 }: {
   value: PricingState;
   patch: (p: Partial<PricingState>) => void;
+  result: PricingResult;
+  competitorStats: CompetitorStats;
 }) {
   const updateScenario = (idx: number, change: Partial<PricingState>) => {
     const next = [...value.scenarios];
@@ -1038,72 +1096,214 @@ function ScenariosTab({
     patch({ scenarios: next });
   };
 
-  return (
-    <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Compare 3 cenários alterando taxas, impostos ou lucro. Os custos fixos são herdados.
-      </p>
-      <div className="grid md:grid-cols-3 gap-3">
-        {value.scenarios.map((s, idx) => {
-          const merged = applyScenario(value, s.overrides);
-          const res = computePricing(merged);
-          const feeOverride =
-            s.overrides.fees?.reduce((sum, f) => (f.active ? sum + f.value : sum), 0) ??
-            value.fees.filter((f) => f.active).reduce((sum, f) => sum + f.value, 0);
-          const taxOverride =
-            s.overrides.taxes?.reduce((sum, t) => (t.active ? sum + t.value : sum), 0) ??
-            value.taxes.filter((t) => t.active).reduce((sum, t) => sum + t.value, 0);
-          const goalOverride = s.overrides.goal?.value ?? value.goal.value;
+  // Simula vender a um preço fixo P, mantendo custos/taxas/impostos atuais.
+  const simulateAtPrice = (price: number) => {
+    const costFixed = result.costFixedTotal;
+    const variableCost = price * (result.costPctTotal + result.feePctTotal + result.taxPctTotal);
+    const profit = price - costFixed - variableCost;
+    const margin = price > 0 ? (profit / price) * 100 : 0;
+    const fees = price * result.feePctTotal;
+    const taxes = price * result.taxPctTotal;
+    const belowMin = price < result.minPrice;
+    return { price, profit, margin, fees, taxes, belowMin };
+  };
 
-          return (
-            <div key={s.id} className="rounded border border-sidebar-border bg-internal-w04 p-3 space-y-3">
-              <input
-                value={s.name}
-                onChange={(e) => {
-                  const next = [...value.scenarios];
-                  next[idx] = { ...next[idx], name: e.target.value };
-                  patch({ scenarios: next });
-                }}
-                className={`${inputCls} font-bold`}
-              />
-              <ScenarioRow
-                label="Σ Taxas (%)"
-                value={feeOverride}
-                onChange={(v) =>
-                  updateScenario(idx, {
-                    fees: value.fees.map((f, i) =>
-                      i === 0 ? { ...f, value: v } : { ...f, value: 0 }
-                    ),
-                  })
-                }
-              />
-              <ScenarioRow
-                label="Σ Impostos (%)"
-                value={taxOverride}
-                onChange={(v) =>
-                  updateScenario(idx, {
-                    taxes: value.taxes.map((t, i) =>
-                      i === 0 ? { ...t, value: v } : { ...t, value: 0 }
-                    ),
-                  })
-                }
-              />
-              <ScenarioRow
-                label={value.goal.mode === "profitBRL" ? "Lucro (R$)" : "Lucro (%)"}
-                value={goalOverride}
-                onChange={(v) =>
-                  updateScenario(idx, { goal: { ...value.goal, value: v } })
-                }
-              />
-              <div className="pt-2 border-t border-sidebar-border/30 space-y-1 text-xs">
-                <RowKV k="Preço" v={fmtBRL(res.idealPrice)} accent="primary" />
-                <RowKV k="Lucro" v={fmtBRL(res.profitBRL)} accent={res.profitBRL >= 0 ? "good" : "bad"} />
-                <RowKV k="Margem" v={fmtPct(res.netMarginPct)} accent="good" />
-              </div>
+  const competitorScenarios = competitorStats
+    ? [
+        {
+          key: "min",
+          title: "Preço Mínimo",
+          subtitle: "Menor preço do mercado",
+          description: "O mínimo que dá pra cobrar antes de ficar abaixo dos concorrentes.",
+          tone: "good" as const,
+          icon: TrendingDown,
+          sim: simulateAtPrice(competitorStats.min),
+        },
+        {
+          key: "avg",
+          title: "Preço Médio",
+          subtitle: "Média dos concorrentes",
+          description: "Posicionamento equilibrado, alinhado ao mercado.",
+          tone: "primary" as const,
+          icon: BarChart3,
+          sim: simulateAtPrice(competitorStats.avg),
+        },
+        {
+          key: "max",
+          title: "Preço Máximo",
+          subtitle: "Maior preço do mercado",
+          description: "Teto que o mercado aceita. Acima disso, risco de não vender.",
+          tone: "warn" as const,
+          icon: TrendingUp,
+          sim: simulateAtPrice(competitorStats.max),
+        },
+      ]
+    : [];
+
+  return (
+    <div className="space-y-6">
+      {/* Cenários de mercado — baseados em concorrentes */}
+      {competitorStats ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+              <Users size={15} className="text-primary" />
             </div>
-          );
-        })}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Cenários de Mercado</h4>
+              <p className="text-[11px] text-muted-foreground">Simulação de lucro vendendo aos preços dos concorrentes ({competitorStats.count} cadastrados)</p>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-3">
+            {competitorScenarios.map((sc) => (
+              <MarketScenarioCard key={sc.key} title={sc.title} subtitle={sc.subtitle} description={sc.description} tone={sc.tone} icon={sc.icon} sim={sc.sim} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-sidebar-border p-6 text-center space-y-2">
+          <Users size={28} className="mx-auto text-muted-foreground/50" />
+          <p className="text-xs text-muted-foreground">
+            Cadastre concorrentes em <strong className="text-foreground">Análise de Concorrentes</strong> para ver simulações automáticas de preço mínimo, médio e máximo do mercado.
+          </p>
+        </div>
+      )}
+
+      {/* Cenários personalizados */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+            <Calculator size={15} className="text-primary" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Cenários Personalizados</h4>
+            <p className="text-[11px] text-muted-foreground">Compare 3 cenários alterando taxas, impostos ou lucro. Custos fixos herdados.</p>
+          </div>
+        </div>
+        <div className="grid md:grid-cols-3 gap-3">
+          {value.scenarios.map((s, idx) => {
+            const merged = applyScenario(value, s.overrides);
+            const res = computePricing(merged);
+            const feeOverride =
+              s.overrides.fees?.reduce((sum, f) => (f.active ? sum + f.value : sum), 0) ??
+              value.fees.filter((f) => f.active).reduce((sum, f) => sum + f.value, 0);
+            const taxOverride =
+              s.overrides.taxes?.reduce((sum, t) => (t.active ? sum + t.value : sum), 0) ??
+              value.taxes.filter((t) => t.active).reduce((sum, t) => sum + t.value, 0);
+            const goalOverride = s.overrides.goal?.value ?? value.goal.value;
+
+            return (
+              <div key={s.id} className="rounded-xl border border-sidebar-border bg-gradient-to-b from-internal-w04 to-internal-w04/40 p-4 space-y-3 hover:border-primary/40 transition-colors">
+                <input
+                  value={s.name}
+                  onChange={(e) => {
+                    const next = [...value.scenarios];
+                    next[idx] = { ...next[idx], name: e.target.value };
+                    patch({ scenarios: next });
+                  }}
+                  className={`${inputCls} font-bold`}
+                />
+                <ScenarioRow
+                  label="Σ Taxas (%)"
+                  value={feeOverride}
+                  onChange={(v) =>
+                    updateScenario(idx, {
+                      fees: value.fees.map((f, i) =>
+                        i === 0 ? { ...f, value: v } : { ...f, value: 0 }
+                      ),
+                    })
+                  }
+                />
+                <ScenarioRow
+                  label="Σ Impostos (%)"
+                  value={taxOverride}
+                  onChange={(v) =>
+                    updateScenario(idx, {
+                      taxes: value.taxes.map((t, i) =>
+                        i === 0 ? { ...t, value: v } : { ...t, value: 0 }
+                      ),
+                    })
+                  }
+                />
+                <ScenarioRow
+                  label={value.goal.mode === "profitBRL" ? "Lucro (R$)" : "Lucro (%)"}
+                  value={goalOverride}
+                  onChange={(v) =>
+                    updateScenario(idx, { goal: { ...value.goal, value: v } })
+                  }
+                />
+                <div className="pt-3 border-t border-sidebar-border/30 space-y-1 text-xs">
+                  <RowKV k="Preço" v={fmtBRL(res.idealPrice)} accent="primary" />
+                  <RowKV k="Lucro" v={fmtBRL(res.profitBRL)} accent={res.profitBRL >= 0 ? "good" : "bad"} />
+                  <RowKV k="Margem" v={fmtPct(res.netMarginPct)} accent="good" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
+    </div>
+  );
+}
+
+function MarketScenarioCard({
+  title,
+  subtitle,
+  description,
+  tone,
+  icon: Icon,
+  sim,
+}: {
+  title: string;
+  subtitle: string;
+  description: string;
+  tone: "good" | "primary" | "warn";
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  sim: { price: number; profit: number; margin: number; fees: number; taxes: number; belowMin: boolean };
+}) {
+  const styles = {
+    good: { border: "border-lime-500/40", glow: "from-lime-500/10", chip: "bg-lime-500/15 border-lime-500/40 text-lime-400", accent: "text-lime-400" },
+    primary: { border: "border-primary/40", glow: "from-primary/10", chip: "bg-primary/15 border-primary/40 text-primary", accent: "text-primary" },
+    warn: { border: "border-yellow-500/40", glow: "from-yellow-500/10", chip: "bg-yellow-500/15 border-yellow-500/40 text-yellow-400", accent: "text-yellow-400" },
+  }[tone];
+
+  const profitable = sim.profit > 0 && !sim.belowMin;
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl border ${styles.border} bg-gradient-to-b ${styles.glow} to-transparent p-4 space-y-3 hover:scale-[1.01] transition-transform`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <div className={`w-7 h-7 rounded-lg border flex items-center justify-center ${styles.chip}`}>
+              <Icon size={13} className={styles.accent} />
+            </div>
+            <h5 className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</h5>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1.5">{subtitle}</p>
+        </div>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground/80 italic leading-snug">{description}</p>
+
+      <div className="rounded-lg bg-background/40 border border-sidebar-border/50 p-3">
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Preço de venda</div>
+        <div className={`font-mono font-bold text-2xl ${styles.accent}`}>{fmtBRL(sim.price)}</div>
+      </div>
+
+      <div className="space-y-1 text-xs">
+        <RowKV k="Taxas" v={fmtBRL(sim.fees)} />
+        <RowKV k="Impostos" v={fmtBRL(sim.taxes)} />
+        <div className="border-t border-sidebar-border/30 my-1.5" />
+        <RowKV k="Lucro / un." v={fmtBRL(sim.profit)} accent={profitable ? "good" : "bad"} />
+        <RowKV k="Margem" v={fmtPct(sim.margin)} accent={profitable ? "good" : "bad"} />
+      </div>
+
+      {sim.belowMin && (
+        <div className="flex items-start gap-1.5 rounded-md bg-red-500/10 border border-red-500/30 px-2 py-1.5 text-[10px] text-red-400">
+          <AlertTriangle size={11} className="shrink-0 mt-0.5" />
+          <span>Abaixo do seu preço mínimo. Vender aqui dá prejuízo.</span>
+        </div>
+      )}
     </div>
   );
 }
