@@ -291,7 +291,10 @@ function SummaryTab({
                 : "border-sidebar-border bg-internal-w04"
             }`}
           >
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{c.label}</div>
+            <div className="flex items-center justify-between gap-1">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{c.label}</div>
+              <Help text={c.help} />
+            </div>
             <div
               className={`mt-1 font-mono font-bold text-base ${
                 c.accent === "primary"
@@ -308,6 +311,47 @@ function SummaryTab({
           </div>
         ))}
       </div>
+
+      {competitorStats && positioning && (
+        <div
+          className={`rounded border p-4 ${
+            positioning.tone === "good"
+              ? "border-lime-500/40 bg-lime-500/5"
+              : positioning.tone === "warn"
+              ? "border-yellow-500/40 bg-yellow-500/10"
+              : "border-red-500/40 bg-red-500/10"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+              <Users size={14} className="text-primary" /> Posicionamento vs Concorrentes
+            </h4>
+            <span
+              className={`text-[11px] font-bold uppercase ${
+                positioning.tone === "good"
+                  ? "text-lime-400"
+                  : positioning.tone === "warn"
+                  ? "text-yellow-400"
+                  : "text-red-400"
+              }`}
+            >
+              {positioning.label}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <CompactStat label="Menor preço" value={fmtBRL(competitorStats.min)} tone="good" />
+            <CompactStat label="Médio" value={fmtBRL(competitorStats.avg)} />
+            <CompactStat label="Maior" value={fmtBRL(competitorStats.max)} tone="bad" />
+            <CompactStat
+              label="Seu preço vs média"
+              value={`${positioning.diffAvg >= 0 ? "+" : ""}${positioning.diffAvg.toFixed(1)}%`}
+              tone={positioning.tone === "good" ? "good" : positioning.tone === "warn" ? "warn" : "bad"}
+            />
+          </div>
+        </div>
+      )}
+
+
 
       {pieData.length > 0 && (
         <div className="grid md:grid-cols-2 gap-4">
