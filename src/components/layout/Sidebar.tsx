@@ -37,7 +37,7 @@ export function Sidebar() {
   return (
     <aside
       style={{ width: collapsed ? 64 : 220 }}
-      className="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width,background-color] duration-200 h-screen sticky top-0 overflow-hidden"
+      className="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width,background-color] duration-200 h-screen sticky top-0"
     >
       {/* Logo */}
       <div className="flex h-16 items-center px-4 gap-2">
