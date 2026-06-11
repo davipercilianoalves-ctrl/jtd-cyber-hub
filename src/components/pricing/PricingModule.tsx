@@ -14,7 +14,11 @@ import {
   Layers,
   Sparkles,
   Calculator,
+  HelpCircle,
+  Users,
+  Info,
 } from "lucide-react";
+
 import {
   PieChart,
   Pie,
