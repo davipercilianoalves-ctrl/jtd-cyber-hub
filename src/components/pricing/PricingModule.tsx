@@ -184,14 +184,45 @@ export default function PricingModule({ value, onChange, competitorPrices = [] }
 type CompetitorStats = { min: number; max: number; avg: number; median: number; count: number; all: number[] } | null;
 type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: number } | null;
 
-// Tooltip de ajuda inline
-function Help({ text }: { text: string }) {
+// Tooltip de ajuda — caixinha estilizada que aparece no hover
+function Help({ text, title }: { text: string; title?: string }) {
   return (
-    <span title={text} className="inline-flex items-center text-muted-foreground/60 hover:text-primary cursor-help">
-      <Info size={11} />
+    <span className="relative inline-flex items-center group/help align-middle">
+      <span
+        tabIndex={0}
+        aria-label={title || "Ajuda"}
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground/70 hover:text-primary hover:bg-primary/10 cursor-help transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+      >
+        <Info size={11} />
+      </span>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 max-w-[16rem] opacity-0 group-hover/help:opacity-100 group-focus-within/help:opacity-100 transition-opacity duration-150"
+      >
+        <span className="block rounded-md border border-primary/40 bg-popover text-popover-foreground shadow-lg p-3 text-[11px] leading-relaxed">
+          {title && (
+            <span className="block text-[10px] font-bold uppercase tracking-widest text-primary mb-1">
+              {title}
+            </span>
+          )}
+          <span className="block text-foreground/90">{text}</span>
+        </span>
+        <span className="block w-2 h-2 bg-popover border-r border-b border-primary/40 rotate-45 mx-auto -mt-1" />
+      </span>
     </span>
   );
 }
+
+// Wrapper para labels de campos com ajuda
+function FieldLabel({ children, help, helpTitle }: { children: React.ReactNode; help?: string; helpTitle?: string }) {
+  return (
+    <label className="text-[10px] uppercase tracking-widest text-muted-foreground inline-flex items-center gap-1.5">
+      <span>{children}</span>
+      {help && <Help text={help} title={helpTitle} />}
+    </label>
+  );
+}
+
 
 
 // =============================================================
@@ -482,7 +513,17 @@ function PercentList({
   return (
     <div className="rounded border border-sidebar-border bg-internal-w04 p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</h4>
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground inline-flex items-center gap-2">
+          {title}
+          <Help
+            title={title}
+            text={
+              title.toLowerCase().includes("imposto")
+                ? "Tributos sobre venda (ICMS, Simples, PIS, COFINS, ISS). Percentual aplicado sobre o preço final. Quanto maior, maior o preço ideal precisa ser."
+                : "Comissões cobradas no preço final (marketplace, cartão, gateway). Aumentam o preço ideal proporcionalmente."
+            }
+          />
+        </h4>
         <div className="flex items-center gap-3">
           <span className="text-[10px] uppercase text-muted-foreground">
             Total: <span className="text-primary font-bold">{fmtPct(total)}</span>
@@ -492,6 +533,7 @@ function PercentList({
           </button>
         </div>
       </div>
+
       <div className="space-y-1">
         {items.map((i) => (
           <div key={i.id} className="grid grid-cols-[1fr_90px_36px_28px] gap-2 items-center">
@@ -547,11 +589,12 @@ function CostTable({
   return (
     <div className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden">
       <div className="grid grid-cols-[1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
-        <div>Nome</div>
-        <div className="text-center">Tipo</div>
-        <div className="text-right">Valor</div>
-        <div className="text-center">Ativo</div>
+        <div className="inline-flex items-center gap-1.5">Nome <Help title="Nome do custo" text="Identificação do item. Ex: 'Custo do produto', 'Frete fornecedor', 'Embalagem', 'Marketing'." /></div>
+        <div className="text-center inline-flex items-center gap-1.5 justify-center">Tipo <Help title="Tipo de custo" text="R$ = valor fixo (não muda com o preço). % = proporcional ao preço de venda (ex: marketing, royalties)." /></div>
+        <div className="text-right inline-flex items-center gap-1.5 justify-end">Valor <Help title="Valor do custo" text="Quanto este item custa por unidade vendida — em reais ou percentual conforme o tipo escolhido." /></div>
+        <div className="text-center inline-flex items-center gap-1.5 justify-center">Ativo <Help title="Considerar no cálculo" text="Desative para simular sem este custo, sem perder o valor cadastrado." /></div>
         <div></div>
+
       </div>
       <div className="divide-y divide-sidebar-border/30">
         {rows.map((r) => (
@@ -722,9 +765,18 @@ function PromoTab({
         </div>
         <div className="grid md:grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <FieldLabel
+              helpTitle={`Valor desejado ${value.goal.mode === "profitBRL" ? "(R$)" : "(%)"}`}
+              help={
+                value.goal.mode === "marginPct"
+                  ? "Margem líquida alvo. Quanto do preço vira lucro depois de pagar tudo. Ex: 30% → para cada R$100 vendidos, R$30 sobram."
+                  : value.goal.mode === "profitPct"
+                  ? "Percentual de lucro desejado sobre o preço. Empurra o preço ideal pra cima quando você aumenta."
+                  : "Lucro absoluto em reais por unidade vendida. Útil quando você sabe quanto quer ganhar fixo por venda."
+              }
+            >
               Valor desejado {value.goal.mode === "profitBRL" ? "(R$)" : "(%)"}
-            </label>
+            </FieldLabel>
             <input
               type="number"
               step="0.01"
@@ -734,9 +786,12 @@ function PromoTab({
             />
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <FieldLabel
+              helpTitle="Margem mínima de alerta"
+              help="Se a margem líquida calculada ficar abaixo deste valor, o sistema mostra um alerta amarelo. Não bloqueia a venda — apenas avisa."
+            >
               Margem mínima de alerta (%)
-            </label>
+            </FieldLabel>
             <input
               type="number"
               step="0.1"
@@ -757,11 +812,14 @@ function PromoTab({
           igual ao aumento.
         </p>
         <div className="grid md:grid-cols-5 gap-3">
-          <PromoField label="Preço Real" value={fmtBRL(result.idealPrice)} readOnly tone="primary" />
+          <PromoField label="Preço Real" value={fmtBRL(result.idealPrice)} readOnly tone="primary" help="Seu preço ideal calculado. É o que você efetivamente recebe — a vitrine só infla para criar percepção de desconto." />
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <FieldLabel
+              helpTitle="Aumento Estratégico"
+              help="Quanto inflar o preço para criar o 'Preço Vitrine'. Exemplo: 25% gera um desconto exibido de ~20%. O preço final volta ao ideal."
+            >
               Aumento Estratégico (%)
-            </label>
+            </FieldLabel>
             <input
               type="number"
               step="0.1"
@@ -772,29 +830,32 @@ function PromoTab({
               className={`${cellNumCls} mt-1`}
             />
           </div>
-          <PromoField label="Preço Vitrine" value={fmtBRL(result.showcasePrice)} readOnly />
-          <PromoField label="Desconto Exibido" value={fmtPct(result.promoDiscountPct)} readOnly tone="good" />
-          <PromoField label="Preço Final" value={fmtBRL(result.promoFinalPrice)} readOnly tone="primary" />
+          <PromoField label="Preço Vitrine" value={fmtBRL(result.showcasePrice)} readOnly help="Preço inflado mostrado riscado para o cliente. = Preço Real × (1 + Aumento Estratégico)." />
+          <PromoField label="Desconto Exibido" value={fmtPct(result.promoDiscountPct)} readOnly tone="good" help="Desconto percentual exibido na vitrine. Calculado para que (Vitrine − Desconto) volte exatamente ao Preço Real." />
+          <PromoField label="Preço Final" value={fmtBRL(result.promoFinalPrice)} readOnly tone="primary" help="O que o cliente paga e o que você recebe. Igual ao Preço Real — a estratégia é só percepção." />
         </div>
       </div>
     </div>
   );
 }
 
+
 function PromoField({
   label,
   value,
   readOnly,
   tone,
+  help,
 }: {
   label: string;
   value: string;
   readOnly?: boolean;
   tone?: "primary" | "good";
+  help?: string;
 }) {
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</label>
+      <FieldLabel help={help} helpTitle={label}>{label}</FieldLabel>
       <div
         className={`mt-1 h-9 px-2 rounded border bg-internal-20 flex items-center justify-end font-mono text-sm ${
           tone === "primary"
@@ -809,6 +870,7 @@ function PromoField({
     </div>
   );
 }
+
 
 // =============================================================
 // CENÁRIOS
