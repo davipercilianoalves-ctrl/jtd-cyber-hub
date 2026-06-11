@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useLayoutEffect } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -184,7 +184,7 @@ export default function PricingModule({ value, onChange, competitorPrices = [] }
 type CompetitorStats = { min: number; max: number; avg: number; median: number; count: number; all: number[] } | null;
 type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: number } | null;
 
-// Tooltip de ajuda — usa position fixed via JS para ficar junto ao ícone e não ser cortado
+// Tooltip de ajuda — sempre nasce acima do ícone, medindo a caixa real para não ficar distante
 function Help({ text, title }: { text: string; title?: string }) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{
@@ -192,79 +192,62 @@ function Help({ text, title }: { text: string; title?: string }) {
     left: number;
     width: number;
     arrowLeft: number;
-    arrowTop: number;
-    placement: "right" | "left" | "top" | "bottom";
+    placement: "top" | "bottom";
   } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  const positionTooltip = () => {
+    const el = triggerRef.current;
+    const tip = tooltipRef.current;
+    if (!el || !tip) return;
+
+    const r = el.getBoundingClientRect();
+    const width = Math.min(260, window.innerWidth - 24);
+    const height = tip.offsetHeight || 96;
+    const gap = 9;
+    const margin = 10;
+    const centerX = r.left + r.width / 2;
+    const canOpenTop = r.top >= height + gap + margin;
+    const placement: "top" | "bottom" = canOpenTop ? "top" : "bottom";
+    const rawLeft = centerX - width / 2;
+    const left = Math.max(margin, Math.min(window.innerWidth - width - margin, rawLeft));
+    const top = placement === "top" ? r.top - height - gap : r.bottom + gap;
+    const arrowLeft = Math.max(16, Math.min(width - 16, centerX - left));
+
+    setCoords({
+      top: Math.max(margin, Math.min(window.innerHeight - height - margin, top)),
+      left,
+      width,
+      arrowLeft,
+      placement,
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    positionTooltip();
+    window.addEventListener("scroll", positionTooltip, true);
+    window.addEventListener("resize", positionTooltip);
+    return () => {
+      window.removeEventListener("scroll", positionTooltip, true);
+      window.removeEventListener("resize", positionTooltip);
+    };
+  }, [open, text, title]);
 
   const show = () => {
     const el = triggerRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    
-    // Dimensões estimadas do tooltip para cálculo
-    const tooltipWidth = Math.min(280, window.innerWidth - 32);
-    const tooltipHeight = 110; 
-    const gap = 8; // Distância menor para ficar mais "colado"
-    const margin = 16;
-    
-    const spaceRight = window.innerWidth - r.right;
-    const spaceLeft = r.left;
-    const spaceBottom = window.innerHeight - r.bottom;
-    const spaceTop = r.top;
-
-    // Lógica de posicionamento: Prioridade Direita -> Esquerda -> Topo -> Baixo
-    let placement: "right" | "left" | "top" | "bottom" = "right";
-    
-    if (spaceRight >= tooltipWidth + gap + margin) {
-      placement = "right";
-    } else if (spaceLeft >= tooltipWidth + gap + margin) {
-      placement = "left";
-    } else if (spaceTop >= tooltipHeight + gap + margin) {
-      placement = "top";
-    } else {
-      placement = "bottom";
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const width = Math.min(260, window.innerWidth - 24);
+      setCoords({
+        top: Math.max(10, r.top - 102),
+        left: Math.max(10, Math.min(window.innerWidth - width - 10, r.left + r.width / 2 - width / 2)),
+        width,
+        arrowLeft: width / 2,
+        placement: "top",
+      });
     }
-
-    let top = 0;
-    let left = 0;
-    let arrowTop = 0;
-    let arrowLeft = 0;
-
-    if (placement === "right") {
-      left = r.right + gap;
-      top = r.top + r.height / 2 - tooltipHeight / 2;
-      arrowLeft = -5;
-      arrowTop = tooltipHeight / 2 - 5;
-    } else if (placement === "left") {
-      left = r.left - tooltipWidth - gap;
-      top = r.top + r.height / 2 - tooltipHeight / 2;
-      arrowLeft = tooltipWidth - 5;
-      arrowTop = tooltipHeight / 2 - 5;
-    } else if (placement === "top") {
-      left = r.left + r.width / 2 - tooltipWidth / 2;
-      top = r.top - tooltipHeight - gap;
-      arrowLeft = tooltipWidth / 2 - 5;
-      arrowTop = tooltipHeight - 5;
-    } else {
-      left = r.left + r.width / 2 - tooltipWidth / 2;
-      top = r.bottom + gap;
-      arrowLeft = tooltipWidth / 2 - 5;
-      arrowTop = -5;
-    }
-
-    // Ajustes de borda da tela
-    left = Math.max(margin, Math.min(window.innerWidth - tooltipWidth - margin, left));
-    top = Math.max(margin, Math.min(window.innerHeight - tooltipHeight - margin, top));
-
-    // Recalcula posição da seta relativa ao trigger real após ajuste de borda
-    if (placement === "right" || placement === "left") {
-      arrowTop = Math.max(12, Math.min(tooltipHeight - 12, r.top + r.height / 2 - top - 5));
-    } else {
-      arrowLeft = Math.max(12, Math.min(tooltipWidth - 12, r.left + r.width / 2 - left - 5));
-    }
-
-    setCoords({ top, left, width: tooltipWidth, arrowLeft, arrowTop, placement });
     setOpen(true);
   };
   const hide = () => setOpen(false);
@@ -280,12 +263,13 @@ function Help({ text, title }: { text: string; title?: string }) {
         onMouseLeave={hide}
         onFocus={show}
         onBlur={hide}
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-primary/20 bg-primary/5 text-primary/70 hover:text-primary hover:bg-primary/15 hover:border-primary/40 cursor-help transition-all focus:outline-none focus:ring-2 focus:ring-primary/25 align-middle shadow-sm"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary/80 shadow-[0_0_0_3px_hsl(var(--primary)/0.06)] transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/20 hover:text-primary hover:shadow-[0_0_0_4px_hsl(var(--primary)/0.10)] focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-help align-middle"
       >
         <Info size={11} />
       </span>
       {open && coords && (
         <div
+          ref={tooltipRef}
           role="tooltip"
           style={{ 
             position: "fixed", 
@@ -294,30 +278,23 @@ function Help({ text, title }: { text: string; title?: string }) {
             width: coords.width,
             zIndex: 99999,
           }}
-          className="pointer-events-none animate-in fade-in zoom-in-95 duration-200"
+          className="pointer-events-none animate-in fade-in zoom-in-95 slide-in-from-bottom-1 duration-150"
         >
-          {/* Arrow */}
           <div
             style={{ 
-              top: coords.arrowTop, 
+              top: coords.placement === "top" ? "calc(100% - 5px)" : -5,
               left: coords.arrowLeft,
               position: "absolute"
             }}
-            className={`h-2.5 w-2.5 rotate-45 bg-popover border-primary/30 ${
-              coords.placement === "right" ? "border-l border-b" :
-              coords.placement === "left" ? "border-r border-t" :
-              coords.placement === "top" ? "border-r border-b" :
-              "border-l border-t"
-            }`}
+            className={`-ml-1.5 h-3 w-3 rotate-45 bg-popover border-primary/35 ${coords.placement === "top" ? "border-r border-b" : "border-l border-t"}`}
           />
-          {/* Content */}
-          <div className="relative rounded-lg border border-primary/30 bg-popover/95 backdrop-blur-sm text-popover-foreground shadow-xl p-3 text-[11px] leading-relaxed ring-1 ring-primary/5">
+          <div className="relative rounded-md border border-primary/35 bg-popover/98 px-3 py-2.5 text-[11px] leading-relaxed text-popover-foreground shadow-2xl shadow-primary/15 ring-1 ring-primary/10 backdrop-blur-md">
             {title && (
-              <div className="text-[10px] font-bold uppercase tracking-widest text-primary/90 mb-1">
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-primary">
                 {title}
               </div>
             )}
-            <div className="text-foreground/90 font-medium">{text}</div>
+            <div className="font-medium text-foreground/90">{text}</div>
           </div>
         </div>
       )}
