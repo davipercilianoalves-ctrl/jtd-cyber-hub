@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -184,34 +184,61 @@ export default function PricingModule({ value, onChange, competitorPrices = [] }
 type CompetitorStats = { min: number; max: number; avg: number; median: number; count: number; all: number[] } | null;
 type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: number } | null;
 
-// Tooltip de ajuda — caixinha estilizada que aparece no hover
+// Tooltip de ajuda — usa position fixed via JS para nunca ser cortado por overflow
 function Help({ text, title }: { text: string; title?: string }) {
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const triggerRef = useRef<HTMLSpanElement>(null);
+
+  const show = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const tooltipWidth = 256;
+    const margin = 8;
+    let left = r.left + r.width / 2 - tooltipWidth / 2;
+    left = Math.max(margin, Math.min(window.innerWidth - tooltipWidth - margin, left));
+    const top = r.top - margin; // tooltip will use translateY(-100%)
+    setCoords({ top, left });
+    setOpen(true);
+  };
+  const hide = () => setOpen(false);
+
   return (
-    <span className="relative inline-flex items-center group/help align-middle">
+    <>
       <span
+        ref={triggerRef}
         tabIndex={0}
+        role="button"
         aria-label={title || "Ajuda"}
-        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground/70 hover:text-primary hover:bg-primary/10 cursor-help transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground/70 hover:text-primary hover:bg-primary/10 cursor-help transition-colors focus:outline-none focus:ring-1 focus:ring-primary align-middle"
       >
         <Info size={11} />
       </span>
-      <span
-        role="tooltip"
-        className="pointer-events-none absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 max-w-[16rem] opacity-0 group-hover/help:opacity-100 group-focus-within/help:opacity-100 transition-opacity duration-150"
-      >
-        <span className="block rounded-md border border-primary/40 bg-popover text-popover-foreground shadow-lg p-3 text-[11px] leading-relaxed">
-          {title && (
-            <span className="block text-[10px] font-bold uppercase tracking-widest text-primary mb-1">
-              {title}
-            </span>
-          )}
-          <span className="block text-foreground/90">{text}</span>
-        </span>
-        <span className="block w-2 h-2 bg-popover border-r border-b border-primary/40 rotate-45 mx-auto -mt-1" />
-      </span>
-    </span>
+      {open && coords && (
+        <div
+          role="tooltip"
+          style={{ position: "fixed", top: coords.top, left: coords.left, width: 256, transform: "translateY(-100%)" }}
+          className="z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div className="rounded-md border border-primary/40 bg-popover text-popover-foreground shadow-xl p-3 text-[11px] leading-relaxed">
+            {title && (
+              <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">
+                {title}
+              </div>
+            )}
+            <div className="text-foreground/90">{text}</div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
+
 
 // Wrapper para labels de campos com ajuda
 function FieldLabel({ children, help, helpTitle }: { children: React.ReactNode; help?: string; helpTitle?: string }) {
@@ -597,7 +624,8 @@ function CostTable({
   emptyMsg: string;
 }) {
   return (
-    <div className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden">
+    <div className="rounded border border-sidebar-border bg-internal-w04">
+
       <div className="grid grid-cols-[20px_1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
         <div></div>
         <div className="inline-flex items-center gap-1.5">Nome <Help title="Nome do custo" text="Identificação do item. Ex: 'Custo do produto', 'Frete fornecedor', 'Embalagem', 'Marketing'." /></div>
