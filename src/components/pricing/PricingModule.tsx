@@ -187,7 +187,14 @@ type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: numb
 // Tooltip de ajuda — usa position fixed via JS para ficar junto ao ícone e não ser cortado
 function Help({ text, title }: { text: string; title?: string }) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number; width: number; arrowLeft: number; placement: "top" | "bottom" } | null>(null);
+  const [coords, setCoords] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    arrowLeft: number;
+    arrowTop: number;
+    placement: "right" | "left" | "top" | "bottom";
+  } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
 
   const show = () => {
@@ -195,17 +202,37 @@ function Help({ text, title }: { text: string; title?: string }) {
     if (!el) return;
     const r = el.getBoundingClientRect();
     const tooltipWidth = Math.min(288, window.innerWidth - 24);
-    const tooltipHeight = 112;
-    const gap = 10;
+    const tooltipHeight = 124;
+    const gap = 12;
     const margin = 12;
-    let left = r.left + r.width / 2 - tooltipWidth / 2;
-    left = Math.max(margin, Math.min(window.innerWidth - tooltipWidth - margin, left));
-    const spaceBelow = window.innerHeight - r.bottom;
-    const placement: "top" | "bottom" = spaceBelow >= tooltipHeight + gap + margin ? "bottom" : "top";
-    const rawTop = placement === "bottom" ? r.bottom + gap : r.top - tooltipHeight - gap;
+    const spaceRight = window.innerWidth - r.right;
+    const spaceLeft = r.left;
+    const placement: "right" | "left" | "top" | "bottom" =
+      spaceRight >= tooltipWidth + gap + margin
+        ? "right"
+        : spaceLeft >= tooltipWidth + gap + margin
+        ? "left"
+        : window.innerHeight - r.bottom >= tooltipHeight + gap + margin
+        ? "bottom"
+        : "top";
+
+    const rawLeft =
+      placement === "right"
+        ? r.right + gap
+        : placement === "left"
+        ? r.left - tooltipWidth - gap
+        : r.left + r.width / 2 - tooltipWidth / 2;
+    const rawTop =
+      placement === "right" || placement === "left"
+        ? r.top + r.height / 2 - tooltipHeight / 2
+        : placement === "bottom"
+        ? r.bottom + gap
+        : r.top - tooltipHeight - gap;
+    const left = Math.max(margin, Math.min(window.innerWidth - tooltipWidth - margin, rawLeft));
     const top = Math.max(margin, Math.min(window.innerHeight - tooltipHeight - margin, rawTop));
     const arrowLeft = Math.max(14, Math.min(tooltipWidth - 14, r.left + r.width / 2 - left));
-    setCoords({ top, left, width: tooltipWidth, arrowLeft, placement });
+    const arrowTop = Math.max(14, Math.min(tooltipHeight - 14, r.top + r.height / 2 - top));
+    setCoords({ top, left, width: tooltipWidth, arrowLeft, arrowTop, placement });
     setOpen(true);
   };
   const hide = () => setOpen(false);
@@ -232,9 +259,17 @@ function Help({ text, title }: { text: string; title?: string }) {
           className="z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-150"
         >
           <div
-            style={{ left: coords.arrowLeft }}
+            style={
+              coords.placement === "right" || coords.placement === "left"
+                ? { top: coords.arrowTop }
+                : { left: coords.arrowLeft }
+            }
             className={`absolute h-2.5 w-2.5 rotate-45 border-primary/45 bg-popover ${
-              coords.placement === "bottom"
+              coords.placement === "right"
+                ? "-left-1 border-l border-b"
+                : coords.placement === "left"
+                ? "-right-1 border-r border-t"
+                : coords.placement === "bottom"
                 ? "-top-1 border-l border-t"
                 : "-bottom-1 border-r border-b"
             }`}
