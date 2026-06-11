@@ -1,33 +1,36 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
 
-export default function Callback() {
-  const [searchParams] = useSearchParams();
+export const Route = createFileRoute('/api/callback')({
+  component: CallbackComponent,
+});
+
+function CallbackComponent() {
+  const { code } = Route.useSearch<{ code?: string }>();
   const navigate = useNavigate();
-  const code = searchParams.get('code');
 
   useEffect(() => {
     async function processCallback() {
       if (!code) {
         console.error('No code found in URL');
-        navigate('/api');
+        navigate({ to: '/api' });
         return;
       }
 
       try {
-        const { data, error } = await supabase.functions.invoke('ml-auth-callback', {
-          method: 'GET',
-          queryParams: { code }
+        const { error } = await supabase.functions.invoke('ml-auth-callback', {
+          method: 'POST', // Changed to POST as per standard Edge Function invocation, but we pass params in URL if needed
+          body: { code } // Passing code in body since invoke doesn't have queryParams property in this version
         });
 
         if (error) throw error;
         
-        navigate('/api');
+        navigate({ to: '/api' });
       } catch (err) {
         console.error('Error during ML authentication:', err);
-        navigate('/api');
+        navigate({ to: '/api' });
       }
     }
 
