@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { ThemeProvider } from "../contexts/JtdThemeContext";
+import { SessionNavBar } from "../components/ui/SessionNavBar";
+
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -126,9 +128,14 @@ function RootComponent() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <div className="flex min-h-screen w-full">
+          <SessionNavBar />
+          <div className="flex-1 pl-[3.5rem]">
+            <Outlet />
+          </div>
+        </div>
       </QueryClientProvider>
     </ThemeProvider>
+
   );
 }
