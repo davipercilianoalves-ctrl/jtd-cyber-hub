@@ -1257,23 +1257,48 @@ function GuideTab() {
         </code>
       </div>
 
-      {sections.map((sec) => (
-        <div key={sec.title} className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-primary">{sec.title}</h4>
-          <div className="space-y-3">
-            {sec.items.map((it) => (
-              <div key={it.term} className="border-l-2 border-primary/40 pl-3 py-1">
-                <div className="text-sm font-bold text-foreground">{it.term}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{it.desc}</div>
-                <div className="text-[11px] text-lime-400 mt-1">
-                  <strong>Impacto:</strong> {it.impact}
+      <div className="space-y-3">
+        {sections.map((sec) => (
+          <CollapsibleSection key={sec.title} title={sec.title}>
+            <div className="space-y-4 pt-2">
+              {sec.items.map((it) => (
+                <div key={it.term} className="border-l-2 border-primary/40 pl-3 py-1 bg-white/5 p-3 rounded-r">
+                  <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                    {it.term}
+                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                      Influência: direta
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{it.desc}</div>
+                  <div className="text-[11px] text-lime-400 mt-2 flex items-start gap-1">
+                    <TrendingUp size={10} className="mt-0.5 shrink-0" />
+                    <span><strong>O que ele faz:</strong> {it.impact}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+              ))}
+            </div>
+          </CollapsibleSection>
+        ))}
+      </div>
     </div>
   );
 }
+
+function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+      >
+        <h4 className="text-xs font-bold uppercase tracking-widest text-primary">{title}</h4>
+        {open ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}
+      </button>
+      {open && <div className="p-4 pt-0">{children}</div>}
+    </div>
+  );
+}
+
 
