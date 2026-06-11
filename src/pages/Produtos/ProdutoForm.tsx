@@ -365,7 +365,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
     // Adiciona AUTOMATICAMENTE à lista principal do produto (sem duplicados)
     if (trimmed && !formData.keywords.includes(trimmed)) {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         keywords: [...prev.keywords, trimmed]
       }));
@@ -373,6 +373,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     } else {
       toast.success(`"${trimmed}" marcada!`);
     }
+
     
     setCompetitors(newComps);
     setSelectionMenu(null);
