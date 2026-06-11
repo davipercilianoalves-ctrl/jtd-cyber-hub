@@ -48,18 +48,22 @@ import {
 interface Props {
   value: PricingState;
   onChange: (next: PricingState) => void;
+  competitorPrices?: number[];
 }
 
-type TabKey = "summary" | "costs" | "feestax" | "promo" | "scenarios" | "report";
+type TabKey = "summary" | "competitors" | "costs" | "feestax" | "promo" | "scenarios" | "report" | "guide";
 
 const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "summary", label: "Resumo", icon: BarChart3 },
+  { key: "competitors", label: "Concorrentes", icon: Users },
   { key: "costs", label: "Custos", icon: Layers },
   { key: "feestax", label: "Taxas & Impostos", icon: Percent },
   { key: "promo", label: "Promoção", icon: Sparkles },
   { key: "scenarios", label: "Simulações", icon: Calculator },
   { key: "report", label: "Relatório", icon: FileText },
+  { key: "guide", label: "Guia", icon: HelpCircle },
 ];
+
 
 // ===== Estilos compartilhados =====
 const inputCls =
