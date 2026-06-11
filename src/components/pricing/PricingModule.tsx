@@ -187,7 +187,7 @@ type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: numb
 // Tooltip de ajuda — usa position fixed via JS para ficar junto ao ícone e não ser cortado
 function Help({ text, title }: { text: string; title?: string }) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number; arrowLeft: number; placement: "top" | "bottom" } | null>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number; arrowLeft: number; placement: "top" | "bottom" } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
 
   const show = () => {
@@ -205,7 +205,7 @@ function Help({ text, title }: { text: string; title?: string }) {
     const rawTop = placement === "bottom" ? r.bottom + gap : r.top - tooltipHeight - gap;
     const top = Math.max(margin, Math.min(window.innerHeight - tooltipHeight - margin, rawTop));
     const arrowLeft = Math.max(14, Math.min(tooltipWidth - 14, r.left + r.width / 2 - left));
-    setCoords({ top, left, arrowLeft, placement });
+    setCoords({ top, left, width: tooltipWidth, arrowLeft, placement });
     setOpen(true);
   };
   const hide = () => setOpen(false);
@@ -228,7 +228,7 @@ function Help({ text, title }: { text: string; title?: string }) {
       {open && coords && (
         <div
           role="tooltip"
-          style={{ position: "fixed", top: coords.top, left: coords.left, width: Math.min(288, window.innerWidth - 24) }}
+          style={{ position: "fixed", top: coords.top, left: coords.left, width: coords.width }}
           className="z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-150"
         >
           <div
