@@ -123,11 +123,15 @@ export function SessionNavBar() {
 
       <ScrollArea className="flex-1 px-2 py-4">
         <motion.ul variants={staggerVariants} className="space-y-1">
-          <NavItem href="/" icon={LayoutDashboard} label="Dashboard" />
+          <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem href="/produtos" icon={Blocks} label="Produtos" />
-          <NavItem href="/pedidos" icon={FileClock} label="Pedidos" />
-          <NavItem href="/analytics" icon={GraduationCap} label="Analytics" />
-          <NavItem href="/mensagens" icon={MessagesSquare} label="Mensagens" badge="BETA" />
+          <NavItem href="/anuncios" icon={Layout} label="Anúncios" />
+          <NavItem href="/kits" icon={Blocks} label="Kits" />
+          <NavItem href="/metrics" icon={GraduationCap} label="Métricas" />
+          <NavItem href="/fornecedores" icon={UserSearch} label="Fornecedores" />
+          <NavItem href="/vendas" icon={FileClock} label="Vendas" />
+          <NavItem href="/compras" icon={FileClock} label="Compras" />
+          <NavItem href="/api" icon={Blocks} label="API" />
         </motion.ul>
 
         {!isCollapsed && (
@@ -137,15 +141,15 @@ export function SessionNavBar() {
             className="mt-6 px-2 mb-2"
           >
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Configurações
+              Sistema
             </span>
           </motion.div>
         )}
         <motion.ul variants={staggerVariants} className="space-y-1">
-          <NavItem href="/settings" icon={Settings} label="Ajustes" />
-          <NavItem href="/integrations" icon={Blocks} label="Integrações" />
+          <NavItem href="/settings" icon={Settings} label="Configuração" />
         </motion.ul>
       </ScrollArea>
+
 
       <Separator />
 
