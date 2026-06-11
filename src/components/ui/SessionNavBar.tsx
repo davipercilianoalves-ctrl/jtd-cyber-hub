@@ -48,11 +48,12 @@ const staggerVariants = {
   },
 };
 
-const transitionProps = {
+const transitionProps: any = {
   type: "spring",
   stiffness: 400,
   damping: 40,
 };
+
 
 export function SessionNavBar() {
   const [isCollapsed, setIsCollapsed] = useState(true);
