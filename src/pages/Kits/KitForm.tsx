@@ -203,7 +203,7 @@ export default function KitForm() {
               <div className="flex items-center gap-6">
                 <div className="flex flex-col items-center gap-1">
                   <label className="text-[8px] font-bold text-muted-foreground uppercase">QTD</label>
-                  <input type="number" min="1" value={kp.quantity} onChange={e => { const n = [...kitProducts]; n[i].quantity = Math.max(1, parseInt(e.target.value) || 1); setKitProducts(n); }} className="w-16 bg-black/20 p-2 text-center rounded border border-sidebar-border font-bold" />
+                  <input type="number" min="1" value={kp.quantity || ""} onChange={e => { const n = [...kitProducts]; n[i].quantity = Math.max(1, parseInt(e.target.value) || 1); setKitProducts(n); }} className="w-16 bg-black/20 p-2 text-center rounded border border-sidebar-border font-bold" />
                 </div>
                 <button onClick={() => setKitProducts(kitProducts.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-red-500 transition-colors"><Trash2 size={20}/></button>
               </div>
@@ -326,7 +326,7 @@ export default function KitForm() {
           ].map(field => (
             <div key={field.key} className="space-y-1.5">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">{field.label}</label>
-              <input type="number" value={(formData as any)[field.key]} onChange={e => setFormData({...formData, [field.key]: Number(e.target.value)})} className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono" />
+              <input type="number" value={(formData as any)[field.key] || ""} onChange={e => setFormData({...formData, [field.key]: Number(e.target.value)})} className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary font-mono" />
             </div>
           ))}
         </div>

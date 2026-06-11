@@ -664,7 +664,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 <input
                   type="number"
                   step="0.01"
-                  value={formData.sale_price || 0}
+                  value={formData.sale_price || 0 || ""}
                   onChange={(e) => setFormData({ ...formData, sale_price: parseFloat(e.target.value) || 0 })}
                   className={`${inputCls} pl-8 font-mono`}
                 />
@@ -676,7 +676,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                 <input
                   type="number"
                   step="0.01"
-                  value={formData.cost_price || 0}
+                  value={formData.cost_price || 0 || ""}
                   onChange={(e) => setFormData({ ...formData, cost_price: parseFloat(e.target.value) || 0 })}
                   className={`${inputCls} pl-8 font-mono`}
                 />
@@ -753,7 +753,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             <Field label="Volumes" value={formData.volumes}>
               <input
                 type="number"
-                value={formData.volumes || 1}
+                value={formData.volumes || 1 || ""}
                 onChange={(e) => setFormData({ ...formData, volumes: parseInt(e.target.value) || 1 })}
                 className={`${inputCls} font-mono`}
               />
@@ -761,7 +761,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             <Field label="Itens p/ Caixa" value={formData.items_per_box}>
               <input
                 type="number"
-                value={formData.items_per_box || 1}
+                value={formData.items_per_box || 1 || ""}
                 onChange={(e) => setFormData({ ...formData, items_per_box: parseInt(e.target.value) || 1 })}
                 className={`${inputCls} font-mono`}
               />
@@ -796,7 +796,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               <input
                 type="number"
                 step="0.01"
-                value={formData.width || 0}
+                value={formData.width || 0 || ""}
                 onChange={(e) => setFormData({ ...formData, width: parseFloat(e.target.value) || 0 })}
                 className={`${inputCls} font-mono`}
               />
@@ -805,7 +805,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               <input
                 type="number"
                 step="0.01"
-                value={formData.height || 0}
+                value={formData.height || 0 || ""}
                 onChange={(e) => setFormData({ ...formData, height: parseFloat(e.target.value) || 0 })}
                 className={`${inputCls} font-mono`}
               />
@@ -814,7 +814,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               <input
                 type="number"
                 step="0.01"
-                value={formData.depth || 0}
+                value={formData.depth || 0 || ""}
                 onChange={(e) => setFormData({ ...formData, depth: parseFloat(e.target.value) || 0 })}
                 className={`${inputCls} font-mono`}
               />
@@ -823,7 +823,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               <input
                 type="number"
                 step="0.01"
-                value={formData.net_weight_g || 0}
+                value={formData.net_weight_g || 0 || ""}
                 onChange={(e) => setFormData({ ...formData, net_weight_g: parseFloat(e.target.value) || 0 })}
                 className={`${inputCls} font-mono`}
               />
@@ -832,7 +832,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
               <input
                 type="number"
                 step="0.01"
-                value={formData.gross_weight_g || 0}
+                value={formData.gross_weight_g || 0 || ""}
                 onChange={(e) => setFormData({ ...formData, gross_weight_g: parseFloat(e.target.value) || 0 })}
                 className={`${inputCls} font-mono`}
               />
@@ -1021,7 +1021,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                     <input
                       type="number"
                       step="0.01"
-                      value={comp.price}
+                      value={comp.price || ""}
                       onChange={(e) => updateCompetitor(idx, "price", parseFloat(e.target.value) || 0)}
                       className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-24 text-right focus:ring-0 focus:outline-none font-mono"
                     />
