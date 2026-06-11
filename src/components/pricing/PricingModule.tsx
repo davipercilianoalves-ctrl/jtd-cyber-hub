@@ -845,15 +845,17 @@ function PromoField({
   value,
   readOnly,
   tone,
+  help,
 }: {
   label: string;
   value: string;
   readOnly?: boolean;
   tone?: "primary" | "good";
+  help?: string;
 }) {
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</label>
+      <FieldLabel help={help} helpTitle={label}>{label}</FieldLabel>
       <div
         className={`mt-1 h-9 px-2 rounded border bg-internal-20 flex items-center justify-end font-mono text-sm ${
           tone === "primary"
@@ -868,6 +870,7 @@ function PromoField({
     </div>
   );
 }
+
 
 // =============================================================
 // CENÁRIOS
