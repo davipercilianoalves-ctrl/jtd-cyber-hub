@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiCallbackRouteImport } from './routes/api/callback'
 import { Route as AuthenticatedVendasRouteImport } from './routes/_authenticated/vendas'
 import { Route as AuthenticatedMetricasRouteImport } from './routes/_authenticated/metricas'
 import { Route as AuthenticatedFornecedoresRouteImport } from './routes/_authenticated/fornecedores'
@@ -41,6 +42,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCallbackRoute = ApiCallbackRouteImport.update({
+  id: '/api/callback',
+  path: '/api/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedVendasRoute = AuthenticatedVendasRouteImport.update({
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
   '/vendas': typeof AuthenticatedVendasRoute
+  '/api/callback': typeof ApiCallbackRoute
   '/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
   '/kits/novo': typeof AuthenticatedKitsNovoRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
   '/vendas': typeof AuthenticatedVendasRoute
+  '/api/callback': typeof ApiCallbackRoute
   '/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
   '/kits/novo': typeof AuthenticatedKitsNovoRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/_authenticated/metricas': typeof AuthenticatedMetricasRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
+  '/api/callback': typeof ApiCallbackRoute
   '/_authenticated/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
   '/_authenticated/kits/novo': typeof AuthenticatedKitsNovoRoute
   '/_authenticated/produtos/novo': typeof AuthenticatedProdutosNovoRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/fornecedores'
     | '/metricas'
     | '/vendas'
+    | '/api/callback'
     | '/anuncios/novo'
     | '/kits/novo'
     | '/produtos/novo'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/fornecedores'
     | '/metricas'
     | '/vendas'
+    | '/api/callback'
     | '/anuncios/novo'
     | '/kits/novo'
     | '/produtos/novo'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fornecedores'
     | '/_authenticated/metricas'
     | '/_authenticated/vendas'
+    | '/api/callback'
     | '/_authenticated/anuncios/novo'
     | '/_authenticated/kits/novo'
     | '/_authenticated/produtos/novo'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiCallbackRoute: typeof ApiCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/callback': {
+      id: '/api/callback'
+      path: '/api/callback'
+      fullPath: '/api/callback'
+      preLoaderRoute: typeof ApiCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/vendas': {
@@ -448,6 +468,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiCallbackRoute: ApiCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

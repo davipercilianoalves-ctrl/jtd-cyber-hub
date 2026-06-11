@@ -211,6 +211,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ml_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: string
+          owner_id: string
+          refresh_token: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          owner_id?: string
+          refresh_token: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          owner_id?: string
+          refresh_token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_competitors: {
         Row: {
           created_at: string
