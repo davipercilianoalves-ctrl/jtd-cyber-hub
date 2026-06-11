@@ -315,6 +315,7 @@ export type Database = {
           net_weight_g: number | null
           notes: string | null
           price_lists: Json | null
+          pricing: Json
           production_type: string | null
           sale_price: number | null
           sku: string | null
@@ -353,6 +354,7 @@ export type Database = {
           net_weight_g?: number | null
           notes?: string | null
           price_lists?: Json | null
+          pricing?: Json
           production_type?: string | null
           sale_price?: number | null
           sku?: string | null
@@ -391,6 +393,7 @@ export type Database = {
           net_weight_g?: number | null
           notes?: string | null
           price_lists?: Json | null
+          pricing?: Json
           production_type?: string | null
           sale_price?: number | null
           sku?: string | null

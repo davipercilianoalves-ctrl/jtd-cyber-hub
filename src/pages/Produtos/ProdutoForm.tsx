@@ -23,6 +23,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
+import PricingModule from "@/components/pricing/PricingModule";
+import {
+  PricingState,
+  defaultPricing,
+  mergePricing,
+  computePricing,
+} from "@/components/pricing/engine";
 
 // Botão pequeno de copiar — usado ao lado de cada campo
 function CopyBtn({ value }: { value: any }) {
@@ -117,6 +124,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     sale_price: 0,
     unit: "UN",
     condition: "novo",
+    pricing: defaultPricing() as PricingState,
   });
 
 
@@ -163,7 +171,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     const { data, error } = await supabase.from("products").select("*, product_competitors(*)").eq("id", productId).single();
     if (data) {
       const { product_competitors, ...rest } = data as any;
-      setFormData(rest);
+      setFormData({ ...rest, pricing: mergePricing(rest.pricing) });
       setCompetitors((product_competitors || []).map((c: any) => ({
         id: c.id,
         title: c.title || "",
@@ -182,7 +190,16 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     setSaving(true);
     
     const sku = formData.sku || `PRD-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
-    const payload = { ...formData, sku };
+    // Sincroniza cost_price/sale_price a partir do módulo de precificação
+    const pricingResult = computePricing(formData.pricing as PricingState);
+    const payload = {
+      ...formData,
+      sku,
+      cost_price: pricingResult.costFixedTotal || formData.cost_price || 0,
+      sale_price: pricingResult.invalid
+        ? formData.sale_price || 0
+        : pricingResult.idealPrice,
+    };
 
     try {
       let savedProductId = productId;
@@ -823,6 +840,16 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           </div>
         </div>
       </section>
+
+      {/* ============================================================ */}
+      {/* 1.5 PRECIFICAÇÃO INTELIGENTE                                 */}
+      {/* ============================================================ */}
+      <PricingModule
+        value={formData.pricing as PricingState}
+        onChange={(next) => setFormData({ ...formData, pricing: next })}
+      />
+
+
 
       {/* ============================================================ */}
       {/* 2. PALAVRAS-CHAVE DO PRODUTO                                 */}
