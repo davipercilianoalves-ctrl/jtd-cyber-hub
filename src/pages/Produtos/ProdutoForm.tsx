@@ -358,14 +358,27 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     
     comp.highlights = [...filteredHighlights, { start, end, text }].sort((a, b) => a.start - b.start);
     
+    // Adiciona ao concorrente se não existir
     if (trimmed && !comp.keywords_found.includes(trimmed)) {
       comp.keywords_found.push(trimmed);
     }
+
+    // Adiciona AUTOMATICAMENTE à lista principal do produto (sem duplicados)
+    if (trimmed && !formData.keywords.includes(trimmed)) {
+      setFormData((prev: any) => ({
+        ...prev,
+        keywords: [...prev.keywords, trimmed]
+      }));
+      toast.success(`"${trimmed}" adicionada às keywords do produto!`);
+    } else {
+      toast.success(`"${trimmed}" marcada!`);
+    }
+
     
     setCompetitors(newComps);
-    toast.success(`"${trimmed}" marcada!`);
     setSelectionMenu(null);
   };
+
 
   const handleRemoveHighlight = () => {
     if (!selectionMenu) return;
@@ -1046,9 +1059,10 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                               highlights.forEach((h, i) => {
                                 if (h.start > cursor) parts.push(text.slice(cursor, h.start));
                                 parts.push(
-                                  <mark key={i} className="bg-yellow-400 text-transparent rounded-sm">
+                                  <mark key={i} className="bg-magenta text-transparent rounded-sm">
                                     {text.slice(h.start, h.end)}
                                   </mark>
+
                                 );
                                 cursor = Math.max(cursor, h.end);
                               });
@@ -1074,7 +1088,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                             onMouseUp={(e) => handleTextSelection(e, idx)}
                             ref={(el) => { descriptionRefs.current[idx] = el; }}
                             style={{ ...textareaStyle, background: 'transparent', lineHeight: '1.5', letterSpacing: 'normal' }}
-                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-yellow-400/30 selection:text-current break-all touch-none"
+                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-magenta/30 selection:text-current break-all touch-none"
                             placeholder="Cole aqui a descrição do anúncio concorrente..."
                           />
                         </div>
