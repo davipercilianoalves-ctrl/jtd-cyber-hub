@@ -86,6 +86,22 @@ export function Sidebar() {
         })}
       </nav>
 
+
+      {/* Perfil do Usuário */}
+      <div className="border-t border-sidebar-border p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#BFFF00]/20 text-[#BFFF00] font-bold text-xs">
+            U
+          </div>
+          {!collapsed && (
+            <div className="flex flex-col truncate">
+              <span className="text-xs font-semibold text-foreground truncate">Usuário JTD</span>
+              <span className="text-[10px] text-muted-foreground truncate">admin@jtd.com</span>
+            </div>
+          )}
+        </div>
+      </div>
     </aside>
+
   );
 }
