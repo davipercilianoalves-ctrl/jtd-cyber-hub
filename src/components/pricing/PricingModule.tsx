@@ -597,7 +597,8 @@ function CostTable({
   emptyMsg: string;
 }) {
   return (
-    <div className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden">
+    <div className="rounded border border-sidebar-border bg-internal-w04">
+
       <div className="grid grid-cols-[20px_1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
         <div></div>
         <div className="inline-flex items-center gap-1.5">Nome <Help title="Nome do custo" text="Identificação do item. Ex: 'Custo do produto', 'Frete fornecedor', 'Embalagem', 'Marketing'." /></div>
