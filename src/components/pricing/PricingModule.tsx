@@ -547,7 +547,7 @@ function PercentList({
               <input
                 type="number"
                 step="0.01"
-                value={i.value}
+                value={i.value || ""}
                 onChange={(e) => update(i.id, { value: parseFloat(e.target.value) || 0 })}
                 className={`${cellNumCls} pr-6`}
               />
@@ -641,7 +641,7 @@ function CostTable({
               <input
                 type="number"
                 step="0.01"
-                value={r.value}
+                value={r.value || ""}
                 onChange={(e) => onChange(r.id, { value: parseFloat(e.target.value) || 0 })}
                 className={`${cellNumCls} ${r.kind === "fixed" ? "pl-7" : "pr-6"}`}
               />
@@ -780,7 +780,7 @@ function PromoTab({
             <input
               type="number"
               step="0.01"
-              value={value.goal.value}
+              value={value.goal.value || ""}
               onChange={(e) => patch({ goal: { ...value.goal, value: parseFloat(e.target.value) || 0 } })}
               className={`${cellNumCls} mt-1`}
             />
@@ -795,7 +795,7 @@ function PromoTab({
             <input
               type="number"
               step="0.1"
-              value={value.minMarginPct}
+              value={value.minMarginPct || ""}
               onChange={(e) => patch({ minMarginPct: parseFloat(e.target.value) || 0 })}
               className={`${cellNumCls} mt-1`}
             />
@@ -823,7 +823,7 @@ function PromoTab({
             <input
               type="number"
               step="0.1"
-              value={value.promo.strategicMarkupPct}
+              value={value.promo.strategicMarkupPct || ""}
               onChange={(e) =>
                 patch({ promo: { strategicMarkupPct: parseFloat(e.target.value) || 0 } })
               }
@@ -973,7 +973,7 @@ function ScenarioRow({
       <input
         type="number"
         step="0.01"
-        value={value}
+        value={value || ""}
         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
         className={`${cellNumCls} w-24`}
       />
