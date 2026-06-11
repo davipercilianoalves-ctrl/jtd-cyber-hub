@@ -864,33 +864,50 @@ function PromoTab({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Sugestões com base nos concorrentes */}
       {competitorStats && (
-        <div className="rounded border border-primary/30 bg-primary/5 p-4 space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-            <Users size={14} className="text-primary" /> Sugestões com base nos concorrentes
-          </h4>
-          <p className="text-xs text-muted-foreground">
-            Use um destes valores como Preço Vitrine — o desconto exibido será calculado automaticamente para voltar ao seu preço ideal.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => suggestShowcase(competitorStats.max)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
-              = Maior ({fmtBRL(competitorStats.max)})
-            </button>
-            <button type="button" onClick={() => suggestShowcase(competitorStats.avg)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
-              = Médio ({fmtBRL(competitorStats.avg)})
-            </button>
-            <button type="button" onClick={() => suggestShowcase(competitorStats.max * 1.05)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
-              +5% acima do maior
-            </button>
+        <div className="relative overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5">
+          <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+          <div className="relative space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+                <Users size={15} className="text-primary" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Sugestões de Vitrine</h4>
+                <p className="text-[11px] text-muted-foreground">Baseadas nos preços dos seus concorrentes</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground/90 leading-relaxed">
+              Clique para usar como <strong className="text-foreground">Preço Vitrine</strong> — o desconto exibido é recalculado para voltar ao seu preço ideal.
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button type="button" onClick={() => suggestShowcase(competitorStats.max)} className="group px-3 py-1.5 rounded-lg border border-primary/40 bg-background/40 hover:bg-primary/15 hover:border-primary transition-all text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-hover:text-primary">= Maior</span>
+                <span className="font-mono text-primary">{fmtBRL(competitorStats.max)}</span>
+              </button>
+              <button type="button" onClick={() => suggestShowcase(competitorStats.avg)} className="group px-3 py-1.5 rounded-lg border border-primary/40 bg-background/40 hover:bg-primary/15 hover:border-primary transition-all text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-hover:text-primary">= Médio</span>
+                <span className="font-mono text-primary">{fmtBRL(competitorStats.avg)}</span>
+              </button>
+              <button type="button" onClick={() => suggestShowcase(competitorStats.max * 1.05)} className="group px-3 py-1.5 rounded-lg border border-primary/40 bg-background/40 hover:bg-primary/15 hover:border-primary transition-all text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-hover:text-primary">+5% acima</span>
+                <span className="font-mono text-primary">{fmtBRL(competitorStats.max * 1.05)}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-4">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-          <Target size={14} className="text-primary" /> Objetivo de Lucro
-        </h4>
+      {/* Objetivo de Lucro */}
+      <div className="rounded-xl border border-sidebar-border bg-gradient-to-b from-internal-w04 to-internal-w04/40 p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+            <Target size={15} className="text-primary" />
+          </div>
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Objetivo de Lucro</h4>
+        </div>
         <div className="grid md:grid-cols-3 gap-2">
           {(
             [
@@ -903,10 +920,10 @@ function PromoTab({
               key={opt.mode}
               type="button"
               onClick={() => patch({ goal: { ...value.goal, mode: opt.mode } })}
-              className={`p-2 rounded border text-xs font-bold uppercase tracking-wider transition-all ${
+              className={`relative p-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all overflow-hidden ${
                 value.goal.mode === opt.mode
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-sidebar-border text-muted-foreground hover:text-foreground"
+                  ? "border-primary bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.3)]"
+                  : "border-sidebar-border bg-background/30 text-muted-foreground hover:text-foreground hover:border-primary/40"
               }`}
             >
               {opt.label}
@@ -953,14 +970,33 @@ function PromoTab({
         </div>
       </div>
 
-      <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-4">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-          <Sparkles size={14} className="text-primary" /> Estratégia Promocional
-        </h4>
-        <p className="text-xs text-muted-foreground">
-          O preço final volta exatamente ao preço real. O desconto exibido é calculado matematicamente — nunca
-          igual ao aumento.
-        </p>
+      {/* Estratégia Promocional */}
+      <div className="rounded-xl border border-sidebar-border bg-gradient-to-b from-internal-w04 to-internal-w04/40 p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+            <Sparkles size={15} className="text-primary" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Estratégia Promocional</h4>
+            <p className="text-[11px] text-muted-foreground">
+              Preço final volta ao real. Desconto exibido nunca é igual ao aumento.
+            </p>
+          </div>
+        </div>
+
+        {/* Fluxo visual */}
+        <div className="hidden md:flex items-center justify-between gap-2 px-2 py-3 rounded-lg bg-background/40 border border-sidebar-border/50">
+          <FlowStep label="Real" value={fmtBRL(result.idealPrice)} tone="primary" />
+          <FlowArrow />
+          <FlowStep label="× Aumento" value={`+${value.promo.strategicMarkupPct || 0}%`} tone="muted" />
+          <FlowArrow />
+          <FlowStep label="Vitrine" value={fmtBRL(result.showcasePrice)} tone="default" />
+          <FlowArrow />
+          <FlowStep label="− Desconto" value={fmtPct(result.promoDiscountPct)} tone="good" />
+          <FlowArrow />
+          <FlowStep label="Final" value={fmtBRL(result.promoFinalPrice)} tone="primary" />
+        </div>
+
         <div className="grid md:grid-cols-5 gap-3">
           <PromoField label="Preço Real" value={fmtBRL(result.idealPrice)} readOnly tone="primary" help="Seu preço ideal calculado. É o que você efetivamente recebe — a vitrine só infla para criar percepção de desconto." />
           <div>
@@ -987,6 +1023,24 @@ function PromoTab({
       </div>
     </div>
   );
+}
+
+function FlowStep({ label, value, tone }: { label: string; value: string; tone: "primary" | "good" | "muted" | "default" }) {
+  const color =
+    tone === "primary" ? "text-primary"
+    : tone === "good" ? "text-lime-400"
+    : tone === "muted" ? "text-muted-foreground"
+    : "text-foreground";
+  return (
+    <div className="flex flex-col items-center min-w-0 flex-1">
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className={`font-mono font-bold text-xs ${color} truncate`}>{value}</div>
+    </div>
+  );
+}
+
+function FlowArrow() {
+  return <ChevronRight size={14} className="text-muted-foreground/50 shrink-0" />;
 }
 
 
