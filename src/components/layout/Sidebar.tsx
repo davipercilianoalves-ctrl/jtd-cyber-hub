@@ -58,7 +58,7 @@ export function Sidebar() {
 
 
       {/* Navegação */}
-      <nav className="flex-1 space-y-1 px-2 py-2">
+      <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto scrollbar-hide">
         {navItems.map(({ to, label, icon: Icon }) => {
           const active = pathname === to || pathname.startsWith(to + "/");
           return (
@@ -67,19 +67,25 @@ export function Sidebar() {
               to={to}
               title={label}
               className={[
-                "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
-                "border-l-2",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 group",
                 active
-                  ? "border-primary bg-accent text-accent-foreground"
-                  : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-[#BFFF00]/10 text-[#BFFF00] shadow-[inset_0_0_12px_rgba(191,255,0,0.1)]"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
               ].join(" ")}
             >
-              <Icon size={18} className="shrink-0" />
+              <Icon 
+                size={20} 
+                className={[
+                  "shrink-0 transition-transform duration-200 group-hover:scale-110",
+                  active ? "text-[#BFFF00]" : "text-muted-foreground/60 group-hover:text-foreground"
+                ].join(" ")} 
+              />
               {!collapsed && <span className="truncate">{label}</span>}
             </Link>
           );
         })}
       </nav>
+
     </aside>
   );
 }
