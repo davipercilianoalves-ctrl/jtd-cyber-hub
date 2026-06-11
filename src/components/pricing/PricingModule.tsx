@@ -246,17 +246,27 @@ function Alerts({
 // =============================================================
 // RESUMO
 // =============================================================
-function SummaryTab({ result }: { result: PricingResult }) {
+function SummaryTab({
+  result,
+  competitorStats,
+  positioning,
+}: {
+  result: PricingResult;
+  competitorStats: CompetitorStats;
+  positioning: Positioning;
+}) {
   const cards = [
-    { label: "Custo Total", value: fmtBRL(result.costFixedTotal), accent: "neutral" },
-    { label: "Preço Mínimo", value: fmtBRL(result.minPrice), accent: "neutral" },
-    { label: "Preço Ideal", value: fmtBRL(result.idealPrice), accent: "primary" },
-    { label: "Lucro (R$)", value: fmtBRL(result.profitBRL), accent: result.profitBRL >= 0 ? "good" : "bad" },
-    { label: "Lucro (%)", value: fmtPct(result.goalPct * 100), accent: "good" },
-    { label: "Margem Líquida", value: fmtPct(result.netMarginPct), accent: "good" },
-    { label: "Taxas Totais", value: fmtBRL(result.totalFeesBRL), accent: "neutral" },
-    { label: "Impostos Totais", value: fmtBRL(result.totalTaxesBRL), accent: "neutral" },
+    { label: "Custo Total", value: fmtBRL(result.costFixedTotal), accent: "neutral", help: "Soma de todos os custos fixos ativos (produto, frete, embalagem, etc.). É o piso absoluto: vender abaixo disso é prejuízo direto." },
+    { label: "Preço Mínimo", value: fmtBRL(result.minPrice), accent: "neutral", help: "Preço de equilíbrio (break-even). Cobre custos + taxas + impostos, mas sem nenhum lucro. Nunca venda abaixo." },
+    { label: "Preço Ideal", value: fmtBRL(result.idealPrice), accent: "primary", help: "Preço calculado para atingir seu objetivo de lucro definido na aba Promoção." },
+    { label: "Lucro (R$)", value: fmtBRL(result.profitBRL), accent: result.profitBRL >= 0 ? "good" : "bad", help: "Quanto sobra em reais por unidade vendida no preço ideal, depois de pagar TUDO (custos, taxas e impostos)." },
+    { label: "Lucro (%)", value: fmtPct(result.goalPct * 100), accent: "good", help: "Percentual do preço de venda que vira lucro líquido (sua meta configurada)." },
+    { label: "Margem Líquida", value: fmtPct(result.netMarginPct), accent: "good", help: "Margem real obtida = Lucro ÷ Preço de venda. Se ficar abaixo da margem mínima configurada, dispara alerta." },
+    { label: "Taxas Totais", value: fmtBRL(result.totalFeesBRL), accent: "neutral", help: "Quanto sai do preço para marketplaces, cartão, gateway e comissões." },
+    { label: "Impostos Totais", value: fmtBRL(result.totalTaxesBRL), accent: "neutral", help: "Quanto sai do preço para impostos (ICMS, Simples, PIS, COFINS, ISS)." },
   ];
+
+
 
   const pieData = [
     { name: "Custo Produto", value: result.costFixedTotal, fill: "hsl(var(--muted-foreground))" },
