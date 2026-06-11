@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Truck, Shield, Loader2, Edit2, ExternalLink, X } from "lucide-react";
+import { Truck, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ListToolbar } from "@/components/layout/ListToolbar";
 
 interface Supplier {
   id: string;
@@ -13,10 +14,13 @@ interface Supplier {
   is_active: boolean;
 }
 
+type StatusFilter = "all" | "active" | "inactive";
+
 export default function Fornecedores() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("all");
 
   useEffect(() => {
     fetchSuppliers();
@@ -30,33 +34,33 @@ export default function Fornecedores() {
     setLoading(false);
   }
 
-  const filtered = suppliers.filter(s => 
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    (s.city || "").toLowerCase().includes(search.toLowerCase()) ||
-    (s.state || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = suppliers.filter(s => {
+    const matchSearch =
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      (s.city || "").toLowerCase().includes(search.toLowerCase()) ||
+      (s.state || "").toLowerCase().includes(search.toLowerCase());
+    const matchStatus = status === "all" || (status === "active" ? s.is_active : !s.is_active);
+    return matchSearch && matchStatus;
+  });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Fornecedores</h1>
-          <p className="text-sm text-muted-foreground">Gerencie seus fornecedores e condições</p>
-        </div>
-        <button className="bg-primary px-4 py-2 text-sm font-bold text-black rounded hover:brightness-110">+ NOVO FORNECEDOR</button>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-3 text-muted-foreground" size={18} />
-        <input 
-          className="w-full bg-internal-w03 border border-sidebar-border rounded py-3 pl-10 pr-4 text-sm focus:border-primary outline-none"
-          placeholder="Buscar por nome, cidade ou estado..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      <p className="text-xs text-muted-foreground">Mostrando {filtered.length} de {suppliers.length} fornecedores</p>
+    <div className="space-y-5 animate-in fade-in duration-500">
+      <ListToolbar
+        icon={Truck}
+        title="Fornecedores"
+        subtitle="Gerencie seus fornecedores e condições"
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por nome, cidade ou estado..."
+        totalCount={suppliers.length}
+        filteredCount={filtered.length}
+        filters={[
+          { label: "Todos", active: status === "all", onClick: () => setStatus("all") },
+          { label: "Ativos", active: status === "active", onClick: () => setStatus("active") },
+          { label: "Inativos", active: status === "inactive", onClick: () => setStatus("inactive") },
+        ]}
+        cta={{ label: "Novo Fornecedor", onClick: () => toast.info("Em breve: cadastro de fornecedor") }}
+      />
 
       {loading ? (
         <div className="space-y-2">
@@ -81,8 +85,8 @@ export default function Fornecedores() {
               <tr key={s.id} className="border-b border-sidebar-border/40 hover:bg-internal-w04 transition-colors group">
                 <td className="p-4 font-semibold text-foreground">{s.name}</td>
                 <td className="p-4 text-sm text-muted-foreground">{s.city ? `${s.city}/${s.state}` : "—"}</td>
-                <td className="p-4 text-sm flex items-center gap-2"><Truck size={14} className="text-primary"/> {s.delivery_days} dias</td>
-                <td className="p-4 text-sm flex items-center gap-2"><Shield size={14} className="text-primary"/> {s.warranty_days} dias</td>
+                <td className="p-4 text-sm"><span className="inline-flex items-center gap-2"><Truck size={14} className="text-primary"/> {s.delivery_days} dias</span></td>
+                <td className="p-4 text-sm"><span className="inline-flex items-center gap-2"><Shield size={14} className="text-primary"/> {s.warranty_days} dias</span></td>
                 <td className="p-4">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.is_active ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                     {s.is_active ? 'ATIVO' : 'INATIVO'}

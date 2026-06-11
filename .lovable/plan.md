@@ -1,45 +1,68 @@
-## Plano: Sidebar Hover-to-Open + JTD em estilo Cyber Acid
+## Plano: Toolbar unificada para Produtos, Anúncios e Fornecedores
 
-### Problemas atuais
-1. Sidebar abre/fecha por clique no chevron — usuário quer auto abrir/fechar por **proximidade do mouse**.
-2. Logo "JTD" está em caixa rosa sólida + texto "Gestão" ao lado — usuário quer voltar ao estilo **gradient Cyber Acid** (lime → cyan, como na tela de login) **sem o "Gestão"**.
-3. Quando colapsada, o layout fica bugado: ícones desalinhados, breadcrumb se sobrepõe ao logo.
-4. Toggle manual (chevron) fica visualmente quebrado.
+### Problema
+Hoje cada uma das 3 telas (Produtos, Anúncios, Fornecedores) repete a mesma estrutura "horrível e mal distribuída":
+- Título + subtítulo solto à esquerda
+- Botão "+ NOVO X" jogado no canto direito
+- Barra de busca enorme ocupando largura inteira numa linha separada
+- Contador "Mostrando X de Y" como texto cinza órfão em outra linha
+- Sem filtros visuais, sem indicação de quantidade total, sem toggle de view, layout desigual entre as 3 telas
 
-### Solução
+### Solução: criar `<ListToolbar />` reutilizável
 
-**1. Comportamento hover (sem bugar)**
-- Sidebar fixa em `position: fixed` ocupando largura colapsada (64px) como espaço reservado no layout.
-- Ao `onMouseEnter` na aside → expande para 220px **sobrepondo** o conteúdo (sem empurrar layout, evita reflow/bug).
-- Ao `onMouseLeave` → recolhe de volta a 64px.
-- Debounce de ~150ms no fechamento para não piscar se o mouse sair brevemente.
-- Transição suave `transition-[width] duration-300 ease-out`.
-- Remover botão chevron toggle (não é mais necessário).
+Componente único em `src/components/layout/ListToolbar.tsx` que distribui tudo numa única faixa coesa:
 
-**2. Logo JTD estilo Cyber Acid**
-- Substituir caixa rosa por texto "JTD" usando classe `jtd-text-gradient` já existente (lime → cyan).
-- Tamanho grande e bold (`text-3xl font-extrabold`), centralizado quando colapsado.
-- Remover label "Gestão" ao lado.
-- Quando colapsado: mostra apenas "JTD" centralizado em fonte menor (`text-xl`).
-- Quando expandido: "JTD" maior (`text-3xl`) à esquerda.
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ ICON  Título            [🔍 buscar...     ]  [filtros] [+ Novo] │
+│       subtítulo · X de Y                                       │
+└──────────────────────────────────────────────────────────────┘
+```
 
-**3. Layout sem bugs no estado colapsado**
-- Container do logo com `justify-center` quando colapsado, `justify-start px-4` quando expandido.
-- Ícones de navegação: `justify-center` quando colapsado (não `gap-3` quebrado).
-- Footer (avatar do usuário): mesma regra — só avatar centralizado quando colapsado.
-- Reservar espaço no Layout.tsx: o `<Sidebar />` ocupa 64px fixos; sidebar real é `fixed` por cima.
+**Estrutura visual (grid responsivo):**
+- Coluna 1 (esquerda): ícone temático em badge + título + subtítulo/contador inline com pontinhos separadores
+- Coluna 2 (meio, flex-1): campo de busca compacto (max-w-md) com ícone embutido
+- Coluna 3 (direita): chips de filtro opcionais (ex: Status ATIVO/INATIVO, Marketplace) + botão CTA primário
 
-**4. Detalhes técnicos**
-- `Sidebar.tsx`: trocar `useState(collapsed)` por `useState(isHovered)` controlado por mouse events.
-- Adicionar `<div className="w-16 shrink-0" aria-hidden />` como spacer no Layout para manter o conteúdo no lugar.
-- Aside vira `fixed left-0 top-0 h-screen z-40` com width animada.
-- Manter cores `bg-sidebar`, `border-sidebar-border`, ativos com `text-[var(--lime)]` em vez de hex hardcoded.
+**Comportamento:**
+- Em mobile (`<sm`): vira 2 linhas — header + (busca | CTA)
+- Em desktop: tudo em uma única linha alinhada
+- Usa `grid grid-cols-[auto_1fr_auto]` com `min-w-0` no meio para a busca não estourar
+- Bordas suaves, fundo `bg-internal-w03`, padding interno consistente
 
-### Arquivos a modificar
-- `src/components/layout/Sidebar.tsx` — refatorar logo, hover behavior, remover chevron, alinhamento colapsado.
-- `src/components/layout/Layout.tsx` — adicionar spacer de 64px para sidebar fixa.
+**Props da API:**
+```tsx
+<ListToolbar
+  icon={Package}
+  title="Produtos"
+  subtitle="Gerencie sua base de produtos"
+  searchValue={search}
+  onSearchChange={setSearch}
+  searchPlaceholder="Buscar por nome ou SKU..."
+  totalCount={products.length}
+  filteredCount={filtered.length}
+  filters={[
+    { label: "Ativos", active: filterActive, onClick: ... },
+    { label: "Inativos", active: ..., onClick: ... },
+  ]}
+  cta={{ label: "Novo Produto", to: "/produtos/novo", icon: Plus }}
+/>
+```
+
+### Arquivos a criar/modificar
+1. **Criar** `src/components/layout/ListToolbar.tsx` — componente reutilizável
+2. **Modificar** `src/pages/Produtos/index.tsx` — substituir header + busca + contador pelo `<ListToolbar />`
+3. **Modificar** `src/pages/Anuncios/index.tsx` — idem, com filtros por marketplace
+4. **Modificar** `src/pages/Fornecedores.tsx` — idem, com filtro Ativo/Inativo
 
 ### Não muda
-- Lista de rotas (Dashboard, Produtos, Anúncios, Kits, Métricas, Fornecedores, Vendas, Compras, API, Configuração).
-- Tokens de tema, paleta Cyber Acid.
-- Outras telas/funcionalidades.
+- A tabela de cada listagem (só a barra superior é refatorada)
+- Lógica de fetch/filtro no Supabase
+- Sidebar, layout geral, tokens de cor
+
+### Detalhes visuais
+- Ícone do título em badge `h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 text-primary`
+- Contador como pill discreta ao lado do subtítulo: `{filtered}/{total}` em mono
+- Busca com `h-9` (mais compacta que os atuais `py-3`), ícone à esquerda em 14px
+- CTA mantém estilo Cyber Acid (lime), agora alinhado e proporcional aos demais elementos
+- Filtros como chips toggle pequenos (`text-xs`, `rounded-full`)
