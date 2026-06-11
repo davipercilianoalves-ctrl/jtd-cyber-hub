@@ -1121,29 +1121,35 @@ function CompetitorsTab({
 
       {/* Estratégias sugeridas */}
       <div>
-        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">Estratégias de Preço Sugeridas</h4>
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-3 flex items-center gap-2">
+          <Target size={14} className="text-primary" /> Estratégias Recomendadas com Base no Mercado
+        </h4>
         <div className="grid md:grid-cols-3 gap-3">
           <StrategyCard
             title="Agressivo"
-            subtitle="Ganhar volume — 3% abaixo do menor"
+            subtitle="Ganhar volume e desbancar concorrentes"
+            description="Preço definido como 3% abaixo do menor preço encontrado no mercado."
             price={recommended.agressivo}
             tone="good"
-            warn={recommended.agressivo < result.minPrice ? "Abaixo do preço mínimo!" : undefined}
+            warn={recommended.agressivo < result.minPrice ? "Preço abaixo do seu custo operacional!" : undefined}
           />
           <StrategyCard
             title="Competitivo"
-            subtitle="Alinhado à média do mercado"
+            subtitle="Equilíbrio e estabilidade"
+            description="Preço alinhado à média exata praticada pelos seus concorrentes."
             price={recommended.competitivo}
             tone="primary"
           />
           <StrategyCard
             title="Premium"
-            subtitle="5% acima do maior — posicionamento alto"
+            subtitle="Posicionamento de marca e exclusividade"
+            description="Preço definido como 5% acima do maior preço do mercado."
             price={recommended.premium}
             tone="warn"
           />
         </div>
       </div>
+
 
       <div className="rounded border border-sidebar-border bg-internal-w04 p-4">
         <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">
