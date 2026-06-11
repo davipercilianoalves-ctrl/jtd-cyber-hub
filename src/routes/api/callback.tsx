@@ -5,10 +5,15 @@ import { useEffect } from 'react';
 
 export const Route = createFileRoute('/api/callback')({
   component: CallbackComponent,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      code: (search.code as string) || undefined,
+    };
+  },
 });
 
 function CallbackComponent() {
-  const { code } = Route.useSearch<{ code?: string }>();
+  const { code } = Route.useSearch();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,8 +26,7 @@ function CallbackComponent() {
 
       try {
         const { error } = await supabase.functions.invoke('ml-auth-callback', {
-          method: 'POST', // Changed to POST as per standard Edge Function invocation, but we pass params in URL if needed
-          body: { code } // Passing code in body since invoke doesn't have queryParams property in this version
+          body: { code }
         });
 
         if (error) throw error;
