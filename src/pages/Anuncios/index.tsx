@@ -1,14 +1,16 @@
-import { useState, useEffect } from "react";
-import { Plus, Search, Megaphone, Loader2, Edit2, BarChart2 } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect, useMemo } from "react";
+import { Megaphone } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ListToolbar } from "@/components/layout/ListToolbar";
 
 export default function Anuncios() {
   const navigate = useNavigate();
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [marketplace, setMarketplace] = useState<string>("all");
 
   useEffect(() => { fetchAds(); }, []);
 
@@ -20,32 +22,41 @@ export default function Anuncios() {
     setLoading(false);
   }
 
-  const filtered = ads.filter(a => 
-    (a.products?.name || "").toLowerCase().includes(search.toLowerCase()) ||
-    (a.marketplace || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const marketplaces = useMemo(() => {
+    const set = new Set<string>();
+    ads.forEach(a => { if (a.marketplace) set.add(a.marketplace); });
+    return Array.from(set);
+  }, [ads]);
+
+  const filtered = ads.filter(a => {
+    const matchSearch =
+      (a.products?.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (a.marketplace || "").toLowerCase().includes(search.toLowerCase());
+    const matchMarketplace = marketplace === "all" || a.marketplace === marketplace;
+    return matchSearch && matchMarketplace;
+  });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Anúncios</h1>
-          <p className="text-sm text-muted-foreground">Gerencie seus anúncios por marketplace</p>
-        </div>
-        <Link to="/anuncios/novo" className="bg-primary px-4 py-2 text-sm font-bold text-black rounded hover:brightness-110 flex items-center gap-2"><Plus size={18}/> NOVO ANÚNCIO</Link>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-3 text-muted-foreground" size={18} />
-        <input 
-          className="w-full bg-internal-w03 border border-sidebar-border rounded py-3 pl-10 pr-4 text-sm outline-none focus:border-primary"
-          placeholder="Buscar por produto ou marketplace..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      <p className="text-xs text-muted-foreground">Mostrando {filtered.length} de {ads.length} anúncios</p>
+    <div className="space-y-5 animate-in fade-in duration-500">
+      <ListToolbar
+        icon={Megaphone}
+        title="Anúncios"
+        subtitle="Gerencie seus anúncios por marketplace"
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por produto ou marketplace..."
+        totalCount={ads.length}
+        filteredCount={filtered.length}
+        filters={[
+          { label: "Todos", active: marketplace === "all", onClick: () => setMarketplace("all") },
+          ...marketplaces.map(m => ({
+            label: m,
+            active: marketplace === m,
+            onClick: () => setMarketplace(m),
+          })),
+        ]}
+        cta={{ label: "Novo Anúncio", to: "/anuncios/novo" }}
+      />
 
       {loading ? (
         <div className="space-y-2">

@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Package, Loader2, Tag, Users } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Package } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ListToolbar } from "@/components/layout/ListToolbar";
+
+type StatusFilter = "all" | "active" | "inactive";
 
 export default function Produtos() {
   const navigate = useNavigate();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("all");
 
   useEffect(() => { fetchProducts(); }, []);
 
@@ -20,29 +24,30 @@ export default function Produtos() {
     setLoading(false);
   }
 
-  const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku || "").toLowerCase().includes(search.toLowerCase()));
+  const filtered = products.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku || "").toLowerCase().includes(search.toLowerCase());
+    const matchStatus = status === "all" || (status === "active" ? p.is_active : !p.is_active);
+    return matchSearch && matchStatus;
+  });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Produtos</h1>
-          <p className="text-sm text-muted-foreground">Gerencie sua base de produtos</p>
-        </div>
-        <Link to="/produtos/novo" className="bg-primary px-4 py-2 text-sm font-bold text-black rounded hover:brightness-110 flex items-center gap-2"><Plus size={18}/> NOVO PRODUTO</Link>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-3 text-muted-foreground" size={18} />
-        <input 
-          className="w-full bg-internal-w03 border border-sidebar-border rounded py-3 pl-10 pr-4 text-sm outline-none focus:border-primary"
-          placeholder="Buscar por nome ou SKU..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      <p className="text-xs text-muted-foreground">Mostrando {filtered.length} de {products.length} produtos</p>
+    <div className="space-y-5 animate-in fade-in duration-500">
+      <ListToolbar
+        icon={Package}
+        title="Produtos"
+        subtitle="Gerencie sua base de produtos"
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por nome ou SKU..."
+        totalCount={products.length}
+        filteredCount={filtered.length}
+        filters={[
+          { label: "Todos", active: status === "all", onClick: () => setStatus("all") },
+          { label: "Ativos", active: status === "active", onClick: () => setStatus("active") },
+          { label: "Inativos", active: status === "inactive", onClick: () => setStatus("inactive") },
+        ]}
+        cta={{ label: "Novo Produto", to: "/produtos/novo" }}
+      />
 
       {loading ? (
         <div className="space-y-2">
