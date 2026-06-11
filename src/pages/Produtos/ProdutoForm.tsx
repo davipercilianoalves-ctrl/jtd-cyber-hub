@@ -1226,9 +1226,10 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 5. ANÁLISE GERAL DO PRODUTO                                  */}
+      {/* 6. ANÁLISE GERAL DO PRODUTO                                  */}
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-5">
+
         <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
           <BarChart3 size={20} className="text-primary" />
           Análise Geral do Produto
