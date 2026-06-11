@@ -1159,7 +1159,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       <PricingModule
         value={formData.pricing as PricingState}
         onChange={(next) => setFormData({ ...formData, pricing: next })}
+        competitorPrices={prices}
       />
+
 
       {/* ============================================================ */}
       {/* 5. TEXTOS DO PRODUTO                                         */}
