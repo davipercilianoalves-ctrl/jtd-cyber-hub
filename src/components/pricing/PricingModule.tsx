@@ -1,0 +1,830 @@
+import { useMemo, useState } from "react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  DollarSign,
+  Percent,
+  Target,
+  Tag,
+  BarChart3,
+  FileText,
+  Layers,
+  Sparkles,
+  Calculator,
+} from "lucide-react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
+} from "recharts";
+import {
+  PricingState,
+  PricingResult,
+  CostItem,
+  FeeItem,
+  computePricing,
+  applyScenario,
+  defaultPricing,
+  fmtBRL,
+  fmtPct,
+  uid,
+} from "./engine";
+
+interface Props {
+  value: PricingState;
+  onChange: (next: PricingState) => void;
+}
+
+type TabKey = "summary" | "costs" | "feestax" | "promo" | "scenarios" | "report";
+
+const TABS: { key: TabKey; label: string; icon: any }[] = [
+  { key: "summary", label: "Resumo", icon: BarChart3 },
+  { key: "costs", label: "Custos", icon: Layers },
+  { key: "feestax", label: "Taxas & Impostos", icon: Percent },
+  { key: "promo", label: "Promoção", icon: Sparkles },
+  { key: "scenarios", label: "Simulações", icon: Calculator },
+  { key: "report", label: "Relatório", icon: FileText },
+];
+
+// ===== Estilos compartilhados =====
+const inputCls =
+  "w-full h-9 rounded border border-sidebar-border bg-internal-20 px-2 text-sm focus:border-primary focus:outline-none";
+const cellNumCls = `${inputCls} text-right font-mono`;
+const btnGhost =
+  "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors";
+const chipBtn =
+  "px-3 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider border transition-all";
+
+export default function PricingModule({ value, onChange }: Props) {
+  const [tab, setTab] = useState<TabKey>("summary");
+  const result = useMemo(() => computePricing(value), [value]);
+
+  const patch = (p: Partial<PricingState>) => onChange({ ...value, ...p });
+
+  return (
+    <section className="jtd-glass p-6 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded bg-primary/10 border border-primary/30 flex items-center justify-center">
+            <Calculator size={18} className="text-primary" />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg text-foreground leading-tight">Precificação Inteligente</h3>
+            <p className="text-xs text-muted-foreground">
+              Calcule preço ideal, mínimo, promocional e simule cenários.
+            </p>
+          </div>
+        </div>
+        <div className="text-right text-xs">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Preço Ideal</div>
+          <div className={`text-xl font-bold font-mono ${result.invalid ? "text-red-500" : "text-primary"}`}>
+            {result.invalid ? "—" : fmtBRL(result.idealPrice)}
+          </div>
+        </div>
+      </div>
+
+      <Alerts result={result} state={value} />
+
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-sidebar-border/40 overflow-x-auto">
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                active
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon size={14} />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      {tab === "summary" && <SummaryTab result={result} />}
+      {tab === "costs" && <CostsTab value={value} patch={patch} />}
+      {tab === "feestax" && <FeesTaxesTab value={value} patch={patch} />}
+      {tab === "promo" && <PromoTab value={value} patch={patch} result={result} />}
+      {tab === "scenarios" && <ScenariosTab value={value} patch={patch} />}
+      {tab === "report" && <ReportTab value={value} result={result} />}
+    </section>
+  );
+}
+
+// =============================================================
+// ALERTAS
+// =============================================================
+function Alerts({ result, state }: { result: PricingResult; state: PricingState }) {
+  const alerts: { type: "error" | "warn"; msg: string }[] = [];
+  if (result.invalid) alerts.push({ type: "error", msg: "Soma de taxas, impostos e lucro ≥ 100%. Reduza algum percentual." });
+  if (!result.invalid && result.netMarginPct < state.minMarginPct)
+    alerts.push({ type: "warn", msg: `Margem líquida (${fmtPct(result.netMarginPct)}) abaixo do mínimo (${state.minMarginPct}%).` });
+  if (!result.invalid && result.idealPrice < result.costFixedTotal)
+    alerts.push({ type: "error", msg: "Preço calculado abaixo do custo total." });
+  const taxPct = result.taxPctTotal * 100;
+  if (taxPct > 30) alerts.push({ type: "warn", msg: `Carga tributária alta (${taxPct.toFixed(1)}%).` });
+  const freight = state.costs.find((c) => c.active && c.name.toLowerCase().includes("frete"));
+  if (freight && result.costFixedTotal > 0 && freight.value / result.costFixedTotal > 0.3)
+    alerts.push({ type: "warn", msg: "Frete representa mais de 30% do custo total." });
+
+  if (!alerts.length) return null;
+  return (
+    <div className="space-y-2">
+      {alerts.map((a, i) => (
+        <div
+          key={i}
+          className={`flex items-start gap-2 p-3 rounded border text-xs ${
+            a.type === "error"
+              ? "border-red-500/40 bg-red-500/10 text-red-300"
+              : "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
+          }`}
+        >
+          <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+          <span>{a.msg}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// =============================================================
+// RESUMO
+// =============================================================
+function SummaryTab({ result }: { result: PricingResult }) {
+  const cards = [
+    { label: "Custo Total", value: fmtBRL(result.costFixedTotal), accent: "neutral" },
+    { label: "Preço Mínimo", value: fmtBRL(result.minPrice), accent: "neutral" },
+    { label: "Preço Ideal", value: fmtBRL(result.idealPrice), accent: "primary" },
+    { label: "Lucro (R$)", value: fmtBRL(result.profitBRL), accent: result.profitBRL >= 0 ? "good" : "bad" },
+    { label: "Lucro (%)", value: fmtPct(result.goalPct * 100), accent: "good" },
+    { label: "Margem Líquida", value: fmtPct(result.netMarginPct), accent: "good" },
+    { label: "Taxas Totais", value: fmtBRL(result.totalFeesBRL), accent: "neutral" },
+    { label: "Impostos Totais", value: fmtBRL(result.totalTaxesBRL), accent: "neutral" },
+  ];
+
+  const pieData = [
+    { name: "Custo Produto", value: result.costFixedTotal, fill: "hsl(var(--muted-foreground))" },
+    { name: "Taxas", value: result.totalFeesBRL, fill: "#60a5fa" },
+    { name: "Impostos", value: result.totalTaxesBRL, fill: "#f87171" },
+    { name: "Lucro", value: Math.max(0, result.profitBRL), fill: "hsl(var(--primary))" },
+  ].filter((d) => d.value > 0);
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {cards.map((c) => (
+          <div
+            key={c.label}
+            className={`rounded border p-3 ${
+              c.accent === "primary"
+                ? "border-primary/40 bg-primary/5"
+                : c.accent === "good"
+                ? "border-lime-500/30 bg-lime-500/5"
+                : c.accent === "bad"
+                ? "border-red-500/40 bg-red-500/10"
+                : "border-sidebar-border bg-internal-w04"
+            }`}
+          >
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{c.label}</div>
+            <div
+              className={`mt-1 font-mono font-bold text-base ${
+                c.accent === "primary"
+                  ? "text-primary"
+                  : c.accent === "good"
+                  ? "text-lime-400"
+                  : c.accent === "bad"
+                  ? "text-red-400"
+                  : "text-foreground"
+              }`}
+            >
+              {c.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {pieData.length > 0 && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="rounded border border-sidebar-border bg-internal-w04 p-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
+              Distribuição do Preço
+            </h4>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={80}>
+                  {pieData.map((d, i) => (
+                    <Cell key={i} fill={d.fill} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(v: any) => fmtBRL(Number(v))}
+                  contentStyle={{ background: "#0a0a0a", border: "1px solid #333", borderRadius: 4 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="rounded border border-sidebar-border bg-internal-w04 p-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
+              Composição (R$)
+            </h4>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={pieData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#222" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#888" }} />
+                <YAxis tick={{ fontSize: 10, fill: "#888" }} />
+                <Tooltip
+                  formatter={(v: any) => fmtBRL(Number(v))}
+                  contentStyle={{ background: "#0a0a0a", border: "1px solid #333", borderRadius: 4 }}
+                />
+                <Bar dataKey="value">
+                  {pieData.map((d, i) => (
+                    <Cell key={i} fill={d.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================
+// CUSTOS
+// =============================================================
+function CostsTab({ value, patch }: { value: PricingState; patch: (p: Partial<PricingState>) => void }) {
+  const updateRow = (id: string, change: Partial<CostItem>) =>
+    patch({ costs: value.costs.map((c) => (c.id === id ? { ...c, ...change } : c)) });
+  const removeRow = (id: string) => patch({ costs: value.costs.filter((c) => c.id !== id) });
+  const addRow = () =>
+    patch({
+      costs: [
+        ...value.costs,
+        { id: uid(), name: "", kind: "fixed", value: 0, active: true },
+      ],
+    });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Custos do produto. Padrão = valor fixo em R$. Use % para custos proporcionais ao preço (ex: marketing).
+        </p>
+        <button type="button" onClick={addRow} className={btnGhost}>
+          <Plus size={14} /> Novo Custo
+        </button>
+      </div>
+      <CostTable
+        rows={value.costs}
+        onChange={updateRow}
+        onRemove={removeRow}
+        allowKind
+        emptyMsg="Nenhum custo cadastrado."
+      />
+    </div>
+  );
+}
+
+// =============================================================
+// TAXAS / IMPOSTOS
+// =============================================================
+function FeesTaxesTab({ value, patch }: { value: PricingState; patch: (p: Partial<PricingState>) => void }) {
+  return (
+    <div className="grid md:grid-cols-2 gap-5">
+      <PercentList
+        title="Taxas e Comissões"
+        items={value.fees}
+        onChange={(items) => patch({ fees: items })}
+        addLabel="Nova Taxa"
+      />
+      <PercentList
+        title="Impostos"
+        items={value.taxes}
+        onChange={(items) => patch({ taxes: items })}
+        addLabel="Novo Imposto"
+      />
+    </div>
+  );
+}
+
+function PercentList({
+  title,
+  items,
+  onChange,
+  addLabel,
+}: {
+  title: string;
+  items: FeeItem[];
+  onChange: (items: FeeItem[]) => void;
+  addLabel: string;
+}) {
+  const update = (id: string, change: Partial<FeeItem>) =>
+    onChange(items.map((i) => (i.id === id ? { ...i, ...change } : i)));
+  const remove = (id: string) => onChange(items.filter((i) => i.id !== id));
+  const add = () => onChange([...items, { id: uid(), name: "", value: 0, active: true }]);
+
+  const total = items.filter((i) => i.active).reduce((s, i) => s + (Number(i.value) || 0), 0);
+
+  return (
+    <div className="rounded border border-sidebar-border bg-internal-w04 p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</h4>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] uppercase text-muted-foreground">
+            Total: <span className="text-primary font-bold">{fmtPct(total)}</span>
+          </span>
+          <button type="button" onClick={add} className={btnGhost}>
+            <Plus size={12} /> {addLabel}
+          </button>
+        </div>
+      </div>
+      <div className="space-y-1">
+        {items.map((i) => (
+          <div key={i.id} className="grid grid-cols-[1fr_90px_36px_28px] gap-2 items-center">
+            <input
+              value={i.name}
+              onChange={(e) => update(i.id, { name: e.target.value })}
+              placeholder="Nome"
+              className={inputCls}
+            />
+            <div className="relative">
+              <input
+                type="number"
+                step="0.01"
+                value={i.value}
+                onChange={(e) => update(i.id, { value: parseFloat(e.target.value) || 0 })}
+                className={`${cellNumCls} pr-6`}
+              />
+              <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            </div>
+            <ToggleActive value={i.active} onChange={(v) => update(i.id, { active: v })} />
+            <button
+              type="button"
+              onClick={() => remove(i.id)}
+              className="text-muted-foreground hover:text-red-500 flex justify-center"
+              title="Remover"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        ))}
+        {!items.length && <p className="text-xs text-muted-foreground py-2 text-center">Nenhum item.</p>}
+      </div>
+    </div>
+  );
+}
+
+// =============================================================
+// CUSTOS — tabela com escolha de tipo (fixo / %)
+// =============================================================
+function CostTable({
+  rows,
+  onChange,
+  onRemove,
+  allowKind,
+  emptyMsg,
+}: {
+  rows: CostItem[];
+  onChange: (id: string, change: Partial<CostItem>) => void;
+  onRemove: (id: string) => void;
+  allowKind: boolean;
+  emptyMsg: string;
+}) {
+  return (
+    <div className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden">
+      <div className="grid grid-cols-[1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
+        <div>Nome</div>
+        <div className="text-center">Tipo</div>
+        <div className="text-right">Valor</div>
+        <div className="text-center">Ativo</div>
+        <div></div>
+      </div>
+      <div className="divide-y divide-sidebar-border/30">
+        {rows.map((r) => (
+          <div
+            key={r.id}
+            className="grid grid-cols-[1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 items-center"
+          >
+            <input
+              value={r.name}
+              onChange={(e) => onChange(r.id, { name: e.target.value })}
+              placeholder="Nome do custo"
+              className={inputCls}
+              disabled={r.builtin}
+            />
+            {allowKind ? (
+              <div className="flex gap-1 justify-center">
+                <button
+                  type="button"
+                  onClick={() => onChange(r.id, { kind: "fixed" })}
+                  className={`${chipBtn} ${
+                    r.kind === "fixed"
+                      ? "bg-primary text-black border-primary"
+                      : "border-sidebar-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  R$
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(r.id, { kind: "percent" })}
+                  className={`${chipBtn} ${
+                    r.kind === "percent"
+                      ? "bg-primary text-black border-primary"
+                      : "border-sidebar-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  %
+                </button>
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground">%</div>
+            )}
+            <div className="relative">
+              <input
+                type="number"
+                step="0.01"
+                value={r.value}
+                onChange={(e) => onChange(r.id, { value: parseFloat(e.target.value) || 0 })}
+                className={`${cellNumCls} ${r.kind === "fixed" ? "pl-7" : "pr-6"}`}
+              />
+              {r.kind === "fixed" ? (
+                <DollarSign size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              ) : (
+                <Percent size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex justify-center">
+              <ToggleActive value={r.active} onChange={(v) => onChange(r.id, { active: v })} />
+            </div>
+            <button
+              type="button"
+              onClick={() => !r.builtin && onRemove(r.id)}
+              disabled={r.builtin}
+              className={`flex justify-center ${
+                r.builtin
+                  ? "text-muted-foreground/20 cursor-not-allowed"
+                  : "text-muted-foreground hover:text-red-500"
+              }`}
+              title={r.builtin ? "Custo padrão" : "Remover"}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        ))}
+        {!rows.length && <p className="text-xs text-muted-foreground py-4 text-center">{emptyMsg}</p>}
+      </div>
+    </div>
+  );
+}
+
+function ToggleActive({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      className={`h-5 w-9 rounded-full transition-colors relative ${value ? "bg-primary" : "bg-sidebar-border"}`}
+      title={value ? "Ativo" : "Inativo"}
+    >
+      <span
+        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+          value ? "translate-x-4" : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
+// =============================================================
+// PROMOÇÃO
+// =============================================================
+function PromoTab({
+  value,
+  patch,
+  result,
+}: {
+  value: PricingState;
+  patch: (p: Partial<PricingState>) => void;
+  result: PricingResult;
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-4">
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+          <Target size={14} className="text-primary" /> Objetivo de Lucro
+        </h4>
+        <div className="grid md:grid-cols-3 gap-2">
+          {(
+            [
+              { mode: "marginPct", label: "Margem (%)" },
+              { mode: "profitPct", label: "Lucro (%)" },
+              { mode: "profitBRL", label: "Lucro (R$)" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.mode}
+              type="button"
+              onClick={() => patch({ goal: { ...value.goal, mode: opt.mode } })}
+              className={`p-2 rounded border text-xs font-bold uppercase tracking-wider transition-all ${
+                value.goal.mode === opt.mode
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-sidebar-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Valor desejado {value.goal.mode === "profitBRL" ? "(R$)" : "(%)"}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={value.goal.value}
+              onChange={(e) => patch({ goal: { ...value.goal, value: parseFloat(e.target.value) || 0 } })}
+              className={`${cellNumCls} mt-1`}
+            />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Margem mínima de alerta (%)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={value.minMarginPct}
+              onChange={(e) => patch({ minMarginPct: parseFloat(e.target.value) || 0 })}
+              className={`${cellNumCls} mt-1`}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-4">
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+          <Sparkles size={14} className="text-primary" /> Estratégia Promocional
+        </h4>
+        <p className="text-xs text-muted-foreground">
+          O preço final volta exatamente ao preço real. O desconto exibido é calculado matematicamente — nunca
+          igual ao aumento.
+        </p>
+        <div className="grid md:grid-cols-5 gap-3">
+          <PromoField label="Preço Real" value={fmtBRL(result.idealPrice)} readOnly tone="primary" />
+          <div>
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Aumento Estratégico (%)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={value.promo.strategicMarkupPct}
+              onChange={(e) =>
+                patch({ promo: { strategicMarkupPct: parseFloat(e.target.value) || 0 } })
+              }
+              className={`${cellNumCls} mt-1`}
+            />
+          </div>
+          <PromoField label="Preço Vitrine" value={fmtBRL(result.showcasePrice)} readOnly />
+          <PromoField label="Desconto Exibido" value={fmtPct(result.promoDiscountPct)} readOnly tone="good" />
+          <PromoField label="Preço Final" value={fmtBRL(result.promoFinalPrice)} readOnly tone="primary" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PromoField({
+  label,
+  value,
+  readOnly,
+  tone,
+}: {
+  label: string;
+  value: string;
+  readOnly?: boolean;
+  tone?: "primary" | "good";
+}) {
+  return (
+    <div>
+      <label className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</label>
+      <div
+        className={`mt-1 h-9 px-2 rounded border bg-internal-20 flex items-center justify-end font-mono text-sm ${
+          tone === "primary"
+            ? "border-primary/50 text-primary"
+            : tone === "good"
+            ? "border-lime-500/40 text-lime-400"
+            : "border-sidebar-border text-foreground"
+        }`}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+// =============================================================
+// CENÁRIOS
+// =============================================================
+function ScenariosTab({
+  value,
+  patch,
+}: {
+  value: PricingState;
+  patch: (p: Partial<PricingState>) => void;
+}) {
+  const updateScenario = (idx: number, change: Partial<PricingState>) => {
+    const next = [...value.scenarios];
+    next[idx] = { ...next[idx], overrides: { ...next[idx].overrides, ...change } };
+    patch({ scenarios: next });
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Compare 3 cenários alterando taxas, impostos ou lucro. Os custos fixos são herdados.
+      </p>
+      <div className="grid md:grid-cols-3 gap-3">
+        {value.scenarios.map((s, idx) => {
+          const merged = applyScenario(value, s.overrides);
+          const res = computePricing(merged);
+          const feeOverride =
+            s.overrides.fees?.reduce((sum, f) => (f.active ? sum + f.value : sum), 0) ??
+            value.fees.filter((f) => f.active).reduce((sum, f) => sum + f.value, 0);
+          const taxOverride =
+            s.overrides.taxes?.reduce((sum, t) => (t.active ? sum + t.value : sum), 0) ??
+            value.taxes.filter((t) => t.active).reduce((sum, t) => sum + t.value, 0);
+          const goalOverride = s.overrides.goal?.value ?? value.goal.value;
+
+          return (
+            <div key={s.id} className="rounded border border-sidebar-border bg-internal-w04 p-3 space-y-3">
+              <input
+                value={s.name}
+                onChange={(e) => {
+                  const next = [...value.scenarios];
+                  next[idx] = { ...next[idx], name: e.target.value };
+                  patch({ scenarios: next });
+                }}
+                className={`${inputCls} font-bold`}
+              />
+              <ScenarioRow
+                label="Σ Taxas (%)"
+                value={feeOverride}
+                onChange={(v) =>
+                  updateScenario(idx, {
+                    fees: value.fees.map((f, i) =>
+                      i === 0 ? { ...f, value: v } : { ...f, value: 0 }
+                    ),
+                  })
+                }
+              />
+              <ScenarioRow
+                label="Σ Impostos (%)"
+                value={taxOverride}
+                onChange={(v) =>
+                  updateScenario(idx, {
+                    taxes: value.taxes.map((t, i) =>
+                      i === 0 ? { ...t, value: v } : { ...t, value: 0 }
+                    ),
+                  })
+                }
+              />
+              <ScenarioRow
+                label={value.goal.mode === "profitBRL" ? "Lucro (R$)" : "Lucro (%)"}
+                value={goalOverride}
+                onChange={(v) =>
+                  updateScenario(idx, { goal: { ...value.goal, value: v } })
+                }
+              />
+              <div className="pt-2 border-t border-sidebar-border/30 space-y-1 text-xs">
+                <RowKV k="Preço" v={fmtBRL(res.idealPrice)} accent="primary" />
+                <RowKV k="Lucro" v={fmtBRL(res.profitBRL)} accent={res.profitBRL >= 0 ? "good" : "bad"} />
+                <RowKV k="Margem" v={fmtPct(res.netMarginPct)} accent="good" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ScenarioRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</span>
+      <input
+        type="number"
+        step="0.01"
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        className={`${cellNumCls} w-24`}
+      />
+    </div>
+  );
+}
+
+function RowKV({ k, v, accent }: { k: string; v: string; accent?: "primary" | "good" | "bad" }) {
+  return (
+    <div className="flex justify-between">
+      <span className="text-muted-foreground">{k}</span>
+      <span
+        className={`font-mono font-bold ${
+          accent === "primary"
+            ? "text-primary"
+            : accent === "good"
+            ? "text-lime-400"
+            : accent === "bad"
+            ? "text-red-400"
+            : "text-foreground"
+        }`}
+      >
+        {v}
+      </span>
+    </div>
+  );
+}
+
+// =============================================================
+// RELATÓRIO
+// =============================================================
+function ReportTab({ value, result }: { value: PricingState; result: PricingResult }) {
+  const rows: { k: string; v: string; bold?: boolean; tone?: "primary" | "good" }[] = [];
+  value.costs
+    .filter((c) => c.active && c.kind === "fixed")
+    .forEach((c) => rows.push({ k: c.name || "Custo", v: fmtBRL(c.value) }));
+  rows.push({ k: "Subtotal Custos", v: fmtBRL(result.costFixedTotal), bold: true });
+  value.fees
+    .filter((f) => f.active && f.value > 0)
+    .forEach((f) => rows.push({ k: f.name || "Taxa", v: fmtPct(f.value) }));
+  rows.push({ k: "Total Taxas", v: fmtPct(result.feePctTotal * 100), bold: true });
+  value.taxes
+    .filter((t) => t.active && t.value > 0)
+    .forEach((t) => rows.push({ k: t.name || "Imposto", v: fmtPct(t.value) }));
+  rows.push({ k: "Total Impostos", v: fmtPct(result.taxPctTotal * 100), bold: true });
+  rows.push({
+    k: `Lucro (${value.goal.mode === "marginPct" ? "Margem" : value.goal.mode === "profitPct" ? "%" : "R$"})`,
+    v: value.goal.mode === "profitBRL" ? fmtBRL(value.goal.value) : fmtPct(value.goal.value),
+  });
+  rows.push({ k: "Preço Calculado", v: fmtBRL(result.idealPrice), bold: true, tone: "primary" });
+  rows.push({ k: "Aumento Estratégico", v: fmtPct(value.promo.strategicMarkupPct) });
+  rows.push({ k: "Preço Vitrine", v: fmtBRL(result.showcasePrice) });
+  rows.push({ k: "Desconto Necessário", v: fmtPct(result.promoDiscountPct) });
+  rows.push({ k: "Preço Final", v: fmtBRL(result.promoFinalPrice), bold: true, tone: "primary" });
+  rows.push({ k: "Lucro Líquido", v: fmtBRL(result.profitBRL), bold: true, tone: "good" });
+  rows.push({ k: "Margem Líquida", v: fmtPct(result.netMarginPct), bold: true, tone: "good" });
+
+  return (
+    <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-1.5 max-w-xl">
+      {rows.map((r, i) => (
+        <div
+          key={i}
+          className={`flex justify-between text-sm py-1 ${
+            r.bold ? "border-t border-sidebar-border/40 pt-2 mt-1" : ""
+          }`}
+        >
+          <span className={r.bold ? "font-bold text-foreground" : "text-muted-foreground"}>{r.k}:</span>
+          <span
+            className={`font-mono ${r.bold ? "font-bold" : ""} ${
+              r.tone === "primary" ? "text-primary" : r.tone === "good" ? "text-lime-400" : "text-foreground"
+            }`}
+          >
+            {r.v}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
