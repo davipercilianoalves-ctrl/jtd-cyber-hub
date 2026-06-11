@@ -74,11 +74,45 @@ const btnGhost =
 const chipBtn =
   "px-3 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider border transition-all";
 
-export default function PricingModule({ value, onChange }: Props) {
+export default function PricingModule({ value, onChange, competitorPrices = [] }: Props) {
   const [tab, setTab] = useState<TabKey>("summary");
   const result = useMemo(() => computePricing(value), [value]);
 
+  const competitorStats = useMemo(() => {
+    const valid = competitorPrices.filter((p) => p > 0).sort((a, b) => a - b);
+    if (!valid.length) return null;
+    const min = valid[0];
+    const max = valid[valid.length - 1];
+    const avg = valid.reduce((s, p) => s + p, 0) / valid.length;
+    const median = valid[Math.floor(valid.length / 2)];
+    return { min, max, avg, median, count: valid.length, all: valid };
+  }, [competitorPrices]);
+
   const patch = (p: Partial<PricingState>) => onChange({ ...value, ...p });
+
+  // Posicionamento do preço ideal em relação aos concorrentes
+  const positioning = useMemo(() => {
+    if (!competitorStats || result.invalid) return null;
+    const { min, max, avg } = competitorStats;
+    const price = result.idealPrice;
+    let label = "";
+    let tone: "good" | "warn" | "bad" = "good";
+    if (price < min) {
+      label = "Abaixo de todos os concorrentes";
+      tone = "warn";
+    } else if (price > max) {
+      label = "Acima de todos os concorrentes";
+      tone = "bad";
+    } else if (price < avg) {
+      label = "Competitivo (abaixo da média)";
+      tone = "good";
+    } else {
+      label = "Acima da média do mercado";
+      tone = "warn";
+    }
+    const diffAvg = ((price - avg) / avg) * 100;
+    return { label, tone, diffAvg };
+  }, [competitorStats, result]);
 
   return (
     <section className="jtd-glass p-6 space-y-5">
@@ -91,7 +125,7 @@ export default function PricingModule({ value, onChange }: Props) {
           <div>
             <h3 className="font-bold text-lg text-foreground leading-tight">Precificação Inteligente</h3>
             <p className="text-xs text-muted-foreground">
-              Calcule preço ideal, mínimo, promocional e simule cenários.
+              Calcule preço ideal, mínimo, promocional e compare com concorrentes.
             </p>
           </div>
         </div>
@@ -103,7 +137,7 @@ export default function PricingModule({ value, onChange }: Props) {
         </div>
       </div>
 
-      <Alerts result={result} state={value} />
+      <Alerts result={result} state={value} competitorStats={competitorStats} positioning={positioning} />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-sidebar-border/40 overflow-x-auto">
@@ -115,7 +149,7 @@ export default function PricingModule({ value, onChange }: Props) {
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
                 active
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -129,15 +163,34 @@ export default function PricingModule({ value, onChange }: Props) {
       </div>
 
       {/* Content */}
-      {tab === "summary" && <SummaryTab result={result} />}
+      {tab === "summary" && (
+        <SummaryTab result={result} competitorStats={competitorStats} positioning={positioning} />
+      )}
+      {tab === "competitors" && (
+        <CompetitorsTab result={result} competitorStats={competitorStats} positioning={positioning} />
+      )}
       {tab === "costs" && <CostsTab value={value} patch={patch} />}
       {tab === "feestax" && <FeesTaxesTab value={value} patch={patch} />}
-      {tab === "promo" && <PromoTab value={value} patch={patch} result={result} />}
+      {tab === "promo" && <PromoTab value={value} patch={patch} result={result} competitorStats={competitorStats} />}
       {tab === "scenarios" && <ScenariosTab value={value} patch={patch} />}
       {tab === "report" && <ReportTab value={value} result={result} />}
+      {tab === "guide" && <GuideTab />}
     </section>
   );
 }
+
+type CompetitorStats = { min: number; max: number; avg: number; median: number; count: number; all: number[] } | null;
+type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: number } | null;
+
+// Tooltip de ajuda inline
+function Help({ text }: { text: string }) {
+  return (
+    <span title={text} className="inline-flex items-center text-muted-foreground/60 hover:text-primary cursor-help">
+      <Info size={11} />
+    </span>
+  );
+}
+
 
 // =============================================================
 // ALERTAS
