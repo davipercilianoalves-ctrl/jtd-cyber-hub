@@ -14,7 +14,11 @@ import {
   Layers,
   Sparkles,
   Calculator,
+  HelpCircle,
+  Users,
+  Info,
 } from "lucide-react";
+
 import {
   PieChart,
   Pie,
@@ -44,18 +48,22 @@ import {
 interface Props {
   value: PricingState;
   onChange: (next: PricingState) => void;
+  competitorPrices?: number[];
 }
 
-type TabKey = "summary" | "costs" | "feestax" | "promo" | "scenarios" | "report";
+type TabKey = "summary" | "competitors" | "costs" | "feestax" | "promo" | "scenarios" | "report" | "guide";
 
 const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "summary", label: "Resumo", icon: BarChart3 },
+  { key: "competitors", label: "Concorrentes", icon: Users },
   { key: "costs", label: "Custos", icon: Layers },
   { key: "feestax", label: "Taxas & Impostos", icon: Percent },
   { key: "promo", label: "Promoção", icon: Sparkles },
   { key: "scenarios", label: "Simulações", icon: Calculator },
   { key: "report", label: "Relatório", icon: FileText },
+  { key: "guide", label: "Guia", icon: HelpCircle },
 ];
+
 
 // ===== Estilos compartilhados =====
 const inputCls =
@@ -66,11 +74,45 @@ const btnGhost =
 const chipBtn =
   "px-3 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider border transition-all";
 
-export default function PricingModule({ value, onChange }: Props) {
+export default function PricingModule({ value, onChange, competitorPrices = [] }: Props) {
   const [tab, setTab] = useState<TabKey>("summary");
   const result = useMemo(() => computePricing(value), [value]);
 
+  const competitorStats = useMemo(() => {
+    const valid = competitorPrices.filter((p) => p > 0).sort((a, b) => a - b);
+    if (!valid.length) return null;
+    const min = valid[0];
+    const max = valid[valid.length - 1];
+    const avg = valid.reduce((s, p) => s + p, 0) / valid.length;
+    const median = valid[Math.floor(valid.length / 2)];
+    return { min, max, avg, median, count: valid.length, all: valid };
+  }, [competitorPrices]);
+
   const patch = (p: Partial<PricingState>) => onChange({ ...value, ...p });
+
+  // Posicionamento do preço ideal em relação aos concorrentes
+  const positioning = useMemo(() => {
+    if (!competitorStats || result.invalid) return null;
+    const { min, max, avg } = competitorStats;
+    const price = result.idealPrice;
+    let label = "";
+    let tone: "good" | "warn" | "bad" = "good";
+    if (price < min) {
+      label = "Abaixo de todos os concorrentes";
+      tone = "warn";
+    } else if (price > max) {
+      label = "Acima de todos os concorrentes";
+      tone = "bad";
+    } else if (price < avg) {
+      label = "Competitivo (abaixo da média)";
+      tone = "good";
+    } else {
+      label = "Acima da média do mercado";
+      tone = "warn";
+    }
+    const diffAvg = ((price - avg) / avg) * 100;
+    return { label, tone, diffAvg };
+  }, [competitorStats, result]);
 
   return (
     <section className="jtd-glass p-6 space-y-5">
@@ -83,7 +125,7 @@ export default function PricingModule({ value, onChange }: Props) {
           <div>
             <h3 className="font-bold text-lg text-foreground leading-tight">Precificação Inteligente</h3>
             <p className="text-xs text-muted-foreground">
-              Calcule preço ideal, mínimo, promocional e simule cenários.
+              Calcule preço ideal, mínimo, promocional e compare com concorrentes.
             </p>
           </div>
         </div>
@@ -95,7 +137,7 @@ export default function PricingModule({ value, onChange }: Props) {
         </div>
       </div>
 
-      <Alerts result={result} state={value} />
+      <Alerts result={result} state={value} competitorStats={competitorStats} positioning={positioning} />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-sidebar-border/40 overflow-x-auto">
@@ -107,7 +149,7 @@ export default function PricingModule({ value, onChange }: Props) {
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
                 active
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -121,20 +163,49 @@ export default function PricingModule({ value, onChange }: Props) {
       </div>
 
       {/* Content */}
-      {tab === "summary" && <SummaryTab result={result} />}
+      {tab === "summary" && (
+        <SummaryTab result={result} competitorStats={competitorStats} positioning={positioning} />
+      )}
+      {tab === "competitors" && (
+        <CompetitorsTab result={result} competitorStats={competitorStats} positioning={positioning} />
+      )}
       {tab === "costs" && <CostsTab value={value} patch={patch} />}
       {tab === "feestax" && <FeesTaxesTab value={value} patch={patch} />}
-      {tab === "promo" && <PromoTab value={value} patch={patch} result={result} />}
+      {tab === "promo" && <PromoTab value={value} patch={patch} result={result} competitorStats={competitorStats} />}
       {tab === "scenarios" && <ScenariosTab value={value} patch={patch} />}
       {tab === "report" && <ReportTab value={value} result={result} />}
+      {tab === "guide" && <GuideTab />}
     </section>
   );
 }
 
+type CompetitorStats = { min: number; max: number; avg: number; median: number; count: number; all: number[] } | null;
+type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: number } | null;
+
+// Tooltip de ajuda inline
+function Help({ text }: { text: string }) {
+  return (
+    <span title={text} className="inline-flex items-center text-muted-foreground/60 hover:text-primary cursor-help">
+      <Info size={11} />
+    </span>
+  );
+}
+
+
 // =============================================================
 // ALERTAS
 // =============================================================
-function Alerts({ result, state }: { result: PricingResult; state: PricingState }) {
+function Alerts({
+  result,
+  state,
+  competitorStats,
+  positioning,
+}: {
+  result: PricingResult;
+  state: PricingState;
+  competitorStats: CompetitorStats;
+  positioning: Positioning;
+}) {
   const alerts: { type: "error" | "warn"; msg: string }[] = [];
   if (result.invalid) alerts.push({ type: "error", msg: "Soma de taxas, impostos e lucro ≥ 100%. Reduza algum percentual." });
   if (!result.invalid && result.netMarginPct < state.minMarginPct)
@@ -146,6 +217,11 @@ function Alerts({ result, state }: { result: PricingResult; state: PricingState 
   const freight = state.costs.find((c) => c.active && c.name.toLowerCase().includes("frete"));
   if (freight && result.costFixedTotal > 0 && freight.value / result.costFixedTotal > 0.3)
     alerts.push({ type: "warn", msg: "Frete representa mais de 30% do custo total." });
+  if (competitorStats && positioning && positioning.tone === "bad")
+    alerts.push({ type: "warn", msg: `Preço ${fmtPct(positioning.diffAvg, 1)} acima da média dos concorrentes (${fmtBRL(competitorStats.avg)}).` });
+  if (competitorStats && positioning && positioning.tone === "warn" && positioning.diffAvg < 0)
+    alerts.push({ type: "warn", msg: `Preço abaixo do menor concorrente (${fmtBRL(competitorStats.min)}). Verifique se está deixando margem na mesa.` });
+
 
   if (!alerts.length) return null;
   return (
@@ -170,17 +246,27 @@ function Alerts({ result, state }: { result: PricingResult; state: PricingState 
 // =============================================================
 // RESUMO
 // =============================================================
-function SummaryTab({ result }: { result: PricingResult }) {
+function SummaryTab({
+  result,
+  competitorStats,
+  positioning,
+}: {
+  result: PricingResult;
+  competitorStats: CompetitorStats;
+  positioning: Positioning;
+}) {
   const cards = [
-    { label: "Custo Total", value: fmtBRL(result.costFixedTotal), accent: "neutral" },
-    { label: "Preço Mínimo", value: fmtBRL(result.minPrice), accent: "neutral" },
-    { label: "Preço Ideal", value: fmtBRL(result.idealPrice), accent: "primary" },
-    { label: "Lucro (R$)", value: fmtBRL(result.profitBRL), accent: result.profitBRL >= 0 ? "good" : "bad" },
-    { label: "Lucro (%)", value: fmtPct(result.goalPct * 100), accent: "good" },
-    { label: "Margem Líquida", value: fmtPct(result.netMarginPct), accent: "good" },
-    { label: "Taxas Totais", value: fmtBRL(result.totalFeesBRL), accent: "neutral" },
-    { label: "Impostos Totais", value: fmtBRL(result.totalTaxesBRL), accent: "neutral" },
+    { label: "Custo Total", value: fmtBRL(result.costFixedTotal), accent: "neutral", help: "Soma de todos os custos fixos ativos (produto, frete, embalagem, etc.). É o piso absoluto: vender abaixo disso é prejuízo direto." },
+    { label: "Preço Mínimo", value: fmtBRL(result.minPrice), accent: "neutral", help: "Preço de equilíbrio (break-even). Cobre custos + taxas + impostos, mas sem nenhum lucro. Nunca venda abaixo." },
+    { label: "Preço Ideal", value: fmtBRL(result.idealPrice), accent: "primary", help: "Preço calculado para atingir seu objetivo de lucro definido na aba Promoção." },
+    { label: "Lucro (R$)", value: fmtBRL(result.profitBRL), accent: result.profitBRL >= 0 ? "good" : "bad", help: "Quanto sobra em reais por unidade vendida no preço ideal, depois de pagar TUDO (custos, taxas e impostos)." },
+    { label: "Lucro (%)", value: fmtPct(result.goalPct * 100), accent: "good", help: "Percentual do preço de venda que vira lucro líquido (sua meta configurada)." },
+    { label: "Margem Líquida", value: fmtPct(result.netMarginPct), accent: "good", help: "Margem real obtida = Lucro ÷ Preço de venda. Se ficar abaixo da margem mínima configurada, dispara alerta." },
+    { label: "Taxas Totais", value: fmtBRL(result.totalFeesBRL), accent: "neutral", help: "Quanto sai do preço para marketplaces, cartão, gateway e comissões." },
+    { label: "Impostos Totais", value: fmtBRL(result.totalTaxesBRL), accent: "neutral", help: "Quanto sai do preço para impostos (ICMS, Simples, PIS, COFINS, ISS)." },
   ];
+
+
 
   const pieData = [
     { name: "Custo Produto", value: result.costFixedTotal, fill: "hsl(var(--muted-foreground))" },
@@ -205,7 +291,10 @@ function SummaryTab({ result }: { result: PricingResult }) {
                 : "border-sidebar-border bg-internal-w04"
             }`}
           >
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{c.label}</div>
+            <div className="flex items-center justify-between gap-1">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{c.label}</div>
+              <Help text={c.help} />
+            </div>
             <div
               className={`mt-1 font-mono font-bold text-base ${
                 c.accent === "primary"
@@ -222,6 +311,47 @@ function SummaryTab({ result }: { result: PricingResult }) {
           </div>
         ))}
       </div>
+
+      {competitorStats && positioning && (
+        <div
+          className={`rounded border p-4 ${
+            positioning.tone === "good"
+              ? "border-lime-500/40 bg-lime-500/5"
+              : positioning.tone === "warn"
+              ? "border-yellow-500/40 bg-yellow-500/10"
+              : "border-red-500/40 bg-red-500/10"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+              <Users size={14} className="text-primary" /> Posicionamento vs Concorrentes
+            </h4>
+            <span
+              className={`text-[11px] font-bold uppercase ${
+                positioning.tone === "good"
+                  ? "text-lime-400"
+                  : positioning.tone === "warn"
+                  ? "text-yellow-400"
+                  : "text-red-400"
+              }`}
+            >
+              {positioning.label}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <CompactStat label="Menor preço" value={fmtBRL(competitorStats.min)} tone="good" />
+            <CompactStat label="Médio" value={fmtBRL(competitorStats.avg)} />
+            <CompactStat label="Maior" value={fmtBRL(competitorStats.max)} tone="bad" />
+            <CompactStat
+              label="Seu preço vs média"
+              value={`${positioning.diffAvg >= 0 ? "+" : ""}${positioning.diffAvg.toFixed(1)}%`}
+              tone={positioning.tone === "good" ? "good" : positioning.tone === "warn" ? "warn" : "bad"}
+            />
+          </div>
+        </div>
+      )}
+
+
 
       {pieData.length > 0 && (
         <div className="grid md:grid-cols-2 gap-4">
@@ -524,13 +654,44 @@ function PromoTab({
   value,
   patch,
   result,
+  competitorStats,
 }: {
   value: PricingState;
   patch: (p: Partial<PricingState>) => void;
   result: PricingResult;
+  competitorStats: CompetitorStats;
 }) {
+  // Sugestões de preço de vitrine baseadas nos concorrentes
+  const suggestShowcase = (target: number) => {
+    if (result.idealPrice <= 0) return;
+    const pct = ((target - result.idealPrice) / result.idealPrice) * 100;
+    patch({ promo: { strategicMarkupPct: Math.max(0, +pct.toFixed(2)) } });
+  };
+
   return (
     <div className="space-y-5">
+      {competitorStats && (
+        <div className="rounded border border-primary/30 bg-primary/5 p-4 space-y-2">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Users size={14} className="text-primary" /> Sugestões com base nos concorrentes
+          </h4>
+          <p className="text-xs text-muted-foreground">
+            Use um destes valores como Preço Vitrine — o desconto exibido será calculado automaticamente para voltar ao seu preço ideal.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => suggestShowcase(competitorStats.max)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
+              = Maior ({fmtBRL(competitorStats.max)})
+            </button>
+            <button type="button" onClick={() => suggestShowcase(competitorStats.avg)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
+              = Médio ({fmtBRL(competitorStats.avg)})
+            </button>
+            <button type="button" onClick={() => suggestShowcase(competitorStats.max * 1.05)} className={`${chipBtn} border-primary/50 text-primary hover:bg-primary/10`}>
+              +5% acima do maior
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-4">
         <h4 className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
           <Target size={14} className="text-primary" /> Objetivo de Lucro
@@ -828,3 +989,289 @@ function ReportTab({ value, result }: { value: PricingState; result: PricingResu
     </div>
   );
 }
+
+// =============================================================
+// CompactStat — usado no card de posicionamento
+// =============================================================
+function CompactStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "good" | "warn" | "bad";
+}) {
+  const color =
+    tone === "good"
+      ? "text-lime-400"
+      : tone === "warn"
+      ? "text-yellow-400"
+      : tone === "bad"
+      ? "text-red-400"
+      : "text-foreground";
+  return (
+    <div className="rounded border border-sidebar-border/40 bg-internal-20 p-2">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className={`mt-0.5 font-mono font-bold text-sm ${color}`}>{value}</div>
+    </div>
+  );
+}
+
+// =============================================================
+// ABA CONCORRENTES — análise completa de preços
+// =============================================================
+function CompetitorsTab({
+  result,
+  competitorStats,
+  positioning,
+}: {
+  result: PricingResult;
+  competitorStats: CompetitorStats;
+  positioning: Positioning;
+}) {
+  if (!competitorStats) {
+    return (
+      <div className="rounded border border-dashed border-sidebar-border p-8 text-center space-y-2">
+        <Users size={32} className="mx-auto text-muted-foreground/50" />
+        <p className="text-sm text-muted-foreground">
+          Nenhum concorrente cadastrado com preço. Vá em <strong className="text-foreground">Análise de Concorrentes</strong> e adicione preços para ver a análise comparativa.
+        </p>
+      </div>
+    );
+  }
+
+  const { min, max, avg, median, count, all } = competitorStats;
+  const price = result.idealPrice;
+  // Posição relativa 0..100 entre min e max
+  const range = Math.max(1, max - min);
+  const pricePos = price > 0 ? Math.max(0, Math.min(100, ((price - min) / range) * 100)) : 0;
+  const avgPos = Math.max(0, Math.min(100, ((avg - min) / range) * 100));
+
+  const recommended = {
+    agressivo: Math.max(result.minPrice, min * 0.97),
+    competitivo: Math.max(result.minPrice, avg),
+    premium: Math.max(result.minPrice, max * 1.05),
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <CompactStat label={`Menor (${count})`} value={fmtBRL(min)} tone="good" />
+        <CompactStat label="Médio" value={fmtBRL(avg)} />
+        <CompactStat label="Mediana" value={fmtBRL(median)} />
+        <CompactStat label="Maior" value={fmtBRL(max)} tone="bad" />
+      </div>
+
+      {/* Régua visual */}
+      <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">Posicionamento na faixa de mercado</span>
+          <span
+            className={`font-bold uppercase text-[10px] ${
+              positioning?.tone === "good"
+                ? "text-lime-400"
+                : positioning?.tone === "warn"
+                ? "text-yellow-400"
+                : "text-red-400"
+            }`}
+          >
+            {positioning?.label}
+          </span>
+        </div>
+        <div className="relative h-12 mt-2">
+          {/* trilho */}
+          <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-lime-500/40 via-yellow-500/40 to-red-500/40" />
+          {/* concorrentes */}
+          {all.map((p, i) => {
+            const pos = ((p - min) / range) * 100;
+            return (
+              <div
+                key={i}
+                className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400 border border-cyan-200"
+                style={{ left: `${pos}%`, transform: "translate(-50%,-50%)" }}
+                title={`Concorrente: ${fmtBRL(p)}`}
+              />
+            );
+          })}
+          {/* média */}
+          <div
+            className="absolute top-0 bottom-0 w-px bg-yellow-400/60"
+            style={{ left: `${avgPos}%` }}
+            title={`Média: ${fmtBRL(avg)}`}
+          />
+          {/* seu preço */}
+          {price > 0 && (
+            <div
+              className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
+              style={{ left: `${pricePos}%` }}
+            >
+              <div className="text-[10px] font-bold text-primary whitespace-nowrap">Você {fmtBRL(price)}</div>
+              <div className="w-0.5 h-8 bg-primary mt-0.5" />
+            </div>
+          )}
+        </div>
+        <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+          <span>{fmtBRL(min)}</span>
+          <span>{fmtBRL(max)}</span>
+        </div>
+      </div>
+
+      {/* Estratégias sugeridas */}
+      <div>
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">Estratégias de Preço Sugeridas</h4>
+        <div className="grid md:grid-cols-3 gap-3">
+          <StrategyCard
+            title="Agressivo"
+            subtitle="Ganhar volume — 3% abaixo do menor"
+            price={recommended.agressivo}
+            tone="good"
+            warn={recommended.agressivo < result.minPrice ? "Abaixo do preço mínimo!" : undefined}
+          />
+          <StrategyCard
+            title="Competitivo"
+            subtitle="Alinhado à média do mercado"
+            price={recommended.competitivo}
+            tone="primary"
+          />
+          <StrategyCard
+            title="Premium"
+            subtitle="5% acima do maior — posicionamento alto"
+            price={recommended.premium}
+            tone="warn"
+          />
+        </div>
+      </div>
+
+      <div className="rounded border border-sidebar-border bg-internal-w04 p-4">
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">
+          Comparação Detalhada
+        </h4>
+        <div className="space-y-1 text-xs">
+          <RowKV k="Seu preço ideal" v={fmtBRL(price)} accent="primary" />
+          <RowKV k="Diferença vs menor" v={fmtBRL(price - min)} accent={price >= min ? "good" : "bad"} />
+          <RowKV k="Diferença vs média" v={fmtBRL(price - avg)} accent={price <= avg ? "good" : "bad"} />
+          <RowKV k="Diferença vs maior" v={fmtBRL(price - max)} accent={price <= max ? "good" : "bad"} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StrategyCard({
+  title,
+  subtitle,
+  price,
+  tone,
+  warn,
+}: {
+  title: string;
+  subtitle: string;
+  price: number;
+  tone: "good" | "primary" | "warn";
+  warn?: string;
+}) {
+  const border =
+    tone === "good"
+      ? "border-lime-500/40 bg-lime-500/5"
+      : tone === "primary"
+      ? "border-primary/40 bg-primary/5"
+      : "border-yellow-500/40 bg-yellow-500/5";
+  const color = tone === "good" ? "text-lime-400" : tone === "primary" ? "text-primary" : "text-yellow-400";
+  return (
+    <div className={`rounded border p-3 ${border}`}>
+      <div className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</div>
+      <div className="text-[10px] text-muted-foreground mb-2">{subtitle}</div>
+      <div className={`font-mono font-bold text-lg ${color}`}>{fmtBRL(price)}</div>
+      {warn && <div className="text-[10px] text-red-400 mt-1">⚠ {warn}</div>}
+    </div>
+  );
+}
+
+// =============================================================
+// ABA GUIA — explica cada conceito e o que ele influencia
+// =============================================================
+function GuideTab() {
+  const sections: { title: string; items: { term: string; desc: string; impact: string }[] }[] = [
+    {
+      title: "Preços Calculados",
+      items: [
+        { term: "Custo Total", desc: "Soma de todos os custos fixos ativos (produto, frete, embalagem, transporte, armazenagem, operacional).", impact: "Define o piso absoluto. Quanto maior, maior o preço mínimo e o ideal." },
+        { term: "Preço Mínimo (break-even)", desc: "O preço que cobre custos + taxas + impostos, sem lucro nenhum.", impact: "Vender abaixo = prejuízo. É o limite inferior para qualquer promoção." },
+        { term: "Preço Ideal", desc: "Preço calculado para atingir o lucro definido em 'Objetivo de Lucro' depois de descontar todos os custos.", impact: "É o seu preço-alvo. Aparece no campo Preço de Venda do produto." },
+        { term: "Preço Vitrine", desc: "Preço inflado mostrado riscado, usado para criar percepção de desconto.", impact: "Quanto maior o Aumento Estratégico, maior o desconto exibido — mas o preço final volta ao ideal." },
+      ],
+    },
+    {
+      title: "Lucro & Margem",
+      items: [
+        { term: "Lucro (R$)", desc: "Reais que sobram por unidade depois de pagar TUDO.", impact: "Multiplicado pelo volume vendido = seu lucro total." },
+        { term: "Lucro (%)", desc: "Percentual do preço que vira lucro líquido — sua meta configurada.", impact: "Aumentar essa meta empurra o preço ideal para cima." },
+        { term: "Margem Líquida", desc: "Lucro ÷ Preço de venda. Diferente do markup.", impact: "Se ficar abaixo da margem mínima de alerta, o sistema avisa." },
+        { term: "Margem Mínima de Alerta", desc: "Margem abaixo da qual o sistema te alerta de baixa rentabilidade.", impact: "Não bloqueia, só sinaliza para você revisar." },
+      ],
+    },
+    {
+      title: "Custos, Taxas e Impostos",
+      items: [
+        { term: "Custos Fixos (R$)", desc: "Valores em reais que não dependem do preço de venda (ex: custo do produto, frete pago ao fornecedor).", impact: "Aumentam o preço mínimo e o ideal proporcionalmente." },
+        { term: "Custos Percentuais (%)", desc: "Custos que variam conforme o preço (ex: marketing, royalties).", impact: "Reduzem o que sobra para você. Tratados como taxas no cálculo." },
+        { term: "Taxas (%)", desc: "Comissões de marketplace, cartão, gateway de pagamento.", impact: "Cobradas sobre o preço final. Quanto mais altas, mais alto precisa ser o preço ideal." },
+        { term: "Impostos (%)", desc: "ICMS, Simples, PIS, COFINS, ISS — incidem sobre a venda.", impact: "Igual às taxas: comem percentual do preço, pressionando-o para cima." },
+      ],
+    },
+    {
+      title: "Estratégia Promocional",
+      items: [
+        { term: "Aumento Estratégico (%)", desc: "Quanto inflar o preço para criar o 'Preço Vitrine'.", impact: "Aumento de 25% gera ~20% de desconto exibido. O preço final volta ao ideal." },
+        { term: "Desconto Exibido", desc: "Calculado matematicamente: (1 - ideal/vitrine) × 100.", impact: "Cria percepção de oferta. Nunca é igual ao aumento — é sempre menor." },
+        { term: "Preço Final", desc: "Vitrine × (1 - desconto). Volta exatamente ao Preço Ideal.", impact: "Você ganha o mesmo lucro, o cliente percebe vantagem." },
+      ],
+    },
+    {
+      title: "Análise de Concorrentes",
+      items: [
+        { term: "Menor / Médio / Maior", desc: "Calculados a partir dos preços dos concorrentes cadastrados.", impact: "Servem como referência de mercado. Não alteram o cálculo automaticamente." },
+        { term: "Posicionamento", desc: "Onde seu preço ideal cai na faixa entre menor e maior concorrente.", impact: "Se ficar muito acima → risco de perder venda. Se ficar muito abaixo → risco de deixar lucro na mesa." },
+        { term: "Estratégias Sugeridas", desc: "Preços calculados com base nos concorrentes (agressivo / competitivo / premium).", impact: "São sugestões — use os botões na aba Promoção para aplicar no Preço Vitrine." },
+      ],
+    },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded border border-primary/30 bg-primary/5 p-4">
+        <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <HelpCircle size={16} className="text-primary" /> Como funciona a precificação?
+        </h4>
+        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+          O sistema parte dos seus <strong className="text-foreground">custos fixos</strong>, soma o que será descontado em
+          <strong className="text-foreground"> taxas</strong> e <strong className="text-foreground">impostos</strong> (percentuais do preço),
+          reserva o <strong className="text-foreground">lucro desejado</strong> e calcula matematicamente o
+          <strong className="text-primary"> Preço Ideal</strong> usando:
+        </p>
+        <code className="block mt-2 text-[11px] font-mono bg-internal-20 p-2 rounded border border-sidebar-border">
+          Preço = Custos Fixos ÷ (1 − Taxas% − Impostos% − Lucro%)
+        </code>
+      </div>
+
+      {sections.map((sec) => (
+        <div key={sec.title} className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-3">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-primary">{sec.title}</h4>
+          <div className="space-y-3">
+            {sec.items.map((it) => (
+              <div key={it.term} className="border-l-2 border-primary/40 pl-3 py-1">
+                <div className="text-sm font-bold text-foreground">{it.term}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{it.desc}</div>
+                <div className="text-[11px] text-lime-400 mt-1">
+                  <strong>Impacto:</strong> {it.impact}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
