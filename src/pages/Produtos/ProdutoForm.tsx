@@ -842,18 +842,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 1.5 PRECIFICAÇÃO INTELIGENTE                                 */}
-      {/* ============================================================ */}
-      <PricingModule
-        value={formData.pricing as PricingState}
-        onChange={(next) => setFormData({ ...formData, pricing: next })}
-      />
-
-
-
-      {/* ============================================================ */}
       {/* 2. PALAVRAS-CHAVE DO PRODUTO                                 */}
       {/* ============================================================ */}
+
       <section className="jtd-glass p-6 space-y-5">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
@@ -1163,8 +1154,17 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 4. TEXTOS DO PRODUTO                                         */}
+      {/* 4. PRECIFICAÇÃO INTELIGENTE                                 */}
       {/* ============================================================ */}
+      <PricingModule
+        value={formData.pricing as PricingState}
+        onChange={(next) => setFormData({ ...formData, pricing: next })}
+      />
+
+      {/* ============================================================ */}
+      {/* 5. TEXTOS DO PRODUTO                                         */}
+      {/* ============================================================ */}
+
       <section className="jtd-glass p-6 space-y-6">
         <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
           <FileText size={20} className="text-primary" />
@@ -1226,9 +1226,10 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 5. ANÁLISE GERAL DO PRODUTO                                  */}
+      {/* 6. ANÁLISE GERAL DO PRODUTO                                  */}
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-5">
+
         <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
           <BarChart3 size={20} className="text-primary" />
           Análise Geral do Produto
@@ -1267,8 +1268,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 6. AÇÕES — barra inline (não fixa)                           */}
+      {/* 7. AÇÕES — barra inline (não fixa)                           */}
       {/* ============================================================ */}
+
       <div className="flex justify-end gap-4 pt-4">
         <button
           type="button"
