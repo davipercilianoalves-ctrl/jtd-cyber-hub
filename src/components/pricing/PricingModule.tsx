@@ -989,3 +989,289 @@ function ReportTab({ value, result }: { value: PricingState; result: PricingResu
     </div>
   );
 }
+
+// =============================================================
+// CompactStat — usado no card de posicionamento
+// =============================================================
+function CompactStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "good" | "warn" | "bad";
+}) {
+  const color =
+    tone === "good"
+      ? "text-lime-400"
+      : tone === "warn"
+      ? "text-yellow-400"
+      : tone === "bad"
+      ? "text-red-400"
+      : "text-foreground";
+  return (
+    <div className="rounded border border-sidebar-border/40 bg-internal-20 p-2">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className={`mt-0.5 font-mono font-bold text-sm ${color}`}>{value}</div>
+    </div>
+  );
+}
+
+// =============================================================
+// ABA CONCORRENTES — análise completa de preços
+// =============================================================
+function CompetitorsTab({
+  result,
+  competitorStats,
+  positioning,
+}: {
+  result: PricingResult;
+  competitorStats: CompetitorStats;
+  positioning: Positioning;
+}) {
+  if (!competitorStats) {
+    return (
+      <div className="rounded border border-dashed border-sidebar-border p-8 text-center space-y-2">
+        <Users size={32} className="mx-auto text-muted-foreground/50" />
+        <p className="text-sm text-muted-foreground">
+          Nenhum concorrente cadastrado com preço. Vá em <strong className="text-foreground">Análise de Concorrentes</strong> e adicione preços para ver a análise comparativa.
+        </p>
+      </div>
+    );
+  }
+
+  const { min, max, avg, median, count, all } = competitorStats;
+  const price = result.idealPrice;
+  // Posição relativa 0..100 entre min e max
+  const range = Math.max(1, max - min);
+  const pricePos = price > 0 ? Math.max(0, Math.min(100, ((price - min) / range) * 100)) : 0;
+  const avgPos = Math.max(0, Math.min(100, ((avg - min) / range) * 100));
+
+  const recommended = {
+    agressivo: Math.max(result.minPrice, min * 0.97),
+    competitivo: Math.max(result.minPrice, avg),
+    premium: Math.max(result.minPrice, max * 1.05),
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <CompactStat label={`Menor (${count})`} value={fmtBRL(min)} tone="good" />
+        <CompactStat label="Médio" value={fmtBRL(avg)} />
+        <CompactStat label="Mediana" value={fmtBRL(median)} />
+        <CompactStat label="Maior" value={fmtBRL(max)} tone="bad" />
+      </div>
+
+      {/* Régua visual */}
+      <div className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">Posicionamento na faixa de mercado</span>
+          <span
+            className={`font-bold uppercase text-[10px] ${
+              positioning?.tone === "good"
+                ? "text-lime-400"
+                : positioning?.tone === "warn"
+                ? "text-yellow-400"
+                : "text-red-400"
+            }`}
+          >
+            {positioning?.label}
+          </span>
+        </div>
+        <div className="relative h-12 mt-2">
+          {/* trilho */}
+          <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-lime-500/40 via-yellow-500/40 to-red-500/40" />
+          {/* concorrentes */}
+          {all.map((p, i) => {
+            const pos = ((p - min) / range) * 100;
+            return (
+              <div
+                key={i}
+                className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400 border border-cyan-200"
+                style={{ left: `${pos}%`, transform: "translate(-50%,-50%)" }}
+                title={`Concorrente: ${fmtBRL(p)}`}
+              />
+            );
+          })}
+          {/* média */}
+          <div
+            className="absolute top-0 bottom-0 w-px bg-yellow-400/60"
+            style={{ left: `${avgPos}%` }}
+            title={`Média: ${fmtBRL(avg)}`}
+          />
+          {/* seu preço */}
+          {price > 0 && (
+            <div
+              className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
+              style={{ left: `${pricePos}%` }}
+            >
+              <div className="text-[10px] font-bold text-primary whitespace-nowrap">Você {fmtBRL(price)}</div>
+              <div className="w-0.5 h-8 bg-primary mt-0.5" />
+            </div>
+          )}
+        </div>
+        <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+          <span>{fmtBRL(min)}</span>
+          <span>{fmtBRL(max)}</span>
+        </div>
+      </div>
+
+      {/* Estratégias sugeridas */}
+      <div>
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">Estratégias de Preço Sugeridas</h4>
+        <div className="grid md:grid-cols-3 gap-3">
+          <StrategyCard
+            title="Agressivo"
+            subtitle="Ganhar volume — 3% abaixo do menor"
+            price={recommended.agressivo}
+            tone="good"
+            warn={recommended.agressivo < result.minPrice ? "Abaixo do preço mínimo!" : undefined}
+          />
+          <StrategyCard
+            title="Competitivo"
+            subtitle="Alinhado à média do mercado"
+            price={recommended.competitivo}
+            tone="primary"
+          />
+          <StrategyCard
+            title="Premium"
+            subtitle="5% acima do maior — posicionamento alto"
+            price={recommended.premium}
+            tone="warn"
+          />
+        </div>
+      </div>
+
+      <div className="rounded border border-sidebar-border bg-internal-w04 p-4">
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">
+          Comparação Detalhada
+        </h4>
+        <div className="space-y-1 text-xs">
+          <RowKV k="Seu preço ideal" v={fmtBRL(price)} accent="primary" />
+          <RowKV k="Diferença vs menor" v={fmtBRL(price - min)} accent={price >= min ? "good" : "bad"} />
+          <RowKV k="Diferença vs média" v={fmtBRL(price - avg)} accent={price <= avg ? "good" : "bad"} />
+          <RowKV k="Diferença vs maior" v={fmtBRL(price - max)} accent={price <= max ? "good" : "bad"} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StrategyCard({
+  title,
+  subtitle,
+  price,
+  tone,
+  warn,
+}: {
+  title: string;
+  subtitle: string;
+  price: number;
+  tone: "good" | "primary" | "warn";
+  warn?: string;
+}) {
+  const border =
+    tone === "good"
+      ? "border-lime-500/40 bg-lime-500/5"
+      : tone === "primary"
+      ? "border-primary/40 bg-primary/5"
+      : "border-yellow-500/40 bg-yellow-500/5";
+  const color = tone === "good" ? "text-lime-400" : tone === "primary" ? "text-primary" : "text-yellow-400";
+  return (
+    <div className={`rounded border p-3 ${border}`}>
+      <div className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</div>
+      <div className="text-[10px] text-muted-foreground mb-2">{subtitle}</div>
+      <div className={`font-mono font-bold text-lg ${color}`}>{fmtBRL(price)}</div>
+      {warn && <div className="text-[10px] text-red-400 mt-1">⚠ {warn}</div>}
+    </div>
+  );
+}
+
+// =============================================================
+// ABA GUIA — explica cada conceito e o que ele influencia
+// =============================================================
+function GuideTab() {
+  const sections: { title: string; items: { term: string; desc: string; impact: string }[] }[] = [
+    {
+      title: "Preços Calculados",
+      items: [
+        { term: "Custo Total", desc: "Soma de todos os custos fixos ativos (produto, frete, embalagem, transporte, armazenagem, operacional).", impact: "Define o piso absoluto. Quanto maior, maior o preço mínimo e o ideal." },
+        { term: "Preço Mínimo (break-even)", desc: "O preço que cobre custos + taxas + impostos, sem lucro nenhum.", impact: "Vender abaixo = prejuízo. É o limite inferior para qualquer promoção." },
+        { term: "Preço Ideal", desc: "Preço calculado para atingir o lucro definido em 'Objetivo de Lucro' depois de descontar todos os custos.", impact: "É o seu preço-alvo. Aparece no campo Preço de Venda do produto." },
+        { term: "Preço Vitrine", desc: "Preço inflado mostrado riscado, usado para criar percepção de desconto.", impact: "Quanto maior o Aumento Estratégico, maior o desconto exibido — mas o preço final volta ao ideal." },
+      ],
+    },
+    {
+      title: "Lucro & Margem",
+      items: [
+        { term: "Lucro (R$)", desc: "Reais que sobram por unidade depois de pagar TUDO.", impact: "Multiplicado pelo volume vendido = seu lucro total." },
+        { term: "Lucro (%)", desc: "Percentual do preço que vira lucro líquido — sua meta configurada.", impact: "Aumentar essa meta empurra o preço ideal para cima." },
+        { term: "Margem Líquida", desc: "Lucro ÷ Preço de venda. Diferente do markup.", impact: "Se ficar abaixo da margem mínima de alerta, o sistema avisa." },
+        { term: "Margem Mínima de Alerta", desc: "Margem abaixo da qual o sistema te alerta de baixa rentabilidade.", impact: "Não bloqueia, só sinaliza para você revisar." },
+      ],
+    },
+    {
+      title: "Custos, Taxas e Impostos",
+      items: [
+        { term: "Custos Fixos (R$)", desc: "Valores em reais que não dependem do preço de venda (ex: custo do produto, frete pago ao fornecedor).", impact: "Aumentam o preço mínimo e o ideal proporcionalmente." },
+        { term: "Custos Percentuais (%)", desc: "Custos que variam conforme o preço (ex: marketing, royalties).", impact: "Reduzem o que sobra para você. Tratados como taxas no cálculo." },
+        { term: "Taxas (%)", desc: "Comissões de marketplace, cartão, gateway de pagamento.", impact: "Cobradas sobre o preço final. Quanto mais altas, mais alto precisa ser o preço ideal." },
+        { term: "Impostos (%)", desc: "ICMS, Simples, PIS, COFINS, ISS — incidem sobre a venda.", impact: "Igual às taxas: comem percentual do preço, pressionando-o para cima." },
+      ],
+    },
+    {
+      title: "Estratégia Promocional",
+      items: [
+        { term: "Aumento Estratégico (%)", desc: "Quanto inflar o preço para criar o 'Preço Vitrine'.", impact: "Aumento de 25% gera ~20% de desconto exibido. O preço final volta ao ideal." },
+        { term: "Desconto Exibido", desc: "Calculado matematicamente: (1 - ideal/vitrine) × 100.", impact: "Cria percepção de oferta. Nunca é igual ao aumento — é sempre menor." },
+        { term: "Preço Final", desc: "Vitrine × (1 - desconto). Volta exatamente ao Preço Ideal.", impact: "Você ganha o mesmo lucro, o cliente percebe vantagem." },
+      ],
+    },
+    {
+      title: "Análise de Concorrentes",
+      items: [
+        { term: "Menor / Médio / Maior", desc: "Calculados a partir dos preços dos concorrentes cadastrados.", impact: "Servem como referência de mercado. Não alteram o cálculo automaticamente." },
+        { term: "Posicionamento", desc: "Onde seu preço ideal cai na faixa entre menor e maior concorrente.", impact: "Se ficar muito acima → risco de perder venda. Se ficar muito abaixo → risco de deixar lucro na mesa." },
+        { term: "Estratégias Sugeridas", desc: "Preços calculados com base nos concorrentes (agressivo / competitivo / premium).", impact: "São sugestões — use os botões na aba Promoção para aplicar no Preço Vitrine." },
+      ],
+    },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded border border-primary/30 bg-primary/5 p-4">
+        <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <HelpCircle size={16} className="text-primary" /> Como funciona a precificação?
+        </h4>
+        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+          O sistema parte dos seus <strong className="text-foreground">custos fixos</strong>, soma o que será descontado em
+          <strong className="text-foreground"> taxas</strong> e <strong className="text-foreground">impostos</strong> (percentuais do preço),
+          reserva o <strong className="text-foreground">lucro desejado</strong> e calcula matematicamente o
+          <strong className="text-primary"> Preço Ideal</strong> usando:
+        </p>
+        <code className="block mt-2 text-[11px] font-mono bg-internal-20 p-2 rounded border border-sidebar-border">
+          Preço = Custos Fixos ÷ (1 − Taxas% − Impostos% − Lucro%)
+        </code>
+      </div>
+
+      {sections.map((sec) => (
+        <div key={sec.title} className="rounded border border-sidebar-border bg-internal-w04 p-4 space-y-3">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-primary">{sec.title}</h4>
+          <div className="space-y-3">
+            {sec.items.map((it) => (
+              <div key={it.term} className="border-l-2 border-primary/40 pl-3 py-1">
+                <div className="text-sm font-bold text-foreground">{it.term}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{it.desc}</div>
+                <div className="text-[11px] text-lime-400 mt-1">
+                  <strong>Impacto:</strong> {it.impact}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
