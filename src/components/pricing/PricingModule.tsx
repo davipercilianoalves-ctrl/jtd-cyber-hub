@@ -17,6 +17,8 @@ import {
   HelpCircle,
   Users,
   Info,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 import {
