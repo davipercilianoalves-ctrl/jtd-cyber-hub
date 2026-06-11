@@ -35,6 +35,7 @@ export type Database = {
           tax: number | null
           titles: string[] | null
           transport_cost: number | null
+          user_id: string
           video_name: string | null
           video_script: string | null
           video_youtube_url: string | null
@@ -59,6 +60,7 @@ export type Database = {
           tax?: number | null
           titles?: string[] | null
           transport_cost?: number | null
+          user_id?: string
           video_name?: string | null
           video_script?: string | null
           video_youtube_url?: string | null
@@ -83,6 +85,7 @@ export type Database = {
           tax?: number | null
           titles?: string[] | null
           transport_cost?: number | null
+          user_id?: string
           video_name?: string | null
           video_script?: string | null
           video_youtube_url?: string | null
@@ -103,18 +106,21 @@ export type Database = {
           kit_id: string
           product_id: string
           quantity: number
+          user_id: string
         }
         Insert: {
           id?: string
           kit_id: string
           product_id: string
           quantity?: number
+          user_id?: string
         }
         Update: {
           id?: string
           kit_id?: string
           product_id?: string
           quantity?: number
+          user_id?: string
         }
         Relationships: [
           {
@@ -152,6 +158,7 @@ export type Database = {
           tax: number | null
           titles: string[] | null
           transport_cost: number | null
+          user_id: string
           video_name: string | null
           video_script: string | null
           video_youtube_url: string | null
@@ -174,6 +181,7 @@ export type Database = {
           tax?: number | null
           titles?: string[] | null
           transport_cost?: number | null
+          user_id?: string
           video_name?: string | null
           video_script?: string | null
           video_youtube_url?: string | null
@@ -196,6 +204,7 @@ export type Database = {
           tax?: number | null
           titles?: string[] | null
           transport_cost?: number | null
+          user_id?: string
           video_name?: string | null
           video_script?: string | null
           video_youtube_url?: string | null
@@ -213,6 +222,7 @@ export type Database = {
           product_id: string
           title: string | null
           url: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -224,6 +234,7 @@ export type Database = {
           product_id: string
           title?: string | null
           url?: string | null
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -235,6 +246,7 @@ export type Database = {
           product_id?: string
           title?: string | null
           url?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -280,6 +292,7 @@ export type Database = {
           supplier_id: string | null
           type: string | null
           unit: string | null
+          user_id: string
           volumes: number | null
           weight_g: number | null
           width: number | null
@@ -317,6 +330,7 @@ export type Database = {
           supplier_id?: string | null
           type?: string | null
           unit?: string | null
+          user_id?: string
           volumes?: number | null
           weight_g?: number | null
           width?: number | null
@@ -354,6 +368,7 @@ export type Database = {
           supplier_id?: string | null
           type?: string | null
           unit?: string | null
+          user_id?: string
           volumes?: number | null
           weight_g?: number | null
           width?: number | null
@@ -380,6 +395,7 @@ export type Database = {
           name: string
           notes: string | null
           state: string | null
+          user_id: string
           warranty_days: number | null
           whatsapp: string | null
         }
@@ -394,6 +410,7 @@ export type Database = {
           name: string
           notes?: string | null
           state?: string | null
+          user_id?: string
           warranty_days?: number | null
           whatsapp?: string | null
         }
@@ -408,6 +425,7 @@ export type Database = {
           name?: string
           notes?: string | null
           state?: string | null
+          user_id?: string
           warranty_days?: number | null
           whatsapp?: string | null
         }
