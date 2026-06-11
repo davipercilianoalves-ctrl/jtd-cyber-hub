@@ -765,9 +765,18 @@ function PromoTab({
         </div>
         <div className="grid md:grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <FieldLabel
+              helpTitle={`Valor desejado ${value.goal.mode === "profitBRL" ? "(R$)" : "(%)"}`}
+              help={
+                value.goal.mode === "marginPct"
+                  ? "Margem líquida alvo. Quanto do preço vira lucro depois de pagar tudo. Ex: 30% → para cada R$100 vendidos, R$30 sobram."
+                  : value.goal.mode === "profitPct"
+                  ? "Percentual de lucro desejado sobre o preço. Empurra o preço ideal pra cima quando você aumenta."
+                  : "Lucro absoluto em reais por unidade vendida. Útil quando você sabe quanto quer ganhar fixo por venda."
+              }
+            >
               Valor desejado {value.goal.mode === "profitBRL" ? "(R$)" : "(%)"}
-            </label>
+            </FieldLabel>
             <input
               type="number"
               step="0.01"
@@ -777,9 +786,12 @@ function PromoTab({
             />
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <FieldLabel
+              helpTitle="Margem mínima de alerta"
+              help="Se a margem líquida calculada ficar abaixo deste valor, o sistema mostra um alerta amarelo. Não bloqueia a venda — apenas avisa."
+            >
               Margem mínima de alerta (%)
-            </label>
+            </FieldLabel>
             <input
               type="number"
               step="0.1"
@@ -800,11 +812,14 @@ function PromoTab({
           igual ao aumento.
         </p>
         <div className="grid md:grid-cols-5 gap-3">
-          <PromoField label="Preço Real" value={fmtBRL(result.idealPrice)} readOnly tone="primary" />
+          <PromoField label="Preço Real" value={fmtBRL(result.idealPrice)} readOnly tone="primary" help="Seu preço ideal calculado. É o que você efetivamente recebe — a vitrine só infla para criar percepção de desconto." />
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <FieldLabel
+              helpTitle="Aumento Estratégico"
+              help="Quanto inflar o preço para criar o 'Preço Vitrine'. Exemplo: 25% gera um desconto exibido de ~20%. O preço final volta ao ideal."
+            >
               Aumento Estratégico (%)
-            </label>
+            </FieldLabel>
             <input
               type="number"
               step="0.1"
@@ -815,14 +830,15 @@ function PromoTab({
               className={`${cellNumCls} mt-1`}
             />
           </div>
-          <PromoField label="Preço Vitrine" value={fmtBRL(result.showcasePrice)} readOnly />
-          <PromoField label="Desconto Exibido" value={fmtPct(result.promoDiscountPct)} readOnly tone="good" />
-          <PromoField label="Preço Final" value={fmtBRL(result.promoFinalPrice)} readOnly tone="primary" />
+          <PromoField label="Preço Vitrine" value={fmtBRL(result.showcasePrice)} readOnly help="Preço inflado mostrado riscado para o cliente. = Preço Real × (1 + Aumento Estratégico)." />
+          <PromoField label="Desconto Exibido" value={fmtPct(result.promoDiscountPct)} readOnly tone="good" help="Desconto percentual exibido na vitrine. Calculado para que (Vitrine − Desconto) volte exatamente ao Preço Real." />
+          <PromoField label="Preço Final" value={fmtBRL(result.promoFinalPrice)} readOnly tone="primary" help="O que o cliente paga e o que você recebe. Igual ao Preço Real — a estratégia é só percepção." />
         </div>
       </div>
     </div>
   );
 }
+
 
 function PromoField({
   label,
