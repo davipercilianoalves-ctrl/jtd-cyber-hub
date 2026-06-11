@@ -1,5 +1,5 @@
-// Sidebar JTD — fixa, colapsável de 220px para 64px
-import { useState } from "react";
+// Sidebar JTD — fixa, expande no hover do mouse
+import { useState, useRef } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -10,8 +10,6 @@ import {
   DollarSign,
   Plug,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   Truck,
   Layers,
 } from "lucide-react";
@@ -29,36 +27,52 @@ const navItems = [
   { to: "/configuracoes", label: "Configuração", icon: Settings },
 ] as const;
 
+const COLLAPSED_W = 64;
+const EXPANDED_W = 220;
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const handleEnter = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    setExpanded(true);
+  };
+  const handleLeave = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setExpanded(false), 180);
+  };
 
   return (
     <aside
-      style={{ width: collapsed ? 64 : 220 }}
-      className="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width,background-color] duration-200 h-screen sticky top-0"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+      style={{ width: expanded ? EXPANDED_W : COLLAPSED_W }}
+      className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out overflow-hidden"
     >
       {/* Logo */}
-      <div className="flex h-16 items-center px-4 gap-2">
-        <div className="flex h-8 w-12 items-center justify-center rounded bg-[#FF00FF] font-black text-white shrink-0">
-          JTD
-        </div>
-        {!collapsed && (
-          <span className="font-bold tracking-tight text-foreground truncate">Gestão</span>
-        )}
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-          aria-label="Alternar sidebar"
+      <div
+        className={[
+          "flex h-16 items-center shrink-0 transition-all duration-300",
+          expanded ? "justify-start px-5" : "justify-center px-0",
+        ].join(" ")}
+      >
+        <span
+          className={[
+            "jtd-text-gradient font-[800] tracking-tight transition-all duration-300",
+            expanded ? "text-3xl" : "text-xl",
+          ].join(" ")}
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+          JTD
+        </span>
       </div>
 
-
       {/* Navegação */}
-      <nav className="flex-1 space-y-1 px-2 py-4">
+      <nav className="flex-1 space-y-1 px-2 py-2">
         {navItems.map(({ to, label, icon: Icon }) => {
           const active = pathname === to || pathname.startsWith(to + "/");
           return (
@@ -67,34 +81,39 @@ export function Sidebar() {
               to={to}
               title={label}
               className={[
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 group",
+                "group flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                expanded ? "gap-3 px-3 py-2 justify-start" : "justify-center px-0 py-2.5",
                 active
-                  ? "bg-[#BFFF00]/10 text-[#BFFF00] shadow-[inset_0_0_12px_rgba(191,255,0,0.1)]"
+                  ? "bg-[color:var(--lime)]/10 text-[color:var(--lime)] shadow-[inset_0_0_12px_color-mix(in_oklab,var(--lime)_15%,transparent)]"
                   : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
               ].join(" ")}
             >
-              <Icon 
-                size={20} 
+              <Icon
+                size={20}
                 className={[
                   "shrink-0 transition-transform duration-200 group-hover:scale-110",
-                  active ? "text-[#BFFF00]" : "text-muted-foreground/60 group-hover:text-foreground"
-                ].join(" ")} 
+                  active ? "text-[color:var(--lime)]" : "text-muted-foreground/70 group-hover:text-foreground",
+                ].join(" ")}
               />
-              {!collapsed && <span className="truncate">{label}</span>}
+              {expanded && <span className="truncate">{label}</span>}
             </Link>
           );
         })}
       </nav>
 
-
-      {/* Perfil do Usuário */}
-      <div className="border-t border-sidebar-border p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#BFFF00]/20 text-[#BFFF00] font-bold text-xs">
+      {/* Perfil */}
+      <div
+        className={[
+          "border-t border-sidebar-border py-4 shrink-0 transition-all duration-300",
+          expanded ? "px-4" : "px-0 flex justify-center",
+        ].join(" ")}
+      >
+        <div className={["flex items-center", expanded ? "gap-3" : "justify-center"].join(" ")}>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--lime)]/20 text-[color:var(--lime)] font-bold text-xs">
             U
           </div>
-          {!collapsed && (
-            <div className="flex flex-col truncate">
+          {expanded && (
+            <div className="flex flex-col truncate min-w-0">
               <span className="text-xs font-semibold text-foreground truncate">Usuário JTD</span>
               <span className="text-[10px] text-muted-foreground truncate">admin@jtd.com</span>
             </div>
@@ -102,6 +121,5 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
-
   );
 }

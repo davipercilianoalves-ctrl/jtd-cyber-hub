@@ -12,6 +12,8 @@ export function Layout({ title, breadcrumb, children }: LayoutProps) {
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground transition-colors duration-200">
       <Sidebar />
+      {/* Spacer para reservar o espaço da sidebar fixa (64px colapsada) */}
+      <div className="w-16 shrink-0" aria-hidden />
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
         <header className="flex h-16 items-center border-b border-sidebar-border px-6">
@@ -27,3 +29,4 @@ export function Layout({ title, breadcrumb, children }: LayoutProps) {
     </div>
   );
 }
+
