@@ -184,22 +184,28 @@ export default function PricingModule({ value, onChange, competitorPrices = [] }
 type CompetitorStats = { min: number; max: number; avg: number; median: number; count: number; all: number[] } | null;
 type Positioning = { label: string; tone: "good" | "warn" | "bad"; diffAvg: number } | null;
 
-// Tooltip de ajuda — usa position fixed via JS para nunca ser cortado por overflow
+// Tooltip de ajuda — usa position fixed via JS para ficar junto ao ícone e não ser cortado
 function Help({ text, title }: { text: string; title?: string }) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number; arrowLeft: number; placement: "top" | "bottom" } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
 
   const show = () => {
     const el = triggerRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const tooltipWidth = 256;
-    const margin = 8;
+    const tooltipWidth = Math.min(288, window.innerWidth - 24);
+    const tooltipHeight = 112;
+    const gap = 10;
+    const margin = 12;
     let left = r.left + r.width / 2 - tooltipWidth / 2;
     left = Math.max(margin, Math.min(window.innerWidth - tooltipWidth - margin, left));
-    const top = r.top - margin; // tooltip will use translateY(-100%)
-    setCoords({ top, left });
+    const spaceBelow = window.innerHeight - r.bottom;
+    const placement: "top" | "bottom" = spaceBelow >= tooltipHeight + gap + margin ? "bottom" : "top";
+    const rawTop = placement === "bottom" ? r.bottom + gap : r.top - tooltipHeight - gap;
+    const top = Math.max(margin, Math.min(window.innerHeight - tooltipHeight - margin, rawTop));
+    const arrowLeft = Math.max(14, Math.min(tooltipWidth - 14, r.left + r.width / 2 - left));
+    setCoords({ top, left, arrowLeft, placement });
     setOpen(true);
   };
   const hide = () => setOpen(false);
@@ -215,19 +221,27 @@ function Help({ text, title }: { text: string; title?: string }) {
         onMouseLeave={hide}
         onFocus={show}
         onBlur={hide}
-        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground/70 hover:text-primary hover:bg-primary/10 cursor-help transition-colors focus:outline-none focus:ring-1 focus:ring-primary align-middle"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-primary/25 bg-primary/10 text-primary/85 hover:text-primary hover:bg-primary/20 hover:border-primary/50 cursor-help transition-all focus:outline-none focus:ring-2 focus:ring-primary/35 align-middle shadow-sm"
       >
-        <Info size={11} />
+        <Info size={12} />
       </span>
       {open && coords && (
         <div
           role="tooltip"
-          style={{ position: "fixed", top: coords.top, left: coords.left, width: 256, transform: "translateY(-100%)" }}
+          style={{ position: "fixed", top: coords.top, left: coords.left, width: Math.min(288, window.innerWidth - 24) }}
           className="z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-150"
         >
-          <div className="rounded-md border border-primary/40 bg-popover text-popover-foreground shadow-xl p-3 text-[11px] leading-relaxed">
+          <div
+            style={{ left: coords.arrowLeft }}
+            className={`absolute h-2.5 w-2.5 rotate-45 border-primary/45 bg-popover ${
+              coords.placement === "bottom"
+                ? "-top-1 border-l border-t"
+                : "-bottom-1 border-r border-b"
+            }`}
+          />
+          <div className="rounded-lg border border-primary/45 bg-popover text-popover-foreground shadow-2xl shadow-primary/10 p-3.5 text-[11px] leading-relaxed ring-1 ring-primary/10">
             {title && (
-              <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1.5">
                 {title}
               </div>
             )}
