@@ -19,15 +19,16 @@ import {
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/produtos", label: "Produtos", icon: Package },
-  { to: "/anuncios/", label: "Anúncios", icon: Megaphone },
-  { to: "/kits/", label: "Kits", icon: Layers },
+  { to: "/anuncios", label: "Anúncios", icon: Megaphone },
+  { to: "/kits", label: "Kits", icon: Layers },
   { to: "/metricas", label: "Métricas", icon: BarChart2 },
-  { to: "/compras", label: "Compras", icon: ShoppingCart },
-  { to: "/vendas", label: "Vendas", icon: DollarSign },
-  { to: "/api", label: "API", icon: Plug },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
+  { to: "/vendas", label: "Vendas", icon: DollarSign },
+  { to: "/compras", label: "Compras", icon: ShoppingCart },
+  { to: "/api", label: "API", icon: Plug },
+  { to: "/configuracoes", label: "Configuração", icon: Settings },
 ] as const;
+
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
