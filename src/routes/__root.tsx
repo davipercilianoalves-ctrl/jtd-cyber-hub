@@ -10,8 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { ThemeProvider } from "../contexts/JtdThemeContext";
 
-
-
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -124,24 +122,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const location = useLocation();
-  const isLoginPage = location.pathname === "/login";
 
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        {isLoginPage ? (
-          <Outlet />
-        ) : (
-          <div className="flex min-h-screen w-full">
-            <SessionNavBar />
-            <div className="flex-1 pl-[3.5rem]">
-              <Outlet />
-            </div>
-          </div>
-        )}
+        <Outlet />
       </QueryClientProvider>
     </ThemeProvider>
   );
 }
-
