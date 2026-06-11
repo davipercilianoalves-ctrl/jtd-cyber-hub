@@ -513,7 +513,17 @@ function PercentList({
   return (
     <div className="rounded border border-sidebar-border bg-internal-w04 p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</h4>
+        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground inline-flex items-center gap-2">
+          {title}
+          <Help
+            title={title}
+            text={
+              title.toLowerCase().includes("imposto")
+                ? "Tributos sobre venda (ICMS, Simples, PIS, COFINS, ISS). Percentual aplicado sobre o preço final. Quanto maior, maior o preço ideal precisa ser."
+                : "Comissões cobradas no preço final (marketplace, cartão, gateway). Aumentam o preço ideal proporcionalmente."
+            }
+          />
+        </h4>
         <div className="flex items-center gap-3">
           <span className="text-[10px] uppercase text-muted-foreground">
             Total: <span className="text-primary font-bold">{fmtPct(total)}</span>
@@ -523,6 +533,7 @@ function PercentList({
           </button>
         </div>
       </div>
+
       <div className="space-y-1">
         {items.map((i) => (
           <div key={i.id} className="grid grid-cols-[1fr_90px_36px_28px] gap-2 items-center">
