@@ -1169,12 +1169,14 @@ function CompetitorsTab({
 function StrategyCard({
   title,
   subtitle,
+  description,
   price,
   tone,
   warn,
 }: {
   title: string;
   subtitle: string;
+  description?: string;
   price: number;
   tone: "good" | "primary" | "warn";
   warn?: string;
@@ -1187,14 +1189,18 @@ function StrategyCard({
       : "border-yellow-500/40 bg-yellow-500/5";
   const color = tone === "good" ? "text-lime-400" : tone === "primary" ? "text-primary" : "text-yellow-400";
   return (
-    <div className={`rounded border p-3 ${border}`}>
+    <div className={`rounded border p-3 flex flex-col ${border}`}>
       <div className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</div>
-      <div className="text-[10px] text-muted-foreground mb-2">{subtitle}</div>
-      <div className={`font-mono font-bold text-lg ${color}`}>{fmtBRL(price)}</div>
-      {warn && <div className="text-[10px] text-red-400 mt-1">⚠ {warn}</div>}
+      <div className="text-[10px] text-muted-foreground mb-1">{subtitle}</div>
+      {description && <div className="text-[10px] text-muted-foreground/70 mb-2 italic">{description}</div>}
+      <div className={`font-mono font-bold text-lg mt-auto ${color}`}>{fmtBRL(price)}</div>
+      {warn && <div className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+        <AlertTriangle size={10} /> {warn}
+      </div>}
     </div>
   );
 }
+
 
 // =============================================================
 // ABA GUIA — explica cada conceito e o que ele influencia
