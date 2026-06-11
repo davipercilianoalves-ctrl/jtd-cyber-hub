@@ -58,7 +58,7 @@ export function Sidebar() {
 
 
       {/* Navegação */}
-      <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto scrollbar-hide">
+      <nav className="flex-1 space-y-1 px-2 py-4">
         {navItems.map(({ to, label, icon: Icon }) => {
           const active = pathname === to || pathname.startsWith(to + "/");
           return (
