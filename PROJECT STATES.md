@@ -1,6 +1,6 @@
 PROJECT_STATE.md — Estado atual:
 
-# JTD | Última atualização: 10/06/2026
+# JTD | Última atualização: 12/06/2026
 
 ## Etapas
 - [x] Etapa 0: Base + Auth + Design System — CONCLUÍDA
@@ -8,12 +8,13 @@ PROJECT_STATE.md — Estado atual:
 - [x] Etapa 2: Produtos — CONCLUÍDA
 - [x] Etapa 3: Anúncios — CONCLUÍDA
 - [x] Etapa 4: Kits — CONCLUÍDA
-- [ ] Etapa 5: API Mercado Livre — PENDENTE
+- [x] Etapa 5: API Mercado Livre — CONCLUÍDA
 - [ ] Etapa 6: Dashboard — PENDENTE
 
 ## Ferramentas configuradas
 - [x] Lovable + Supabase
 - [x] Lovable + GitHub
+- [x] API Mercado Livre (OAuth + Edge Functions)
 
 ## Tabelas criadas no Supabase
 - [x] suppliers (RLS ativo)
@@ -22,13 +23,18 @@ PROJECT_STATE.md — Estado atual:
 - [x] ads (RLS ativo)
 - [x] kits (RLS ativo)
 - [x] kit_products (RLS ativo)
+- [x] ml_tokens (RLS ativo)
+
+## Edge Functions deployadas
+- [x] ml-auth-callback
+- [x] ml-refresh-token
+- [x] ml-proxy
 
 ## Decisões tomadas
 - Stack: Lovable + Supabase + GitHub
 - Auth: email/senha via Supabase Auth
-- Design: Acid Cyber (dark) + Arctic Cyber (light)
-- API ML: somente leitura, sem escrita
-- Listagens: tabela profissional em todas as abas
+- API ML: OAuth sem PKCE, somente leitura via proxy seguro
+- Client Secret: nunca exposto ao frontend
 
 ## Próxima etapa
-Etapa 5 — API Mercado Livre (somente leitura)
+Etapa 6 — Dashboard
