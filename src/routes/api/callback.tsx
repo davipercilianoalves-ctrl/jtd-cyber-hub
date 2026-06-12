@@ -5,41 +5,39 @@ import { useEffect } from 'react';
 
 export const Route = createFileRoute('/api/callback')({
   component: CallbackComponent,
-  validateSearch: (search: Record<string, unknown>) => {
-    return {
-      code: (search.code as string) || undefined,
-    };
-  },
+  validateSearch: (search: Record<string, unknown>) => ({
+    code: (search.code as string) || undefined,
+    state: (search.state as string) || undefined,
+  }),
 });
 
 function CallbackComponent() {
-  const { code } = Route.useSearch();
+  const { code, state } = Route.useSearch();
   const navigate = useNavigate();
 
   useEffect(() => {
     async function processCallback() {
       if (!code) {
-        console.error('No code found in URL');
         navigate({ to: '/api' });
         return;
       }
 
       try {
+        const resolvedState = state || localStorage.getItem('ml_oauth_state') || '';
         const { error } = await supabase.functions.invoke('ml-auth-callback', {
-          body: { code }
+          body: { code, state: resolvedState }
         });
-
         if (error) throw error;
-        
+        localStorage.removeItem('ml_oauth_state');
         navigate({ to: '/api' });
       } catch (err) {
-        console.error('Error during ML authentication:', err);
+        console.error('Callback error:', err);
         navigate({ to: '/api' });
       }
     }
 
     processCallback();
-  }, [code, navigate]);
+  }, [code, state, navigate]);
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center space-y-4">

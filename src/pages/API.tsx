@@ -14,7 +14,18 @@ export default function API() {
 
   const clientId = "6630631570819220";
   const redirectUri = "https://acid-nexus-jtd.lovable.app/api/callback";
-  const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`;
+
+  async function handleConnect() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const state = session?.access_token || '';
+    localStorage.setItem('ml_oauth_state', state);
+    const url = `https://auth.mercadolivre.com.br/authorization?` +
+      `response_type=code&` +
+      `client_id=${clientId}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `state=${encodeURIComponent(state)}`;
+    window.location.href = url;
+  }
 
   useEffect(() => {
     fetchToken();
@@ -91,7 +102,7 @@ export default function API() {
             </div>
             <Button 
               className="w-full max-w-md bg-[#CCFF00] text-black hover:bg-[#B3E600] font-bold py-6 text-lg"
-              onClick={() => window.location.href = authUrl}
+              onClick={handleConnect}
             >
               CONECTAR COM MERCADO LIVRE
             </Button>
