@@ -203,7 +203,7 @@ export default function KitForm() {
               <div className="flex items-center gap-6">
                 <div className="flex flex-col items-center gap-1">
                   <label className="text-[8px] font-bold text-muted-foreground uppercase">QTD</label>
-                  <input type="number" min="1" value={kp.quantity || ""} onChange={e => { const n = [...kitProducts]; n[i].quantity = Math.max(1, parseInt(e.target.value) || 1); setKitProducts(n); }} className="w-16 bg-black/20 p-2 text-center rounded border border-sidebar-border font-bold" />
+                  <input type="number" min="1" value={kp.quantity || ""} onChange={e => { const n = [...kitProducts]; n[i].quantity = Math.max(1, parseInt(e.target.value) || 1); setKitProducts(n); }} className="w-16 bg-muted/20 p-2 text-center rounded border border-sidebar-border font-bold" />
                 </div>
                 <button onClick={() => setKitProducts(kitProducts.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-red-500 transition-colors"><Trash2 size={20}/></button>
               </div>
@@ -308,7 +308,7 @@ export default function KitForm() {
           <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Breve Descrição</label>
           <textarea value={formData.brief_description} onChange={e => { setFormData({...formData, brief_description: e.target.value}); autoResize(e.target); }} style={textareaStyle} className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary outline-none" placeholder="Resumo técnico do kit..." />
         </div>
-        <button onClick={() => setShowTemplateModal(true)} className="w-full bg-white/5 border border-sidebar-border rounded py-3 text-xs font-bold text-foreground hover:bg-white/10">VER TEMPLATE IA</button>
+        <button onClick={() => setShowTemplateModal(true)} className="w-full bg-muted/10 border border-sidebar-border rounded py-3 text-xs font-bold text-foreground hover:bg-muted/15">VER TEMPLATE IA</button>
       </section>
 
       {/* BLOCO 6 — Precificação */}
@@ -368,7 +368,7 @@ export default function KitForm() {
 
       {/* AÇÕES FINAIS */}
       <div className="flex justify-end gap-4 pt-6">
-        <button onClick={() => navigate({ to: "/kits" })} className="px-8 py-3 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-white/5 text-sm uppercase">CANCELAR</button>
+        <button onClick={() => navigate({ to: "/kits" })} className="px-8 py-3 rounded font-bold text-muted-foreground border border-sidebar-border hover:bg-muted/10 text-sm uppercase">CANCELAR</button>
         <button onClick={handleSubmit} disabled={saving} className="bg-lime-500 px-8 py-3 rounded font-bold text-black text-sm hover:brightness-110 active:scale-[0.98] shadow-lg flex items-center gap-2 uppercase">
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} SALVAR KIT
         </button>
@@ -376,11 +376,11 @@ export default function KitForm() {
 
       {/* MODAL TEMPLATE */}
       {showTemplateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/95 backdrop-blur-sm animate-in fade-in">
           <div className="jtd-glass max-w-2xl w-full p-8 relative">
-            <button onClick={() => setShowTemplateModal(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-white"><X size={24}/></button>
+            <button onClick={() => setShowTemplateModal(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"><X size={24}/></button>
             <h2 className="text-xl font-bold text-primary mb-6">Template Kit IA</h2>
-            <div className="bg-black/50 border border-sidebar-border rounded p-6 font-mono text-sm leading-relaxed text-muted-foreground h-[400px] overflow-y-auto">
+            <div className="bg-muted/50 border border-sidebar-border rounded p-6 font-mono text-sm leading-relaxed text-muted-foreground h-[400px] overflow-y-auto">
               <p>Crie uma descrição para o kit: <span className="text-foreground">{formData.name}</span></p>
               <p className="mt-4 font-bold">Composição:</p>
               <ul className="list-disc ml-6">{kitProducts.map((kp, i) => <li key={i}>{kp.quantity}x {kp.products?.name}</li>)}</ul>

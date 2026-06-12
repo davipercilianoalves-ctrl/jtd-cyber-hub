@@ -203,6 +203,16 @@
   backdrop-filter: blur(var(--glass-blur));
 }
 
+/* Tema claro: remove blur e adiciona sombra sutil para legibilidade */
+.light .jtd-glass,
+.light .jtd-glass-gradient {
+  background: var(--card);
+  border: 1px solid var(--border);
+  backdrop-filter: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+
 @utility jtd-text-gradient {
   background: var(--logo-gradient);
   -webkit-background-clip: text;

@@ -142,7 +142,7 @@ export default function PricingModule({ value, onChange, competitorPrices = [] }
       <Alerts result={result} state={value} competitorStats={competitorStats} positioning={positioning} />
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-sidebar-border/40 overflow-x-auto">
+      <div className="flex gap-1 border-b border-border/40 overflow-x-auto">
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = tab === t.key;
@@ -694,7 +694,7 @@ function CostTable({
   return (
     <div className="rounded border border-sidebar-border bg-internal-w04">
 
-      <div className="grid grid-cols-[20px_1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-sidebar-border/40 bg-internal-20">
+      <div className="grid grid-cols-[20px_1.5fr_140px_140px_60px_40px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-border/40 bg-internal-20">
         <div></div>
         <div className="inline-flex items-center gap-1.5">Nome <Help title="Nome do custo" text="Identificação do item. Ex: 'Custo do produto', 'Frete fornecedor', 'Embalagem', 'Marketing'." /></div>
         <div className="text-center inline-flex items-center gap-1.5 justify-center">Tipo <Help title="Tipo de custo" text="R$ = valor fixo (não muda com o preço). % = proporcional ao preço de venda (ex: marketing, royalties)." /></div>
@@ -1424,7 +1424,7 @@ function ReportTab({ value, result }: { value: PricingState; result: PricingResu
         <div
           key={i}
           className={`flex justify-between text-sm py-1 ${
-            r.bold ? "border-t border-sidebar-border/40 pt-2 mt-1" : ""
+            r.bold ? "border-t border-border/40 pt-2 mt-1" : ""
           }`}
         >
           <span className={r.bold ? "font-bold text-foreground" : "text-muted-foreground"}>{r.k}:</span>
@@ -1462,7 +1462,7 @@ function CompactStat({
       ? "text-red-400"
       : "text-foreground";
   return (
-    <div className="rounded border border-sidebar-border/40 bg-internal-20 p-2">
+    <div className="rounded border border-border/40 bg-internal-20 p-2">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className={`mt-0.5 font-mono font-bold text-sm ${color}`}>{value}</div>
     </div>
@@ -1723,7 +1723,7 @@ function GuideTab() {
           <CollapsibleSection key={sec.title} title={sec.title}>
             <div className="space-y-4 pt-2">
               {sec.items.map((it) => (
-                <div key={it.term} className="border-l-2 border-primary/40 pl-3 py-1 bg-white/5 p-3 rounded-r">
+                <div key={it.term} className="border-l-2 border-primary/40 pl-3 py-1 bg-muted/10 p-3 rounded-r">
                   <div className="text-sm font-bold text-foreground flex items-center gap-2">
                     {it.term}
                     <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">
@@ -1752,7 +1752,7 @@ function CollapsibleSection({ title, children }: { title: string; children: Reac
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/10 transition-colors"
       >
         <h4 className="text-xs font-bold uppercase tracking-widest text-primary">{title}</h4>
         {open ? <ChevronDown size={16} className="text-muted-foreground" /> : <ChevronRight size={16} className="text-muted-foreground" />}

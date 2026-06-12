@@ -164,7 +164,7 @@ export function DataView<T>({
             </div>
 
             {renderActions && (
-              <div className="mt-auto pt-2 border-t border-sidebar-border/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-auto pt-2 border-t border-border/40 opacity-0 group-hover:opacity-100 transition-opacity">
                 {renderActions(item)}
               </div>
             )}
