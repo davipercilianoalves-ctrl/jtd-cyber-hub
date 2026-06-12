@@ -85,7 +85,7 @@ export function Sidebar() {
                 expanded ? "gap-3 px-3 py-2 justify-start" : "justify-center px-0 py-2.5",
                 active
                   ? "bg-[color:var(--lime)]/10 text-[color:var(--lime)] shadow-[inset_0_0_12px_color-mix(in_oklab,var(--lime)_15%,transparent)]"
-                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
+                  : "text-muted-foreground hover:bg-muted/10 hover:text-foreground",
               ].join(" ")}
             >
               <Icon

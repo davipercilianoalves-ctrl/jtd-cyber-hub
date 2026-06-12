@@ -55,7 +55,7 @@ function CallbackComponent() {
             <h1 className="text-lg font-bold text-red-500 font-mono">ERRO NA AUTENTICAÇÃO</h1>
           </div>
           <p className="text-sm text-gray-300 font-mono break-words">{error}</p>
-          <p className="mt-4 text-xs text-gray-500 font-mono">Redirecionando em 3 segundos...</p>
+          <p className="mt-4 text-xs text-muted-foreground font-mono">Redirecionando em 3 segundos...</p>
         </div>
       </div>
     );

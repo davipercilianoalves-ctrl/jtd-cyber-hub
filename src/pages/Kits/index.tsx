@@ -107,14 +107,14 @@ export default function Kits() {
               <tr 
                 key={k.id} 
                 onClick={() => navigate({ to: "/kits/$id/editar", params: { id: k.id } })} 
-                className="border-b border-sidebar-border/40 hover:bg-internal-w04 transition-colors group cursor-pointer"
+                className="border-b border-border/40 hover:bg-internal-w04 transition-colors group cursor-pointer"
               >
                 <td className="p-4">
                   <div className="font-semibold text-foreground">{k.name}</div>
                   <div className="font-mono text-[10px] text-muted-foreground">{k.sku || "—"}</div>
                 </td>
                 <td className="p-4">
-                  <span className="bg-white/10 text-foreground text-[10px] font-bold px-2 py-0.5 rounded border border-white/10">
+                  <span className="bg-muted/15 text-foreground text-[10px] font-bold px-2 py-0.5 rounded border border-white/10">
                     {k.kit_products?.length || 0} produtos
                   </span>
                 </td>

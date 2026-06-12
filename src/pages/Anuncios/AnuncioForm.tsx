@@ -412,7 +412,7 @@ export default function AnuncioForm() {
             <button 
               type="button"
               onClick={() => setShowTemplateModal(true)}
-              className="flex-1 bg-internal-w5 border border-sidebar-border rounded py-3 text-xs font-bold text-foreground hover:bg-white/10 transition-all"
+              className="flex-1 bg-internal-w5 border border-sidebar-border rounded py-3 text-xs font-bold text-foreground hover:bg-muted/15 transition-all"
             >
               VER TEMPLATE
             </button>
@@ -423,7 +423,7 @@ export default function AnuncioForm() {
                 navigator.clipboard.writeText(template);
                 toast.success("Template copiado!");
               }}
-              className="px-6 bg-internal-w5 border border-sidebar-border rounded text-xs font-bold text-foreground hover:bg-white/10 transition-all"
+              className="px-6 bg-internal-w5 border border-sidebar-border rounded text-xs font-bold text-foreground hover:bg-muted/15 transition-all"
             >
               <Copy size={16} />
             </button>
@@ -516,7 +516,7 @@ export default function AnuncioForm() {
           <div className="jtd-glass max-w-2xl w-full p-8 relative animate-in zoom-in-95 duration-200">
             <button 
               onClick={() => setShowTemplateModal(false)}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-white"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
             >
               <X size={24} />
             </button>

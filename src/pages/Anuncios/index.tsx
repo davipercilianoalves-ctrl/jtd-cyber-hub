@@ -54,7 +54,7 @@ export default function Anuncios() {
     { key: "title", label: "Título", render: (a) => (
       <span className="inline-flex items-center gap-1.5">
         <span className="text-muted-foreground truncate max-w-[180px] inline-block align-bottom">{a.titles?.[0] || "—"}</span>
-        {a.titles?.length > 1 && <span className="bg-white/10 text-[10px] px-1.5 py-0.5 rounded">+{a.titles.length - 1}</span>}
+        {a.titles?.length > 1 && <span className="bg-muted/15 text-[10px] px-1.5 py-0.5 rounded">+{a.titles.length - 1}</span>}
       </span>
     ), tableOnly: true },
     { key: "price", label: "Preço", align: "right", className: "font-mono font-bold text-cyan-400", render: (a) => `R$ ${(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
