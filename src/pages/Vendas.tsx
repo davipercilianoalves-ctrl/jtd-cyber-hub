@@ -279,17 +279,22 @@ export default function Vendas() {
     return s;
   }, [computed, orders.length]);
 
-  async function handleSaveOverride(orderId: string, itemId: string) {
+  async function handleSaveOverride(orderId: string, itemId: string, qty: number, fallback: number) {
     const key = `${orderId}::${itemId}`;
-    const raw = editing[key];
-    const val = Number((raw || "").replace(",", "."));
-    if (!Number.isFinite(val) || val < 0) {
-      toast.error("Custo inválido");
-      return;
+    const raw = editing[key] || [];
+    const arr: number[] = [];
+    for (let i = 0; i < qty; i++) {
+      const v = (raw[i] ?? "").toString().replace(",", ".").trim();
+      const n = v === "" ? fallback : Number(v);
+      if (!Number.isFinite(n) || n < 0) {
+        toast.error(`Custo inválido na unidade ${i + 1}`);
+        return;
+      }
+      arr.push(n);
     }
     setSavingKey(key);
     try {
-      await saveOverride(orderId, itemId, val);
+      await saveOverride(orderId, itemId, arr);
       const ovs = await fetchOverrides(orders.map((o) => String(o.id)));
       setOverrides(ovs);
       setEditing((s) => {
@@ -304,6 +309,7 @@ export default function Vendas() {
       setSavingKey(null);
     }
   }
+
 
   async function handleRemoveOverride(orderId: string, itemId: string) {
     const key = `${orderId}::${itemId}`;
