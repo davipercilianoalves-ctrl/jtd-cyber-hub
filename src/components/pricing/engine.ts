@@ -33,6 +33,7 @@ export interface PricingState {
   promo: { strategicMarkupPct: number };
   scenarios: Array<{ id: string; name: string; overrides: Partial<PricingState> }>;
   minMarginPct: number;
+  investmentPct: number; // % do preço de venda que volta para a empresa como reinvestimento
 }
 
 export function uid() {
