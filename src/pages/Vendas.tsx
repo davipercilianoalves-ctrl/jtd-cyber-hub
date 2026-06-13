@@ -1,5 +1,5 @@
 // Vendas — controle financeiro das vendas do Mercado Livre
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   DollarSign,
@@ -10,6 +10,16 @@ import {
   Loader2,
   Search,
   AlertCircle,
+  User,
+  FileText,
+  MapPin,
+  Truck,
+  Package,
+  CheckCircle2,
+  Clock,
+  ShieldAlert,
+  ShieldCheck,
+  Hash,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendas, type MLOrder, type MatchedAd, type SaleOverride } from "@/hooks/useVendas";
@@ -37,6 +47,17 @@ function fmtDateTime(iso: string) {
     minute: "2-digit",
   });
 }
+
+function relativeTime(ts: number, now: number) {
+  const s = Math.max(0, Math.floor((now - ts) / 1000));
+  if (s < 5) return "agora";
+  if (s < 60) return `há ${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `há ${m}min`;
+  const h = Math.floor(m / 60);
+  return `há ${h}h`;
+}
+
 
 function periodRange(p: Period, from?: string, to?: string): { from: Date; to: Date } {
   const now = new Date();
@@ -239,8 +260,20 @@ export default function Vendas() {
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, any>>({});
   const [detailsLoading, setDetailsLoading] = useState<Record<string, boolean>>({});
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
 
 
+  async function refreshOrderDetails(oid: string, order: MLOrder) {
+    try {
+      const d = await fetchOrderDetails(order.id, order.shipping?.id || null, order.buyer?.id || null);
+      setDetails((s) => ({ ...s, [oid]: d }));
+    } catch {
+      // silencioso em refresh
+    }
+  }
 
   async function toggleExpand(oid: string, order: MLOrder) {
     setExpanded((s) => ({ ...s, [oid]: !s[oid] }));
@@ -285,9 +318,9 @@ export default function Vendas() {
     return m;
   }, [overrides]);
 
-  async function load() {
+  async function load(opts: { silent?: boolean } = {}) {
     if (!hasToken || !mlUserId) return;
-    setLoading(true);
+    if (!opts.silent) setLoading(true);
     try {
       const { from, to } = periodRange(period, customFrom, customTo);
       const [orderList, adList] = await Promise.all([
@@ -299,10 +332,17 @@ export default function Vendas() {
       const ids = orderList.map((o) => String(o.id));
       const ovs = await fetchOverrides(ids);
       setOverrides(ovs);
+      setLastSync(new Date());
+      // Atualiza detalhes dos pedidos abertos em background
+      const openIds = Object.keys(expandedRef.current).filter((k) => expandedRef.current[k]);
+      openIds.forEach((oid) => {
+        const o = orderList.find((x) => String(x.id) === oid);
+        if (o) refreshOrderDetails(oid, o);
+      });
     } catch (e: any) {
-      toast.error(e?.message || "Erro ao carregar vendas");
+      if (!opts.silent) toast.error(e?.message || "Erro ao carregar vendas");
     } finally {
-      setLoading(false);
+      if (!opts.silent) setLoading(false);
     }
   }
 
@@ -310,6 +350,22 @@ export default function Vendas() {
     if (tokenChecked && hasToken) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenChecked, hasToken, mlUserId, period, customFrom, customTo]);
+
+  // Auto-refresh a cada 30s enquanto a aba está visível
+  useEffect(() => {
+    if (!hasToken || !mlUserId) return;
+    const iv = setInterval(() => {
+      if (document.visibilityState === "visible") load({ silent: true });
+    }, 30000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasToken, mlUserId, period, customFrom, customTo]);
+
+  // Tick para "atualizado há X" relativo
+  useEffect(() => {
+    const iv = setInterval(() => setNowTick(Date.now()), 15000);
+    return () => clearInterval(iv);
+  }, []);
 
   const computed = useMemo<Computed[]>(
     () => orders.map((o) => computeOrder(o, ads, overridesByKey, findAd)),
@@ -418,14 +474,22 @@ export default function Vendas() {
               Controle financeiro das suas vendas
             </p>
           </div>
-          <Button onClick={load} disabled={loading} variant="outline">
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCcw className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            {lastSync && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--lime)] animate-pulse" />
+                Atualizado {relativeTime(lastSync.getTime(), nowTick)} · auto 30s
+              </span>
             )}
-            Atualizar
-          </Button>
+            <Button onClick={() => load()} disabled={loading} variant="outline">
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCcw className="w-4 h-4" />
+              )}
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-3 mt-6">
@@ -855,17 +919,23 @@ function Row({ k, v }: { k: string; v: string }) {
   );
 }
 
-const SHIPMENT_STEPS: Array<{ key: string; label: string }> = [
-  { key: "pending", label: "Pendente" },
-  { key: "handling", label: "Preparando" },
-  { key: "ready_to_ship", label: "Pronto p/ envio" },
-  { key: "shipped", label: "A caminho" },
-  { key: "out_for_delivery", label: "Saiu p/ entrega" },
-  { key: "delivered", label: "Entregue" },
+const SHIPMENT_STEPS: Array<{ key: string; label: string; icon: any }> = [
+  { key: "pending", label: "Pendente", icon: Clock },
+  { key: "handling", label: "Preparando", icon: Package },
+  { key: "ready_to_ship", label: "Pronto", icon: Package },
+  { key: "shipped", label: "A caminho", icon: Truck },
+  { key: "out_for_delivery", label: "Em rota", icon: Truck },
+  { key: "delivered", label: "Entregue", icon: CheckCircle2 },
 ];
 
 function ShipmentTimeline({ shipment }: { shipment: any }) {
-  if (!shipment) return <div className="text-xs text-muted-foreground">Sem dados de envio.</div>;
+  if (!shipment) {
+    return (
+      <div className="text-xs text-muted-foreground flex items-center gap-2">
+        <Truck className="w-4 h-4" /> Sem dados de envio do ML.
+      </div>
+    );
+  }
   const status = String(shipment.status || "");
   const substatus = String(shipment.substatus || "");
   const history: any[] = shipment.status_history
@@ -875,10 +945,15 @@ function ShipmentTimeline({ shipment }: { shipment: any }) {
     : [];
   const currentIdx = Math.max(
     0,
-    SHIPMENT_STEPS.findIndex((s) => s.key === status || (status === "shipped" && substatus === "out_for_delivery" && s.key === "out_for_delivery")),
+    SHIPMENT_STEPS.findIndex(
+      (s) =>
+        s.key === status ||
+        (status === "shipped" && substatus === "out_for_delivery" && s.key === "out_for_delivery"),
+    ),
   );
   const dateFor = (key: string) => {
     const map: Record<string, string> = {
+      pending: "date_pending",
       handling: "date_handling",
       ready_to_ship: "date_ready_to_ship",
       shipped: "date_shipped",
@@ -886,52 +961,120 @@ function ShipmentTimeline({ shipment }: { shipment: any }) {
       delivered: "date_delivered",
     };
     const v = shipment.status_history?.[map[key]];
-    return v ? new Date(v).toLocaleString("pt-BR") : null;
+    return v ? new Date(v).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : null;
   };
+  const pct = SHIPMENT_STEPS.length > 1 ? (currentIdx / (SHIPMENT_STEPS.length - 1)) * 100 : 0;
   return (
     <div>
-      <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Truck className="w-4 h-4 text-[var(--cyan)]" />
           Rastreio do envio
         </div>
-        <div className="text-xs text-muted-foreground flex gap-3 flex-wrap">
+        <div className="text-xs text-muted-foreground flex gap-4 flex-wrap">
           {shipment.tracking_number && (
-            <span>Tracking: <span className="font-mono text-foreground">{shipment.tracking_number}</span></span>
+            <span className="flex items-center gap-1">
+              <Hash className="w-3 h-3" />
+              <span className="font-mono text-foreground">{shipment.tracking_number}</span>
+            </span>
           )}
-          {shipment.logistic_type && <span>Tipo: {shipment.logistic_type}</span>}
+          {shipment.logistic_type && (
+            <span className="uppercase tracking-wider">{shipment.logistic_type}</span>
+          )}
         </div>
       </div>
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-        {SHIPMENT_STEPS.map((s, i) => {
-          const done = i <= currentIdx;
-          const at = dateFor(s.key);
-          return (
-            <div
-              key={s.key}
-              className={`rounded-md p-2 border text-center ${
-                done
-                  ? "border-[var(--lime)]/50 bg-[var(--lime)]/10"
-                  : "border-sidebar-border bg-internal-20"
-              }`}
-            >
-              <div className={`text-[10px] uppercase tracking-wider ${done ? "text-[var(--lime)]" : "text-muted-foreground"}`}>
-                {s.label}
+
+      {/* Trilho horizontal com bolinhas */}
+      <div className="relative px-3">
+        <div className="absolute left-3 right-3 top-3 h-0.5 bg-sidebar-border" />
+        <div
+          className="absolute left-3 top-3 h-0.5 bg-[var(--lime)] transition-all"
+          style={{ width: `calc((100% - 24px) * ${pct / 100})` }}
+        />
+        <div className="relative grid grid-cols-6 gap-1">
+          {SHIPMENT_STEPS.map((s, i) => {
+            const done = i <= currentIdx;
+            const isCurrent = i === currentIdx;
+            const at = dateFor(s.key);
+            const Icon = s.icon;
+            return (
+              <div key={s.key} className="flex flex-col items-center text-center">
+                <div
+                  className={`relative z-10 grid place-items-center w-6 h-6 rounded-full border-2 transition ${
+                    done
+                      ? "bg-[var(--lime)] border-[var(--lime)] text-black"
+                      : "bg-background border-sidebar-border text-muted-foreground"
+                  } ${isCurrent ? "ring-4 ring-[var(--lime)]/20" : ""}`}
+                >
+                  <Icon className="w-3 h-3" />
+                </div>
+                <div
+                  className={`text-[10px] uppercase tracking-wider mt-1.5 font-semibold ${
+                    done ? "text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {s.label}
+                </div>
+                <div className="text-[10px] font-mono text-muted-foreground leading-tight">
+                  {at || "—"}
+                </div>
               </div>
-              <div className="text-[10px] text-muted-foreground mt-1">{at || "—"}</div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+
       {history.length > 0 && (
-        <details className="mt-2 text-xs text-muted-foreground">
-          <summary className="cursor-pointer">Histórico completo</summary>
-          <ul className="mt-1 space-y-0.5 font-mono">
+        <details className="mt-4 text-xs text-muted-foreground">
+          <summary className="cursor-pointer hover:text-foreground">Histórico completo ({history.length})</summary>
+          <ul className="mt-2 space-y-0.5 font-mono bg-internal-20 rounded p-2">
             {history.map((h) => (
-              <li key={h.key}>{h.key}: {new Date(h.at).toLocaleString("pt-BR")}</li>
+              <li key={h.key} className="flex justify-between">
+                <span>{h.key}</span>
+                <span>{new Date(h.at).toLocaleString("pt-BR")}</span>
+              </li>
             ))}
           </ul>
         </details>
       )}
+    </div>
+  );
+}
+
+function InfoLine({ icon: Icon, label, value, mono }: { icon?: any; label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-1 border-b border-border/30 last:border-0">
+      <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
+        {Icon && <Icon className="w-3 h-3" />}
+        {label}
+      </span>
+      <span className={`text-xs text-right ${mono ? "font-mono" : ""} text-foreground truncate max-w-[60%]`} title={value}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function SectionCard({
+  icon: Icon,
+  title,
+  accent,
+  children,
+}: {
+  icon: any;
+  title: string;
+  accent: "cyan" | "lime" | "magenta";
+  children: React.ReactNode;
+}) {
+  const color =
+    accent === "cyan" ? "text-[var(--cyan)]" : accent === "lime" ? "text-[var(--lime)]" : "text-[var(--magenta)]";
+  return (
+    <div className="bg-background/40 border border-sidebar-border rounded-lg p-3">
+      <div className={`flex items-center gap-2 text-xs uppercase tracking-wider font-bold mb-2 pb-2 border-b border-sidebar-border ${color}`}>
+        <Icon className="w-3.5 h-3.5" />
+        {title}
+      </div>
+      <div className="space-y-0.5">{children}</div>
     </div>
   );
 }
@@ -947,12 +1090,15 @@ function OrderDetailsPanel({
   data: any;
   loading: boolean;
 }) {
-  if (loading) {
+  if (loading && !data) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
+      <div className="space-y-3">
+        <Skeleton className="h-20" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+        </div>
       </div>
     );
   }
@@ -965,72 +1111,96 @@ function OrderDetailsPanel({
   const addr = shipment?.receiver_address;
   const billPayer = billing?.billing_info?.doc_number || billing?.buyer?.billing_info?.doc_number;
   const billDocType = billing?.billing_info?.doc_type || billing?.buyer?.billing_info?.doc_type;
-  const invoiceUrl = full?.tags?.includes("invoice_generated") ? null : null;
   const reputationAffected =
     feedback?.sale?.reputation_status === "affected" ||
     feedback?.purchase?.reputation_status === "affected" ||
     (Array.isArray(full?.tags) && full.tags.includes("not_delivered"));
+  const totalTx = Number(buyer?.buyer_reputation?.transactions?.total ?? 0);
+  const cancelTx = Number(buyer?.buyer_reputation?.transactions?.canceled?.total ?? 0);
+  const buyerName = [buyer?.first_name, buyer?.last_name].filter(Boolean).join(" ") || buyer?.nickname || "—";
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-      {/* Cliente */}
-      <div className="jtd-glass p-3 rounded-lg">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-          Cliente
-        </div>
-        <div className="text-sm space-y-1">
-          <Row k="Nome" v={[buyer?.first_name, buyer?.last_name].filter(Boolean).join(" ") || "—"} />
-          <Row k="Nickname" v={buyer?.nickname || "—"} />
-          <Row k="ID comprador" v={String(buyer?.id ?? "—")} />
-          <Row k="Compras (reputação)" v={String(buyer?.buyer_reputation?.transactions?.total ?? "—")} />
-          <Row k="Canceladas" v={String(buyer?.buyer_reputation?.transactions?.canceled?.total ?? "—")} />
-        </div>
+    <div className="space-y-3">
+      {/* Faixa de status + rastreio (full width) */}
+      <div className="bg-background/40 border border-sidebar-border rounded-lg p-4">
+        <ShipmentTimeline shipment={shipment} />
       </div>
 
-      {/* Venda + Nota Fiscal */}
-      <div className="jtd-glass p-3 rounded-lg">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-          Venda & Nota Fiscal
-        </div>
-        <div className="text-sm space-y-1">
-          <Row k="Nº da venda" v={orderId} />
-          {full?.pack_id && <Row k="Pack" v={String(full.pack_id)} />}
-          <Row k="CPF/CNPJ" v={billPayer ? `${billDocType || ""} ${billPayer}`.trim() : "—"} />
-          <Row k="Razão / Nome" v={billing?.billing_info?.business_name || billing?.billing_info?.name || "—"} />
-          <Row k="IE" v={billing?.billing_info?.state_registration || "—"} />
-          <Row k="Endereço fiscal" v={
-            billing?.billing_info?.street_name
-              ? `${billing.billing_info.street_name}, ${billing.billing_info.street_number || "s/n"} — ${billing.billing_info.city || ""}/${billing.billing_info.state || ""}`
-              : "—"
-          } />
-          <Row k="Reputação afetada" v={reputationAffected ? "Sim" : "Não"} />
-        </div>
-      </div>
-
-      {/* Endereço de entrega */}
-      <div className="jtd-glass p-3 rounded-lg">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-          Endereço de entrega
-        </div>
-        {addr ? (
-          <div className="text-sm space-y-1">
-            <Row k="Destinatário" v={addr.receiver_name || "—"} />
-            <Row k="Rua" v={`${addr.street_name || ""}, ${addr.street_number || "s/n"}`} />
-            <Row k="Compl." v={addr.comment || "—"} />
-            <Row k="Bairro" v={addr.neighborhood?.name || "—"} />
-            <Row k="Cidade/UF" v={`${addr.city?.name || ""} / ${addr.state?.name || ""}`} />
-            <Row k="CEP" v={addr.zip_code || "—"} />
-          </div>
+      {/* Faixa de alertas/badges */}
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <Badge variant="outline" className="font-mono">#{orderId}</Badge>
+        {full?.pack_id && <Badge variant="outline" className="font-mono">pack {String(full.pack_id)}</Badge>}
+        {Array.isArray(full?.tags) && full.tags.includes("invoice_generated") && (
+          <Badge variant="outline" className="border-[var(--cyan)]/50 text-[var(--cyan)]">
+            <FileText className="w-3 h-3 mr-1" /> NF emitida
+          </Badge>
+        )}
+        {reputationAffected ? (
+          <Badge variant="outline" className="border-destructive/50 text-destructive">
+            <ShieldAlert className="w-3 h-3 mr-1" /> Reputação afetada
+          </Badge>
         ) : (
-          <div className="text-xs text-muted-foreground">Sem endereço.</div>
+          <Badge variant="outline" className="border-[var(--lime)]/50 text-[var(--lime)]">
+            <ShieldCheck className="w-3 h-3 mr-1" /> Reputação ok
+          </Badge>
         )}
       </div>
 
-      {/* Rastreio — coluna inteira */}
-      <div className="jtd-glass p-3 rounded-lg lg:col-span-3">
-        <ShipmentTimeline shipment={shipment} />
+      {/* 3 colunas: Cliente / NF / Entrega */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <SectionCard icon={User} title="Cliente" accent="cyan">
+          <InfoLine label="Nome" value={buyerName} />
+          <InfoLine label="Nickname" value={buyer?.nickname || "—"} mono />
+          <InfoLine label="ID" value={String(buyer?.id ?? "—")} mono />
+          <InfoLine
+            label="Compras"
+            value={totalTx ? `${totalTx} (${cancelTx} cancel.)` : "—"}
+            mono
+          />
+        </SectionCard>
+
+        <SectionCard icon={FileText} title="Nota Fiscal" accent="magenta">
+          <InfoLine
+            label="CPF/CNPJ"
+            value={billPayer ? `${billDocType || ""} ${billPayer}`.trim() : "—"}
+            mono
+          />
+          <InfoLine
+            label="Razão"
+            value={billing?.billing_info?.business_name || billing?.billing_info?.name || "—"}
+          />
+          <InfoLine label="IE" value={billing?.billing_info?.state_registration || "—"} mono />
+          <InfoLine
+            label="End. fiscal"
+            value={
+              billing?.billing_info?.street_name
+                ? `${billing.billing_info.street_name}, ${billing.billing_info.street_number || "s/n"} — ${billing.billing_info.city || ""}/${billing.billing_info.state || ""}`
+                : "—"
+            }
+          />
+        </SectionCard>
+
+        <SectionCard icon={MapPin} title="Entrega" accent="lime">
+          {addr ? (
+            <>
+              <InfoLine label="Destinatário" value={addr.receiver_name || "—"} />
+              <InfoLine
+                label="Endereço"
+                value={`${addr.street_name || ""}, ${addr.street_number || "s/n"}${addr.comment ? " — " + addr.comment : ""}`}
+              />
+              <InfoLine
+                label="Bairro/Cidade"
+                value={`${addr.neighborhood?.name || "—"} · ${addr.city?.name || ""}/${addr.state?.name || ""}`}
+              />
+              <InfoLine label="CEP" value={addr.zip_code || "—"} mono />
+            </>
+          ) : (
+            <div className="text-xs text-muted-foreground">Sem endereço.</div>
+          )}
+        </SectionCard>
       </div>
     </div>
   );
 }
+
 
