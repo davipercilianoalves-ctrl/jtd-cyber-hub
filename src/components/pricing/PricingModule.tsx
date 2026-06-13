@@ -1437,6 +1437,9 @@ function ReportTab({ value, result }: { value: PricingState; result: PricingResu
     .filter((t) => t.active && t.value > 0)
     .forEach((t) => rows.push({ k: t.name || "Imposto", v: fmtPct(t.value) }));
   rows.push({ k: "Total Impostos", v: fmtPct(result.taxPctTotal * 100), bold: true });
+  if (value.investmentPct > 0) {
+    rows.push({ k: "Reinvestimento", v: fmtPct(value.investmentPct) });
+  }
   rows.push({
     k: `Lucro (${value.goal.mode === "marginPct" ? "Margem" : value.goal.mode === "profitPct" ? "%" : "R$"})`,
     v: value.goal.mode === "profitBRL" ? fmtBRL(value.goal.value) : fmtPct(value.goal.value),
@@ -1446,6 +1449,7 @@ function ReportTab({ value, result }: { value: PricingState; result: PricingResu
   rows.push({ k: "Preço Vitrine", v: fmtBRL(result.showcasePrice) });
   rows.push({ k: "Desconto Necessário", v: fmtPct(result.promoDiscountPct) });
   rows.push({ k: "Preço Final", v: fmtBRL(result.promoFinalPrice), bold: true, tone: "primary" });
+  rows.push({ k: "Reinvestimento (R$)", v: fmtBRL(result.investmentBRL), bold: true, tone: "primary" });
   rows.push({ k: "Lucro Líquido", v: fmtBRL(result.profitBRL), bold: true, tone: "good" });
   rows.push({ k: "Margem Líquida", v: fmtPct(result.netMarginPct), bold: true, tone: "good" });
 
