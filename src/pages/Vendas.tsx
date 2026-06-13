@@ -216,8 +216,9 @@ function computeOrder(
 
 
 export default function Vendas() {
-  const { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd } =
+  const { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd, fetchOrderDetails } =
     useVendas();
+
 
   const [tokenChecked, setTokenChecked] = useState(false);
   const [hasToken, setHasToken] = useState(false);
