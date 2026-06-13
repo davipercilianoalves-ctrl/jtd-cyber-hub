@@ -19,8 +19,10 @@ export type SaleOverride = {
   ml_order_id: string;
   ml_item_id: string;
   custom_cost_price: number | null;
+  unit_costs: number[] | null;
   notes: string | null;
 };
+
 
 export type MatchedAd = {
   id: string;
