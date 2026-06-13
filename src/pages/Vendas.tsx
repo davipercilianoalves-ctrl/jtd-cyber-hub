@@ -754,9 +754,10 @@ export default function Vendas() {
                                         </div>
                                         <Row k="Receita" v={BRL(b.revenue)} />
                                         <Row k="Custo dos produtos" v={`- ${BRL(b.cost)}`} />
-                                        <Row k={`Taxa ML (${b.feePct}%)`} v={`- ${BRL(b.feeBRL)}`} />
+                                        <Row k={`Taxa ML (${b.feePct.toFixed(1)}%)${b.feeSource === "ml" ? " · do ML" : b.feeSource === "none" ? " · sem dado" : ""}`} v={`- ${BRL(b.feeBRL)}`} />
                                         <Row k={`Imposto (${b.taxPct}%)`} v={`- ${BRL(b.taxBRL)}`} />
-                                        <Row k="Frete" v={`- ${BRL(b.shipping)}`} />
+                                        <Row k={`Frete${b.shippingSource === "ml" ? " · do ML" : b.shippingSource === "none" ? " · sem dado" : ""}`} v={`- ${BRL(b.shipping)}`} />
+
                                         <Row k="Embalagem" v={`- ${BRL(b.packaging)}`} />
                                         <Row k="Transporte" v={`- ${BRL(b.transport)}`} />
                                         <div className="flex justify-between pt-2 mt-1 border-t border-border font-semibold">
