@@ -94,11 +94,13 @@ export interface PricingResult {
   costPctTotal: number; // 0..1
   feePctTotal: number;
   taxPctTotal: number;
+  investmentPct: number; // 0..1
   goalPct: number; // 0..1, resolvido se modo R$
   denom: number;
   idealPrice: number;
   minPrice: number;
   profitBRL: number;
+  investmentBRL: number;
   netMarginPct: number;
   showcasePrice: number;
   promoDiscountPct: number;
