@@ -844,15 +844,6 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* IMAGENS DO PRODUTO                                           */}
-      {/* ============================================================ */}
-      <ProductImages
-        images={(formData.images || []) as ProductImage[]}
-        onChange={(imgs) => setFormData({ ...formData, images: imgs })}
-        productId={productId}
-      />
-
-      {/* ============================================================ */}
       {/* 2. PALAVRAS-CHAVE DO PRODUTO                                 */}
       {/* ============================================================ */}
 
@@ -1171,6 +1162,15 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         value={formData.pricing as PricingState}
         onChange={(next) => setFormData({ ...formData, pricing: next })}
         competitorPrices={prices}
+      />
+
+      {/* ============================================================ */}
+      {/* IMAGENS DO PRODUTO                                           */}
+      {/* ============================================================ */}
+      <ProductImages
+        images={(formData.images || []) as ProductImage[]}
+        onChange={(imgs) => setFormData({ ...formData, images: imgs })}
+        productId={productId}
       />
 
 
