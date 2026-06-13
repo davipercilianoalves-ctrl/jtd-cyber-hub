@@ -307,9 +307,9 @@ export default function Vendas() {
     return m;
   }, [overrides]);
 
-  async function load() {
+  async function load(opts: { silent?: boolean } = {}) {
     if (!hasToken || !mlUserId) return;
-    setLoading(true);
+    if (!opts.silent) setLoading(true);
     try {
       const { from, to } = periodRange(period, customFrom, customTo);
       const [orderList, adList] = await Promise.all([
@@ -321,10 +321,17 @@ export default function Vendas() {
       const ids = orderList.map((o) => String(o.id));
       const ovs = await fetchOverrides(ids);
       setOverrides(ovs);
+      setLastSync(new Date());
+      // Atualiza detalhes dos pedidos abertos em background
+      const openIds = Object.keys(expandedRef.current).filter((k) => expandedRef.current[k]);
+      openIds.forEach((oid) => {
+        const o = orderList.find((x) => String(x.id) === oid);
+        if (o) refreshOrderDetails(oid, o);
+      });
     } catch (e: any) {
-      toast.error(e?.message || "Erro ao carregar vendas");
+      if (!opts.silent) toast.error(e?.message || "Erro ao carregar vendas");
     } finally {
-      setLoading(false);
+      if (!opts.silent) setLoading(false);
     }
   }
 
@@ -332,6 +339,22 @@ export default function Vendas() {
     if (tokenChecked && hasToken) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenChecked, hasToken, mlUserId, period, customFrom, customTo]);
+
+  // Auto-refresh a cada 30s enquanto a aba está visível
+  useEffect(() => {
+    if (!hasToken || !mlUserId) return;
+    const iv = setInterval(() => {
+      if (document.visibilityState === "visible") load({ silent: true });
+    }, 30000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasToken, mlUserId, period, customFrom, customTo]);
+
+  // Tick para "atualizado há X" relativo
+  useEffect(() => {
+    const iv = setInterval(() => setNowTick(Date.now()), 15000);
+    return () => clearInterval(iv);
+  }, []);
 
   const computed = useMemo<Computed[]>(
     () => orders.map((o) => computeOrder(o, ads, overridesByKey, findAd)),
