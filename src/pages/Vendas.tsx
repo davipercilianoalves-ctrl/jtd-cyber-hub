@@ -110,6 +110,12 @@ function computeOrder(
   findAd: (ads: MatchedAd[], title: string, sku?: string | null) => MatchedAd | null,
 ): Computed {
   const items = order.order_items || [];
+  // Totais do ML para fallback
+  const mlShippingTotal =
+    Number(order.shipping?.cost ?? 0) ||
+    (order.payments || []).reduce((s, p) => s + Number(p?.shipping_cost || 0), 0);
+  const orderRevenueAll = items.reduce((s, it) => s + it.unit_price * it.quantity, 0);
+
   const totals = {
     revenue: 0,
     cost: 0,
@@ -135,13 +141,38 @@ function computeOrder(
     });
     const hasOverride = !!(ovArr?.length || ovSingle != null);
 
-    const feePct = Number(ad?.marketplace_fee ?? 0);
+    const adFeePct = Number(ad?.marketplace_fee ?? 0);
     const taxPct = Number(ad?.tax ?? 0);
-    const shipping = Number(ad?.shipping_cost ?? 0) * it.quantity;
+    const adShippingUnit = Number(ad?.shipping_cost ?? 0);
     const packaging = Number(ad?.packaging_cost ?? 0) * it.quantity;
     const transport = Number(ad?.transport_cost ?? 0) * it.quantity;
     const revenue = it.unit_price * it.quantity;
-    const feeBRL = revenue * (feePct / 100);
+
+    // Taxa ML — preferir cadastro; senão usar sale_fee do próprio ML
+    let feeBRL = 0;
+    let feePct = 0;
+    let feeSource: "ad" | "ml" | "none" = "none";
+    if (adFeePct > 0) {
+      feePct = adFeePct;
+      feeBRL = revenue * (adFeePct / 100);
+      feeSource = "ad";
+    } else if (it.sale_fee != null && Number(it.sale_fee) > 0) {
+      feeBRL = Number(it.sale_fee) * it.quantity;
+      feePct = revenue > 0 ? (feeBRL / revenue) * 100 : 0;
+      feeSource = "ml";
+    }
+
+    // Frete — preferir cadastro; senão ratear o frete pago no ML por participação na receita
+    let shipping = 0;
+    let shippingSource: "ad" | "ml" | "none" = "none";
+    if (adShippingUnit > 0) {
+      shipping = adShippingUnit * it.quantity;
+      shippingSource = "ad";
+    } else if (mlShippingTotal > 0 && orderRevenueAll > 0) {
+      shipping = mlShippingTotal * (revenue / orderRevenueAll);
+      shippingSource = "ml";
+    }
+
     const taxBRL = revenue * (taxPct / 100);
     const cost = unitCosts.reduce((s, n) => s + n, 0);
     const profit = revenue - cost - feeBRL - shipping - packaging - transport - taxBRL;
@@ -168,7 +199,9 @@ function computeOrder(
       hasOverride,
       feePct,
       feeBRL,
+      feeSource,
       shipping,
+      shippingSource,
       packaging,
       transport,
       taxPct,
@@ -176,6 +209,7 @@ function computeOrder(
       revenue,
       profit,
     };
+
   });
   return { order, itemsBreakdown, totals };
 }
