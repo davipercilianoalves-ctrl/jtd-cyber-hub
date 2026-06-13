@@ -130,13 +130,13 @@ export function computePricing(state: PricingState): PricingResult {
     goalPct = (Number(state.goal.value) || 0) / 100;
   } else {
     // profitBRL — bisseção em [0, 0.99 - outros%]
-    const ceiling = Math.max(0, 1 - feePctTotal - taxPctTotal - costPctTotal - 0.001);
+    const ceiling = Math.max(0, 1 - feePctTotal - taxPctTotal - costPctTotal - investmentPct - 0.001);
     let lo = 0,
       hi = ceiling;
     const target = Number(state.goal.value) || 0;
     for (let i = 0; i < 40; i++) {
       const mid = (lo + hi) / 2;
-      const denomMid = 1 - feePctTotal - taxPctTotal - costPctTotal - mid;
+      const denomMid = 1 - feePctTotal - taxPctTotal - costPctTotal - investmentPct - mid;
       if (denomMid <= 0) {
         hi = mid;
         continue;
@@ -149,13 +149,14 @@ export function computePricing(state: PricingState): PricingResult {
     goalPct = (lo + hi) / 2;
   }
 
-  const denom = 1 - feePctTotal - taxPctTotal - costPctTotal - goalPct;
+  const denom = 1 - feePctTotal - taxPctTotal - costPctTotal - investmentPct - goalPct;
   const invalid = denom <= 0;
   const idealPrice = invalid ? 0 : costFixedTotal / denom;
-  const minDenom = 1 - feePctTotal - taxPctTotal - costPctTotal;
+  const minDenom = 1 - feePctTotal - taxPctTotal - costPctTotal - investmentPct;
   const minPrice = minDenom > 0 ? costFixedTotal / minDenom : 0;
 
   const profitBRL = idealPrice * goalPct;
+  const investmentBRL = idealPrice * investmentPct;
   const netMarginPct = idealPrice > 0 ? (profitBRL / idealPrice) * 100 : 0;
   const totalFeesBRL = idealPrice * feePctTotal;
   const totalTaxesBRL = idealPrice * taxPctTotal;
@@ -171,11 +172,13 @@ export function computePricing(state: PricingState): PricingResult {
     costPctTotal,
     feePctTotal,
     taxPctTotal,
+    investmentPct,
     goalPct,
     denom,
     idealPrice,
     minPrice,
     profitBRL,
+    investmentBRL,
     netMarginPct,
     showcasePrice,
     promoDiscountPct,
