@@ -74,7 +74,8 @@ type Computed = {
     qty: number;
     unitPrice: number;
     ad: MatchedAd | null;
-    costPrice: number; // unitário (override > ad.cost_price > product.cost_price > 0)
+    unitCosts: number[]; // length = qty
+    cost: number; // sum(unitCosts)
     defaultCost: number; // unitário do cadastro
     hasOverride: boolean;
     feePct: number;
@@ -120,11 +121,16 @@ function computeOrder(
     const itemId = String(it.item.id);
     const key = `${order.id}::${itemId}`;
     const ad = findAd(ads, it.item.title, it.item.seller_sku || null);
-    const defaultCost =
-      Number(ad?.cost_price ?? ad?.products?.cost_price ?? 0) || 0;
+    const defaultCost = Number(ad?.cost_price ?? ad?.products?.cost_price ?? 0) || 0;
     const ov = overridesByKey.get(key);
-    const hasOverride = ov?.custom_cost_price != null;
-    const costPrice = hasOverride ? Number(ov!.custom_cost_price) : defaultCost;
+    const ovArr = Array.isArray(ov?.unit_costs) ? (ov!.unit_costs as number[]) : null;
+    const ovSingle = ov?.custom_cost_price != null ? Number(ov!.custom_cost_price) : null;
+    const unitCosts: number[] = Array.from({ length: it.quantity }, (_, i) => {
+      if (ovArr && ovArr[i] != null) return Number(ovArr[i]);
+      if (ovSingle != null) return ovSingle;
+      return defaultCost;
+    });
+    const hasOverride = !!(ovArr?.length || ovSingle != null);
 
     const feePct = Number(ad?.marketplace_fee ?? 0);
     const taxPct = Number(ad?.tax ?? 0);
@@ -134,7 +140,7 @@ function computeOrder(
     const revenue = it.unit_price * it.quantity;
     const feeBRL = revenue * (feePct / 100);
     const taxBRL = revenue * (taxPct / 100);
-    const cost = costPrice * it.quantity;
+    const cost = unitCosts.reduce((s, n) => s + n, 0);
     const profit = revenue - cost - feeBRL - shipping - packaging - transport - taxBRL;
 
     totals.revenue += revenue;
@@ -153,7 +159,8 @@ function computeOrder(
       qty: it.quantity,
       unitPrice: it.unit_price,
       ad,
-      costPrice,
+      unitCosts,
+      cost,
       defaultCost,
       hasOverride,
       feePct,
@@ -169,6 +176,7 @@ function computeOrder(
   });
   return { order, itemsBreakdown, totals };
 }
+
 
 export default function Vendas() {
   const { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd } =
@@ -188,8 +196,9 @@ export default function Vendas() {
   const [ads, setAds] = useState<MatchedAd[]>([]);
   const [overrides, setOverrides] = useState<SaleOverride[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [editing, setEditing] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<Record<string, string[]>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
+
 
   // Verifica token ML e busca o seller_id via /users/me
   useEffect(() => {
@@ -270,17 +279,22 @@ export default function Vendas() {
     return s;
   }, [computed, orders.length]);
 
-  async function handleSaveOverride(orderId: string, itemId: string) {
+  async function handleSaveOverride(orderId: string, itemId: string, qty: number, fallback: number) {
     const key = `${orderId}::${itemId}`;
-    const raw = editing[key];
-    const val = Number((raw || "").replace(",", "."));
-    if (!Number.isFinite(val) || val < 0) {
-      toast.error("Custo inválido");
-      return;
+    const raw = editing[key] || [];
+    const arr: number[] = [];
+    for (let i = 0; i < qty; i++) {
+      const v = (raw[i] ?? "").toString().replace(",", ".").trim();
+      const n = v === "" ? fallback : Number(v);
+      if (!Number.isFinite(n) || n < 0) {
+        toast.error(`Custo inválido na unidade ${i + 1}`);
+        return;
+      }
+      arr.push(n);
     }
     setSavingKey(key);
     try {
-      await saveOverride(orderId, itemId, val);
+      await saveOverride(orderId, itemId, arr);
       const ovs = await fetchOverrides(orders.map((o) => String(o.id)));
       setOverrides(ovs);
       setEditing((s) => {
@@ -295,6 +309,7 @@ export default function Vendas() {
       setSavingKey(null);
     }
   }
+
 
   async function handleRemoveOverride(orderId: string, itemId: string) {
     const key = `${orderId}::${itemId}`;
@@ -535,22 +550,31 @@ export default function Vendas() {
                             <div className="space-y-3">
                               {c.itemsBreakdown.map((b) => {
                                 const key = `${oid}::${b.itemId}`;
-                                const editVal = editing[key];
+                                const editArr = editing[key];
+                                const displayUnits: string[] = Array.from(
+                                  { length: b.qty },
+                                  (_, i) =>
+                                    editArr?.[i] ??
+                                    (b.unitCosts[i] ?? b.defaultCost).toFixed(2),
+                                );
                                 return (
-                                  <div
-                                    key={key}
-                                    className="jtd-glass p-4 rounded-lg"
-                                  >
-                                    <div className="flex items-start justify-between flex-wrap gap-2">
-                                      <div>
-                                        <div className="font-semibold">{b.title}</div>
-                                        <div className="text-xs text-muted-foreground mt-1">
-                                          {b.ad
-                                            ? `SKU: ${b.ad.products?.sku || "—"}`
-                                            : "Anúncio não encontrado no app — adicione manualmente os custos"}
+                                  <div key={key} className="jtd-glass p-4 rounded-lg">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between flex-wrap gap-2 pb-3 border-b border-border/60">
+                                      <div className="min-w-0">
+                                        <div className="font-semibold line-clamp-2">{b.title}</div>
+                                        <div className="text-xs text-muted-foreground mt-1 flex gap-3 flex-wrap">
+                                          <span>SKU: {b.ad?.products?.sku || b.sku || "—"}</span>
+                                          <span>Venda unit.: <span className="font-mono text-[var(--cyan)]">{BRL(b.unitPrice)}</span></span>
+                                          <span>Receita total: <span className="font-mono text-[var(--cyan)]">{BRL(b.revenue)}</span></span>
                                         </div>
                                       </div>
-                                      <Badge variant="outline">Qtd: {b.qty}</Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="outline">Qtd: {b.qty}</Badge>
+                                        {b.hasOverride && (
+                                          <Badge variant="outline" className="border-[var(--magenta)]/50 text-[var(--magenta)]">custom</Badge>
+                                        )}
+                                      </div>
                                     </div>
 
                                     {!b.ad && (
@@ -563,44 +587,49 @@ export default function Vendas() {
                                       </div>
                                     )}
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                      <div className="space-y-2">
-                                        <div className="text-xs text-muted-foreground">
-                                          Preço de Venda Unit.
+                                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mt-4">
+                                      {/* Per-unit cost editor */}
+                                      <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                          <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                                            Custo de compra por unidade
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">
+                                            Padrão do cadastro: <span className="font-mono text-foreground">{BRL(b.defaultCost)}</span>
+                                          </div>
                                         </div>
-                                        <div className="font-mono text-[var(--cyan)]">
-                                          {BRL(b.unitPrice)}
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                          {displayUnits.map((val, i) => (
+                                            <div key={i} className="bg-internal-20 rounded-md p-2 border border-sidebar-border">
+                                              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                                                Unidade #{i + 1}
+                                              </div>
+                                              <input
+                                                type="number"
+                                                step="0.01"
+                                                value={val}
+                                                onChange={(e) =>
+                                                  setEditing((s) => {
+                                                    const cur = s[key] ? [...s[key]] : [...displayUnits];
+                                                    cur[i] = e.target.value;
+                                                    return { ...s, [key]: cur };
+                                                  })
+                                                }
+                                                className="w-full bg-background/40 border border-sidebar-border rounded px-2 py-1 text-sm font-mono"
+                                              />
+                                            </div>
+                                          ))}
                                         </div>
-
-                                        <div className="text-xs text-muted-foreground mt-3">
-                                          Custo de Compra Unit. {b.hasOverride && (
-                                            <Badge variant="outline" className="ml-2">
-                                              custom
-                                            </Badge>
-                                          )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <input
-                                            type="number"
-                                            step="0.01"
-                                            value={editVal ?? b.costPrice.toFixed(2)}
-                                            onChange={(e) =>
-                                              setEditing((s) => ({
-                                                ...s,
-                                                [key]: e.target.value,
-                                              }))
-                                            }
-                                            className="bg-internal-20 border border-sidebar-border rounded-md px-3 py-1.5 text-sm w-32 font-mono"
-                                          />
+                                        <div className="flex items-center gap-2 mt-3">
                                           <Button
                                             size="sm"
-                                            onClick={() => handleSaveOverride(oid, b.itemId)}
+                                            onClick={() => handleSaveOverride(oid, b.itemId, b.qty, b.defaultCost)}
                                             disabled={savingKey === key}
                                           >
                                             {savingKey === key ? (
                                               <Loader2 className="w-3 h-3 animate-spin" />
                                             ) : (
-                                              "Salvar"
+                                              "Salvar custos"
                                             )}
                                           </Button>
                                           {b.hasOverride && (
@@ -610,35 +639,37 @@ export default function Vendas() {
                                               onClick={() => handleRemoveOverride(oid, b.itemId)}
                                               disabled={savingKey === key}
                                             >
-                                              Usar padrão
+                                              Restaurar padrão
                                             </Button>
                                           )}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                          Padrão do cadastro: {BRL(b.defaultCost)}
+                                          <span className="text-xs text-muted-foreground ml-auto">
+                                            Total custos: <span className="font-mono text-foreground">{BRL(b.cost)}</span>
+                                          </span>
                                         </div>
                                       </div>
 
-                                      <div className="space-y-1.5 text-sm">
-                                        <div className="text-xs text-muted-foreground mb-1">
-                                          Breakdown desta venda
+                                      {/* Financial breakdown */}
+                                      <div className="bg-internal-20 rounded-md p-3 space-y-1.5">
+                                        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                                          Onde vai o dinheiro
                                         </div>
-                                        <Row k={`Taxa ML (${b.feePct}%)`} v={BRL(b.feeBRL)} />
-                                        <Row k="Frete" v={BRL(b.shipping)} />
-                                        <Row k="Embalagem" v={BRL(b.packaging)} />
-                                        <Row k="Transporte" v={BRL(b.transport)} />
-                                        <Row k={`Imposto (${b.taxPct}%)`} v={BRL(b.taxBRL)} />
-                                        <Row k="Custo Produto" v={BRL(b.costPrice * b.qty)} />
-                                        <div className="flex justify-between pt-2 mt-2 border-t border-border font-semibold">
-                                          <span>Lucro desta venda</span>
-                                          <span
-                                            className={`font-mono ${
-                                              b.profit >= 0
-                                                ? "text-[var(--lime)]"
-                                                : "text-destructive"
-                                            }`}
-                                          >
+                                        <Row k="Receita" v={BRL(b.revenue)} />
+                                        <Row k="Custo dos produtos" v={`- ${BRL(b.cost)}`} />
+                                        <Row k={`Taxa ML (${b.feePct}%)`} v={`- ${BRL(b.feeBRL)}`} />
+                                        <Row k={`Imposto (${b.taxPct}%)`} v={`- ${BRL(b.taxBRL)}`} />
+                                        <Row k="Frete" v={`- ${BRL(b.shipping)}`} />
+                                        <Row k="Embalagem" v={`- ${BRL(b.packaging)}`} />
+                                        <Row k="Transporte" v={`- ${BRL(b.transport)}`} />
+                                        <div className="flex justify-between pt-2 mt-1 border-t border-border font-semibold">
+                                          <span>Lucro</span>
+                                          <span className={`font-mono ${b.profit >= 0 ? "text-[var(--lime)]" : "text-destructive"}`}>
                                             {BRL(b.profit)}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between text-xs text-muted-foreground">
+                                          <span>Margem</span>
+                                          <span className="font-mono">
+                                            {b.revenue > 0 ? ((b.profit / b.revenue) * 100).toFixed(1) : "0.0"}%
                                           </span>
                                         </div>
                                       </div>
@@ -646,6 +677,7 @@ export default function Vendas() {
                                   </div>
                                 );
                               })}
+
                             </div>
                           </td>
                         </tr>

@@ -424,6 +424,7 @@ export type Database = {
           ml_item_id: string
           ml_order_id: string
           notes: string | null
+          unit_costs: number[] | null
           updated_at: string
         }
         Insert: {
@@ -433,6 +434,7 @@ export type Database = {
           ml_item_id: string
           ml_order_id: string
           notes?: string | null
+          unit_costs?: number[] | null
           updated_at?: string
         }
         Update: {
@@ -442,6 +444,7 @@ export type Database = {
           ml_item_id?: string
           ml_order_id?: string
           notes?: string | null
+          unit_costs?: number[] | null
           updated_at?: string
         }
         Relationships: []

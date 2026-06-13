@@ -1,0 +1,1 @@
+ALTER TABLE public.sale_overrides ADD COLUMN IF NOT EXISTS unit_costs numeric[];
