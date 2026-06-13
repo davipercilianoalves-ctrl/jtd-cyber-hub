@@ -606,7 +606,14 @@ export default function Vendas() {
                       {isOpen && (
                         <tr key={oid + "-exp"}>
                           <td colSpan={7} className="bg-internal-20 p-4">
-                            <div className="space-y-3">
+                            <OrderDetailsPanel
+                              orderId={oid}
+                              order={c.order}
+                              data={details[oid]}
+                              loading={!!detailsLoading[oid]}
+                            />
+                            <div className="space-y-3 mt-4">
+
                               {c.itemsBreakdown.map((b) => {
                                 const key = `${oid}::${b.itemId}`;
                                 const editArr = editing[key];
