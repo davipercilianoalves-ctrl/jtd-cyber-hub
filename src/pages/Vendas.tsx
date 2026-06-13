@@ -56,6 +56,8 @@ function relativeTime(ts: number, now: number) {
   if (m < 60) return `há ${m}min`;
   const h = Math.floor(m / 60);
   return `há ${h}h`;
+}
+
 
 function periodRange(p: Period, from?: string, to?: string): { from: Date; to: Date } {
   const now = new Date();
