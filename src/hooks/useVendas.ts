@@ -124,5 +124,34 @@ export function useVendas() {
     return null;
   }
 
-  return { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd };
+  async function mlGet(endpoint: string) {
+    const { data, error } = await supabase.functions.invoke("ml-proxy", {
+      body: { endpoint, method: "GET" },
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function fetchOrderDetails(orderId: string | number, shippingId?: string | number | null, buyerId?: string | number | null) {
+    const tasks: Promise<any>[] = [
+      mlGet(`/orders/${orderId}`).catch(() => null), // pedido completo (buyer, billing, tags)
+      mlGet(`/orders/${orderId}/billing_info`).catch(() => null),
+      mlGet(`/orders/${orderId}/feedback`).catch(() => null),
+      shippingId ? mlGet(`/shipments/${shippingId}`).catch(() => null) : Promise.resolve(null),
+      buyerId ? mlGet(`/users/${buyerId}`).catch(() => null) : Promise.resolve(null),
+    ];
+    const [full, billing, feedback, shipment, buyer] = await Promise.all(tasks);
+    return { full, billing, feedback, shipment, buyer };
+  }
+
+  return {
+    fetchOrders,
+    fetchOverrides,
+    saveOverride,
+    removeOverride,
+    fetchAds,
+    findAd,
+    fetchOrderDetails,
+  };
 }
+
