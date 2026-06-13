@@ -74,7 +74,8 @@ type Computed = {
     qty: number;
     unitPrice: number;
     ad: MatchedAd | null;
-    costPrice: number; // unitário (override > ad.cost_price > product.cost_price > 0)
+    unitCosts: number[]; // length = qty
+    cost: number; // sum(unitCosts)
     defaultCost: number; // unitário do cadastro
     hasOverride: boolean;
     feePct: number;
@@ -120,11 +121,16 @@ function computeOrder(
     const itemId = String(it.item.id);
     const key = `${order.id}::${itemId}`;
     const ad = findAd(ads, it.item.title, it.item.seller_sku || null);
-    const defaultCost =
-      Number(ad?.cost_price ?? ad?.products?.cost_price ?? 0) || 0;
+    const defaultCost = Number(ad?.cost_price ?? ad?.products?.cost_price ?? 0) || 0;
     const ov = overridesByKey.get(key);
-    const hasOverride = ov?.custom_cost_price != null;
-    const costPrice = hasOverride ? Number(ov!.custom_cost_price) : defaultCost;
+    const ovArr = Array.isArray(ov?.unit_costs) ? (ov!.unit_costs as number[]) : null;
+    const ovSingle = ov?.custom_cost_price != null ? Number(ov!.custom_cost_price) : null;
+    const unitCosts: number[] = Array.from({ length: it.quantity }, (_, i) => {
+      if (ovArr && ovArr[i] != null) return Number(ovArr[i]);
+      if (ovSingle != null) return ovSingle;
+      return defaultCost;
+    });
+    const hasOverride = !!(ovArr?.length || ovSingle != null);
 
     const feePct = Number(ad?.marketplace_fee ?? 0);
     const taxPct = Number(ad?.tax ?? 0);
@@ -134,7 +140,7 @@ function computeOrder(
     const revenue = it.unit_price * it.quantity;
     const feeBRL = revenue * (feePct / 100);
     const taxBRL = revenue * (taxPct / 100);
-    const cost = costPrice * it.quantity;
+    const cost = unitCosts.reduce((s, n) => s + n, 0);
     const profit = revenue - cost - feeBRL - shipping - packaging - transport - taxBRL;
 
     totals.revenue += revenue;
@@ -153,7 +159,8 @@ function computeOrder(
       qty: it.quantity,
       unitPrice: it.unit_price,
       ad,
-      costPrice,
+      unitCosts,
+      cost,
       defaultCost,
       hasOverride,
       feePct,
@@ -169,6 +176,7 @@ function computeOrder(
   });
   return { order, itemsBreakdown, totals };
 }
+
 
 export default function Vendas() {
   const { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd } =
