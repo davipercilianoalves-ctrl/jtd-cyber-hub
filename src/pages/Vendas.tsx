@@ -236,6 +236,26 @@ export default function Vendas() {
   const [editing, setEditing] = useState<Record<string, string[]>>({});
   const [editMode, setEditMode] = useState<Record<string, "uniform" | "individual">>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [details, setDetails] = useState<Record<string, any>>({});
+  const [detailsLoading, setDetailsLoading] = useState<Record<string, boolean>>({});
+
+  const { fetchOrderDetails } = useVendas();
+
+  async function toggleExpand(oid: string, order: MLOrder) {
+    setExpanded((s) => ({ ...s, [oid]: !s[oid] }));
+    if (!expanded[oid] && !details[oid] && !detailsLoading[oid]) {
+      setDetailsLoading((s) => ({ ...s, [oid]: true }));
+      try {
+        const d = await fetchOrderDetails(order.id, order.shipping?.id || null, order.buyer?.id || null);
+        setDetails((s) => ({ ...s, [oid]: d }));
+      } catch (e: any) {
+        toast.error("Não foi possível buscar detalhes do ML");
+      } finally {
+        setDetailsLoading((s) => ({ ...s, [oid]: false }));
+      }
+    }
+  }
+
 
 
 
