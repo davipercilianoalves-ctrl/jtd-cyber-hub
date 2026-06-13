@@ -249,8 +249,20 @@ export default function Vendas() {
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, any>>({});
   const [detailsLoading, setDetailsLoading] = useState<Record<string, boolean>>({});
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
 
 
+  async function refreshOrderDetails(oid: string, order: MLOrder) {
+    try {
+      const d = await fetchOrderDetails(order.id, order.shipping?.id || null, order.buyer?.id || null);
+      setDetails((s) => ({ ...s, [oid]: d }));
+    } catch {
+      // silencioso em refresh
+    }
+  }
 
   async function toggleExpand(oid: string, order: MLOrder) {
     setExpanded((s) => ({ ...s, [oid]: !s[oid] }));
