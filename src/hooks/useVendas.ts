@@ -63,19 +63,28 @@ export function useVendas() {
     return (data || []) as SaleOverride[];
   }
 
-  async function saveOverride(orderId: string, itemId: string, customCost: number) {
+  async function saveOverride(
+    orderId: string,
+    itemId: string,
+    unitCosts: number[],
+  ) {
+    const avg = unitCosts.length
+      ? unitCosts.reduce((s, n) => s + (Number(n) || 0), 0) / unitCosts.length
+      : null;
     const { error } = await supabase
       .from("sale_overrides")
       .upsert(
         {
           ml_order_id: orderId,
           ml_item_id: itemId,
-          custom_cost_price: customCost,
-        },
+          custom_cost_price: avg,
+          unit_costs: unitCosts,
+        } as any,
         { onConflict: "ml_order_id,ml_item_id" },
       );
     if (error) throw error;
   }
+
 
   async function removeOverride(orderId: string, itemId: string) {
     const { error } = await supabase
