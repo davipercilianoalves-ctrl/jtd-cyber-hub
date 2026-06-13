@@ -392,6 +392,7 @@ function SummaryTab({
     { label: "Margem Líquida", value: fmtPct(result.netMarginPct), accent: "good", help: "Margem real obtida = Lucro ÷ Preço de venda. Se ficar abaixo da margem mínima configurada, dispara alerta." },
     { label: "Taxas Totais", value: fmtBRL(result.totalFeesBRL), accent: "neutral", help: "Quanto sai do preço para marketplaces, cartão, gateway e comissões." },
     { label: "Impostos Totais", value: fmtBRL(result.totalTaxesBRL), accent: "neutral", help: "Quanto sai do preço para impostos (ICMS, Simples, PIS, COFINS, ISS)." },
+    { label: "Reinvestimento", value: fmtBRL(result.investmentBRL), accent: "primary", help: "Percentual do preço de venda que retorna à empresa como reinvestimento. Configurado em Taxas & Impostos." },
   ];
 
 
