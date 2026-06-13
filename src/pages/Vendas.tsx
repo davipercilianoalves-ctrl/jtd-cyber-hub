@@ -191,13 +191,20 @@ export default function Vendas() {
   const [editing, setEditing] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
-  // Verifica token ML
+  // Verifica token ML e busca o seller_id via /users/me
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("ml_tokens").select("*").maybeSingle();
+      const { data } = await supabase.from("ml_tokens").select("id").maybeSingle();
       if (data) {
         setHasToken(true);
-        setMlUserId(String((data as any).ml_user_id ?? ""));
+        try {
+          const { data: me } = await supabase.functions.invoke("ml-proxy", {
+            body: { endpoint: "/users/me", method: "GET" },
+          });
+          if (me?.id) setMlUserId(String(me.id));
+        } catch {
+          // ignora — tela mostra vazio
+        }
       }
       setTokenChecked(true);
     })();
