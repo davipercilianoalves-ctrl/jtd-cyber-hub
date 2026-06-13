@@ -416,6 +416,36 @@ export type Database = {
           },
         ]
       }
+      sale_overrides: {
+        Row: {
+          created_at: string
+          custom_cost_price: number | null
+          id: string
+          ml_item_id: string
+          ml_order_id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_cost_price?: number | null
+          id?: string
+          ml_item_id: string
+          ml_order_id: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_cost_price?: number | null
+          id?: string
+          ml_item_id?: string
+          ml_order_id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           city: string | null
