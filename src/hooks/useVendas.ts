@@ -5,15 +5,19 @@ export type MLOrder = {
   date_created: string;
   status: string;
   total_amount: number;
+  pack_id?: number | string | null;
+  buyer?: { id?: number | string; nickname?: string; first_name?: string; last_name?: string } | null;
+  tags?: string[];
   order_items: Array<{
     item: { id: string; title: string; seller_sku?: string | null };
     quantity: number;
     unit_price: number;
-    sale_fee?: number | null; // taxa ML por unidade
+    sale_fee?: number | null;
   }>;
   shipping?: { id?: number | string; cost?: number | null } | null;
   payments?: Array<{ shipping_cost?: number; total_paid_amount?: number; marketplace_fee?: number; fee_details?: Array<{ amount?: number }> }>;
 };
+
 
 
 export type SaleOverride = {
@@ -124,5 +128,34 @@ export function useVendas() {
     return null;
   }
 
-  return { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd };
+  async function mlGet(endpoint: string) {
+    const { data, error } = await supabase.functions.invoke("ml-proxy", {
+      body: { endpoint, method: "GET" },
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function fetchOrderDetails(orderId: string | number, shippingId?: string | number | null, buyerId?: string | number | null) {
+    const tasks: Promise<any>[] = [
+      mlGet(`/orders/${orderId}`).catch(() => null), // pedido completo (buyer, billing, tags)
+      mlGet(`/orders/${orderId}/billing_info`).catch(() => null),
+      mlGet(`/orders/${orderId}/feedback`).catch(() => null),
+      shippingId ? mlGet(`/shipments/${shippingId}`).catch(() => null) : Promise.resolve(null),
+      buyerId ? mlGet(`/users/${buyerId}`).catch(() => null) : Promise.resolve(null),
+    ];
+    const [full, billing, feedback, shipment, buyer] = await Promise.all(tasks);
+    return { full, billing, feedback, shipment, buyer };
+  }
+
+  return {
+    fetchOrders,
+    fetchOverrides,
+    saveOverride,
+    removeOverride,
+    fetchAds,
+    findAd,
+    fetchOrderDetails,
+  };
 }
+

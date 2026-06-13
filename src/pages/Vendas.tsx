@@ -216,8 +216,9 @@ function computeOrder(
 
 
 export default function Vendas() {
-  const { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd } =
+  const { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd, fetchOrderDetails } =
     useVendas();
+
 
   const [tokenChecked, setTokenChecked] = useState(false);
   const [hasToken, setHasToken] = useState(false);
@@ -236,6 +237,26 @@ export default function Vendas() {
   const [editing, setEditing] = useState<Record<string, string[]>>({});
   const [editMode, setEditMode] = useState<Record<string, "uniform" | "individual">>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [details, setDetails] = useState<Record<string, any>>({});
+  const [detailsLoading, setDetailsLoading] = useState<Record<string, boolean>>({});
+
+
+
+  async function toggleExpand(oid: string, order: MLOrder) {
+    setExpanded((s) => ({ ...s, [oid]: !s[oid] }));
+    if (!expanded[oid] && !details[oid] && !detailsLoading[oid]) {
+      setDetailsLoading((s) => ({ ...s, [oid]: true }));
+      try {
+        const d = await fetchOrderDetails(order.id, order.shipping?.id || null, order.buyer?.id || null);
+        setDetails((s) => ({ ...s, [oid]: d }));
+      } catch (e: any) {
+        toast.error("Não foi possível buscar detalhes do ML");
+      } finally {
+        setDetailsLoading((s) => ({ ...s, [oid]: false }));
+      }
+    }
+  }
+
 
 
 
@@ -570,9 +591,8 @@ export default function Vendas() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() =>
-                              setExpanded((s) => ({ ...s, [oid]: !s[oid] }))
-                            }
+                            onClick={() => toggleExpand(oid, c.order)}
+
                           >
                             {isOpen ? (
                               <ChevronUp className="w-4 h-4" />
@@ -586,7 +606,14 @@ export default function Vendas() {
                       {isOpen && (
                         <tr key={oid + "-exp"}>
                           <td colSpan={7} className="bg-internal-20 p-4">
-                            <div className="space-y-3">
+                            <OrderDetailsPanel
+                              orderId={oid}
+                              order={c.order}
+                              data={details[oid]}
+                              loading={!!detailsLoading[oid]}
+                            />
+                            <div className="space-y-3 mt-4">
+
                               {c.itemsBreakdown.map((b) => {
                                 const key = `${oid}::${b.itemId}`;
                                 const editArr = editing[key];
@@ -827,3 +854,183 @@ function Row({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
+
+const SHIPMENT_STEPS: Array<{ key: string; label: string }> = [
+  { key: "pending", label: "Pendente" },
+  { key: "handling", label: "Preparando" },
+  { key: "ready_to_ship", label: "Pronto p/ envio" },
+  { key: "shipped", label: "A caminho" },
+  { key: "out_for_delivery", label: "Saiu p/ entrega" },
+  { key: "delivered", label: "Entregue" },
+];
+
+function ShipmentTimeline({ shipment }: { shipment: any }) {
+  if (!shipment) return <div className="text-xs text-muted-foreground">Sem dados de envio.</div>;
+  const status = String(shipment.status || "");
+  const substatus = String(shipment.substatus || "");
+  const history: any[] = shipment.status_history
+    ? Object.entries(shipment.status_history)
+        .filter(([, v]) => !!v)
+        .map(([k, v]) => ({ key: k, at: v }))
+    : [];
+  const currentIdx = Math.max(
+    0,
+    SHIPMENT_STEPS.findIndex((s) => s.key === status || (status === "shipped" && substatus === "out_for_delivery" && s.key === "out_for_delivery")),
+  );
+  const dateFor = (key: string) => {
+    const map: Record<string, string> = {
+      handling: "date_handling",
+      ready_to_ship: "date_ready_to_ship",
+      shipped: "date_shipped",
+      out_for_delivery: "date_first_visit",
+      delivered: "date_delivered",
+    };
+    const v = shipment.status_history?.[map[key]];
+    return v ? new Date(v).toLocaleString("pt-BR") : null;
+  };
+  return (
+    <div>
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+          Rastreio do envio
+        </div>
+        <div className="text-xs text-muted-foreground flex gap-3 flex-wrap">
+          {shipment.tracking_number && (
+            <span>Tracking: <span className="font-mono text-foreground">{shipment.tracking_number}</span></span>
+          )}
+          {shipment.logistic_type && <span>Tipo: {shipment.logistic_type}</span>}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+        {SHIPMENT_STEPS.map((s, i) => {
+          const done = i <= currentIdx;
+          const at = dateFor(s.key);
+          return (
+            <div
+              key={s.key}
+              className={`rounded-md p-2 border text-center ${
+                done
+                  ? "border-[var(--lime)]/50 bg-[var(--lime)]/10"
+                  : "border-sidebar-border bg-internal-20"
+              }`}
+            >
+              <div className={`text-[10px] uppercase tracking-wider ${done ? "text-[var(--lime)]" : "text-muted-foreground"}`}>
+                {s.label}
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1">{at || "—"}</div>
+            </div>
+          );
+        })}
+      </div>
+      {history.length > 0 && (
+        <details className="mt-2 text-xs text-muted-foreground">
+          <summary className="cursor-pointer">Histórico completo</summary>
+          <ul className="mt-1 space-y-0.5 font-mono">
+            {history.map((h) => (
+              <li key={h.key}>{h.key}: {new Date(h.at).toLocaleString("pt-BR")}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function OrderDetailsPanel({
+  orderId,
+  order,
+  data,
+  loading,
+}: {
+  orderId: string;
+  order: MLOrder;
+  data: any;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+      </div>
+    );
+  }
+  const full = data?.full || order;
+  const buyer = data?.buyer || full?.buyer;
+  const billing = data?.billing;
+  const shipment = data?.shipment;
+  const feedback = data?.feedback;
+
+  const addr = shipment?.receiver_address;
+  const billPayer = billing?.billing_info?.doc_number || billing?.buyer?.billing_info?.doc_number;
+  const billDocType = billing?.billing_info?.doc_type || billing?.buyer?.billing_info?.doc_type;
+  const invoiceUrl = full?.tags?.includes("invoice_generated") ? null : null;
+  const reputationAffected =
+    feedback?.sale?.reputation_status === "affected" ||
+    feedback?.purchase?.reputation_status === "affected" ||
+    (Array.isArray(full?.tags) && full.tags.includes("not_delivered"));
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      {/* Cliente */}
+      <div className="jtd-glass p-3 rounded-lg">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+          Cliente
+        </div>
+        <div className="text-sm space-y-1">
+          <Row k="Nome" v={[buyer?.first_name, buyer?.last_name].filter(Boolean).join(" ") || "—"} />
+          <Row k="Nickname" v={buyer?.nickname || "—"} />
+          <Row k="ID comprador" v={String(buyer?.id ?? "—")} />
+          <Row k="Compras (reputação)" v={String(buyer?.buyer_reputation?.transactions?.total ?? "—")} />
+          <Row k="Canceladas" v={String(buyer?.buyer_reputation?.transactions?.canceled?.total ?? "—")} />
+        </div>
+      </div>
+
+      {/* Venda + Nota Fiscal */}
+      <div className="jtd-glass p-3 rounded-lg">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+          Venda & Nota Fiscal
+        </div>
+        <div className="text-sm space-y-1">
+          <Row k="Nº da venda" v={orderId} />
+          {full?.pack_id && <Row k="Pack" v={String(full.pack_id)} />}
+          <Row k="CPF/CNPJ" v={billPayer ? `${billDocType || ""} ${billPayer}`.trim() : "—"} />
+          <Row k="Razão / Nome" v={billing?.billing_info?.business_name || billing?.billing_info?.name || "—"} />
+          <Row k="IE" v={billing?.billing_info?.state_registration || "—"} />
+          <Row k="Endereço fiscal" v={
+            billing?.billing_info?.street_name
+              ? `${billing.billing_info.street_name}, ${billing.billing_info.street_number || "s/n"} — ${billing.billing_info.city || ""}/${billing.billing_info.state || ""}`
+              : "—"
+          } />
+          <Row k="Reputação afetada" v={reputationAffected ? "Sim" : "Não"} />
+        </div>
+      </div>
+
+      {/* Endereço de entrega */}
+      <div className="jtd-glass p-3 rounded-lg">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+          Endereço de entrega
+        </div>
+        {addr ? (
+          <div className="text-sm space-y-1">
+            <Row k="Destinatário" v={addr.receiver_name || "—"} />
+            <Row k="Rua" v={`${addr.street_name || ""}, ${addr.street_number || "s/n"}`} />
+            <Row k="Compl." v={addr.comment || "—"} />
+            <Row k="Bairro" v={addr.neighborhood?.name || "—"} />
+            <Row k="Cidade/UF" v={`${addr.city?.name || ""} / ${addr.state?.name || ""}`} />
+            <Row k="CEP" v={addr.zip_code || "—"} />
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground">Sem endereço.</div>
+        )}
+      </div>
+
+      {/* Rastreio — coluna inteira */}
+      <div className="jtd-glass p-3 rounded-lg lg:col-span-3">
+        <ShipmentTimeline shipment={shipment} />
+      </div>
+    </div>
+  );
+}
+
