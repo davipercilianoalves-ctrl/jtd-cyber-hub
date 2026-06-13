@@ -307,6 +307,7 @@ export type Database = {
           gtin_tax: string | null
           height: number | null
           id: string
+          images: Json
           is_active: boolean
           items_per_box: number | null
           keywords: string[] | null
@@ -346,6 +347,7 @@ export type Database = {
           gtin_tax?: string | null
           height?: number | null
           id?: string
+          images?: Json
           is_active?: boolean
           items_per_box?: number | null
           keywords?: string[] | null
@@ -385,6 +387,7 @@ export type Database = {
           gtin_tax?: string | null
           height?: number | null
           id?: string
+          images?: Json
           is_active?: boolean
           items_per_box?: number | null
           keywords?: string[] | null

@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
 import PricingModule from "@/components/pricing/PricingModule";
+import ProductImages, { ProductImage } from "@/components/ProductImages";
 import {
   PricingState,
   defaultPricing,
@@ -125,6 +126,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     unit: "UN",
     condition: "novo",
     pricing: defaultPricing() as PricingState,
+    images: [] as ProductImage[],
   });
 
 
@@ -840,6 +842,15 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
           </div>
         </div>
       </section>
+
+      {/* ============================================================ */}
+      {/* IMAGENS DO PRODUTO                                           */}
+      {/* ============================================================ */}
+      <ProductImages
+        images={(formData.images || []) as ProductImage[]}
+        onChange={(imgs) => setFormData({ ...formData, images: imgs })}
+        productId={productId}
+      />
 
       {/* ============================================================ */}
       {/* 2. PALAVRAS-CHAVE DO PRODUTO                                 */}
