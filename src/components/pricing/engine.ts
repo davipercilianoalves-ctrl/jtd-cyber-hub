@@ -85,6 +85,7 @@ export function mergePricing(raw: any): PricingState {
     promo: raw.promo ?? base.promo,
     scenarios: Array.isArray(raw.scenarios) && raw.scenarios.length ? raw.scenarios : base.scenarios,
     minMarginPct: typeof raw.minMarginPct === "number" ? raw.minMarginPct : base.minMarginPct,
+    investmentPct: typeof raw.investmentPct === "number" ? raw.investmentPct : base.investmentPct,
   };
 }
 
