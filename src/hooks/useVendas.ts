@@ -5,15 +5,19 @@ export type MLOrder = {
   date_created: string;
   status: string;
   total_amount: number;
+  pack_id?: number | string | null;
+  buyer?: { id?: number | string; nickname?: string; first_name?: string; last_name?: string } | null;
+  tags?: string[];
   order_items: Array<{
     item: { id: string; title: string; seller_sku?: string | null };
     quantity: number;
     unit_price: number;
-    sale_fee?: number | null; // taxa ML por unidade
+    sale_fee?: number | null;
   }>;
   shipping?: { id?: number | string; cost?: number | null } | null;
   payments?: Array<{ shipping_cost?: number; total_paid_amount?: number; marketplace_fee?: number; fee_details?: Array<{ amount?: number }> }>;
 };
+
 
 
 export type SaleOverride = {
