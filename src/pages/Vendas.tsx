@@ -197,7 +197,9 @@ export default function Vendas() {
   const [overrides, setOverrides] = useState<SaleOverride[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<Record<string, string[]>>({});
+  const [editMode, setEditMode] = useState<Record<string, "uniform" | "individual">>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
+
 
 
   // Verifica token ML e busca o seller_id via /users/me
