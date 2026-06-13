@@ -591,9 +591,8 @@ export default function Vendas() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() =>
-                              setExpanded((s) => ({ ...s, [oid]: !s[oid] }))
-                            }
+                            onClick={() => toggleExpand(oid, c.order)}
+
                           >
                             {isOpen ? (
                               <ChevronUp className="w-4 h-4" />
