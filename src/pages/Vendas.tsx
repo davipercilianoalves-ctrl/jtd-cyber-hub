@@ -1,5 +1,5 @@
 // Vendas — controle financeiro das vendas do Mercado Livre
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   DollarSign,
@@ -10,6 +10,16 @@ import {
   Loader2,
   Search,
   AlertCircle,
+  User,
+  FileText,
+  MapPin,
+  Truck,
+  Package,
+  CheckCircle2,
+  Clock,
+  ShieldAlert,
+  ShieldCheck,
+  Hash,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendas, type MLOrder, type MatchedAd, type SaleOverride } from "@/hooks/useVendas";
