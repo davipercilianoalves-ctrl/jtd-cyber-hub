@@ -592,36 +592,96 @@ export default function Vendas() {
                                     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mt-4">
                                       {/* Per-unit cost editor */}
                                       <div>
-                                        <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                                           <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                                            Custo de compra por unidade
+                                            Custo de compra
                                           </div>
-                                          <div className="text-xs text-muted-foreground">
-                                            Padrão do cadastro: <span className="font-mono text-foreground">{BRL(b.defaultCost)}</span>
+                                          <div className="flex items-center gap-1 bg-internal-20 rounded-md p-0.5 border border-sidebar-border">
+                                            {(() => {
+                                              const allEqual = b.unitCosts.every((u) => u === b.unitCosts[0]);
+                                              const mode = editMode[key] ?? (b.qty > 1 && !allEqual ? "individual" : "uniform");
+                                              return (["uniform", "individual"] as const).map((m) => (
+                                                <button
+                                                  key={m}
+                                                  onClick={() => {
+                                                    setEditMode((s) => ({ ...s, [key]: m }));
+                                                    setEditing((s) => {
+                                                      const n = { ...s };
+                                                      delete n[key];
+                                                      return n;
+                                                    });
+                                                  }}
+                                                  disabled={b.qty <= 1 && m === "individual"}
+                                                  className={`px-2 py-1 rounded text-[11px] font-medium transition ${
+                                                    mode === m
+                                                      ? "bg-primary text-primary-foreground"
+                                                      : "text-muted-foreground hover:text-foreground disabled:opacity-30"
+                                                  }`}
+                                                >
+                                                  {m === "uniform" ? "Todos iguais" : "Por unidade"}
+                                                </button>
+                                              ));
+                                            })()}
                                           </div>
                                         </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                          {displayUnits.map((val, i) => (
-                                            <div key={i} className="bg-internal-20 rounded-md p-2 border border-sidebar-border">
-                                              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                                                Unidade #{i + 1}
+                                        <div className="text-xs text-muted-foreground mb-2">
+                                          Padrão do cadastro: <span className="font-mono text-foreground">{BRL(b.defaultCost)}</span>
+                                        </div>
+                                        {(() => {
+                                          const allEqual = b.unitCosts.every((u) => u === b.unitCosts[0]);
+                                          const mode = editMode[key] ?? (b.qty > 1 && !allEqual ? "individual" : "uniform");
+                                          if (mode === "uniform") {
+                                            const uniformVal =
+                                              editing[key]?.[0] ?? (b.unitCosts[0] ?? b.defaultCost).toFixed(2);
+                                            return (
+                                              <div>
+                                                <input
+                                                  type="number"
+                                                  step="0.01"
+                                                  value={uniformVal}
+                                                  onChange={(e) =>
+                                                    setEditing((s) => ({
+                                                      ...s,
+                                                      [key]: Array.from({ length: b.qty }, () => e.target.value),
+                                                    }))
+                                                  }
+                                                  className="w-40 bg-background/40 border border-sidebar-border rounded px-3 py-2 text-sm font-mono"
+                                                  placeholder="0,00"
+                                                />
+                                                {b.qty > 1 && (
+                                                  <span className="text-xs text-muted-foreground ml-2">
+                                                    × {b.qty} unidades
+                                                  </span>
+                                                )}
                                               </div>
-                                              <input
-                                                type="number"
-                                                step="0.01"
-                                                value={val}
-                                                onChange={(e) =>
-                                                  setEditing((s) => {
-                                                    const cur = s[key] ? [...s[key]] : [...displayUnits];
-                                                    cur[i] = e.target.value;
-                                                    return { ...s, [key]: cur };
-                                                  })
-                                                }
-                                                className="w-full bg-background/40 border border-sidebar-border rounded px-2 py-1 text-sm font-mono"
-                                              />
+                                            );
+                                          }
+                                          return (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                              {displayUnits.map((val, i) => (
+                                                <div key={i} className="bg-internal-20 rounded-md p-2 border border-sidebar-border">
+                                                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                                                    Unidade #{i + 1}
+                                                  </div>
+                                                  <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={val}
+                                                    onChange={(e) =>
+                                                      setEditing((s) => {
+                                                        const cur = s[key] ? [...s[key]] : [...displayUnits];
+                                                        cur[i] = e.target.value;
+                                                        return { ...s, [key]: cur };
+                                                      })
+                                                    }
+                                                    className="w-full bg-background/40 border border-sidebar-border rounded px-2 py-1 text-sm font-mono"
+                                                  />
+                                                </div>
+                                              ))}
                                             </div>
-                                          ))}
-                                        </div>
+                                          );
+                                        })()}
+
                                         <div className="flex items-center gap-2 mt-3">
                                           <Button
                                             size="sm"
