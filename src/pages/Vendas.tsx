@@ -48,6 +48,15 @@ function fmtDateTime(iso: string) {
   });
 }
 
+function relativeTime(ts: number, now: number) {
+  const s = Math.max(0, Math.floor((now - ts) / 1000));
+  if (s < 5) return "agora";
+  if (s < 60) return `há ${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `há ${m}min`;
+  const h = Math.floor(m / 60);
+  return `há ${h}h`;
+
 function periodRange(p: Period, from?: string, to?: string): { from: Date; to: Date } {
   const now = new Date();
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
