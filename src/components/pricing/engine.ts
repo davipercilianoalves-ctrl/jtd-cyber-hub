@@ -71,6 +71,7 @@ export const defaultPricing = (): PricingState => ({
     { id: uid(), name: "Cenário 3", overrides: {} },
   ],
   minMarginPct: 10,
+  investmentPct: 0,
 });
 
 export function mergePricing(raw: any): PricingState {
