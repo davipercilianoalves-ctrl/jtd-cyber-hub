@@ -571,19 +571,48 @@ function CostsTab({ value, patch }: { value: PricingState; patch: (p: Partial<Pr
 // =============================================================
 function FeesTaxesTab({ value, patch }: { value: PricingState; patch: (p: Partial<PricingState>) => void }) {
   return (
-    <div className="grid md:grid-cols-2 gap-5">
-      <PercentList
-        title="Taxas e Comissões"
-        items={value.fees}
-        onChange={(items) => patch({ fees: items })}
-        addLabel="Nova Taxa"
-      />
-      <PercentList
-        title="Impostos"
-        items={value.taxes}
-        onChange={(items) => patch({ taxes: items })}
-        addLabel="Novo Imposto"
-      />
+    <div className="space-y-5">
+      <div className="grid md:grid-cols-2 gap-5">
+        <PercentList
+          title="Taxas e Comissões"
+          items={value.fees}
+          onChange={(items) => patch({ fees: items })}
+          addLabel="Nova Taxa"
+        />
+        <PercentList
+          title="Impostos"
+          items={value.taxes}
+          onChange={(items) => patch({ taxes: items })}
+          addLabel="Novo Imposto"
+        />
+      </div>
+
+      <div className="rounded border border-primary/40 bg-primary/5 p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground inline-flex items-center gap-2">
+            Reinvestimento na Empresa
+            <Help
+              title="Reinvestimento"
+              text="Percentual do preço de venda reservado para voltar à empresa como reinvestimento (capital de giro, expansão, marketing). É descontado da receita junto com taxas e impostos, aumentando o preço ideal proporcionalmente."
+            />
+          </h4>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              step={0.1}
+              value={value.investmentPct || ""}
+              onChange={(e) => patch({ investmentPct: parseFloat(e.target.value) || 0 })}
+              className="w-24 rounded border border-sidebar-border bg-internal-20 px-2 py-1 text-right text-sm font-mono focus:border-primary focus:outline-none"
+              placeholder="0"
+            />
+            <span className="text-sm font-bold text-muted-foreground">%</span>
+          </div>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Cada venda separa este percentual como fundo de reinvestimento — o produto "paga" o crescimento da empresa.
+        </p>
+      </div>
     </div>
   );
 }
