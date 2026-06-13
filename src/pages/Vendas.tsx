@@ -80,13 +80,16 @@ type Computed = {
     hasOverride: boolean;
     feePct: number;
     feeBRL: number;
+    feeSource: "ad" | "ml" | "none";
     shipping: number;
+    shippingSource: "ad" | "ml" | "none";
     packaging: number;
     transport: number;
     taxPct: number;
     taxBRL: number;
     revenue: number;
     profit: number;
+
   }>;
   totals: {
     revenue: number;
