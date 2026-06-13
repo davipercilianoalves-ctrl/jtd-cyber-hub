@@ -9,10 +9,12 @@ export type MLOrder = {
     item: { id: string; title: string; seller_sku?: string | null };
     quantity: number;
     unit_price: number;
+    sale_fee?: number | null; // taxa ML por unidade
   }>;
-  shipping?: { id?: number | string } | null;
-  payments?: Array<{ shipping_cost?: number; total_paid_amount?: number }>;
+  shipping?: { id?: number | string; cost?: number | null } | null;
+  payments?: Array<{ shipping_cost?: number; total_paid_amount?: number; marketplace_fee?: number; fee_details?: Array<{ amount?: number }> }>;
 };
+
 
 export type SaleOverride = {
   id: string;
