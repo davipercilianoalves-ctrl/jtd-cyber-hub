@@ -401,6 +401,7 @@ function SummaryTab({
     { name: "Custo Produto", value: result.costFixedTotal, fill: "hsl(var(--muted-foreground))" },
     { name: "Taxas", value: result.totalFeesBRL, fill: "#60a5fa" },
     { name: "Impostos", value: result.totalTaxesBRL, fill: "#f87171" },
+    { name: "Reinvestimento", value: result.investmentBRL, fill: "#a78bfa" },
     { name: "Lucro", value: Math.max(0, result.profitBRL), fill: "hsl(var(--primary))" },
   ].filter((d) => d.value > 0);
 
