@@ -463,14 +463,22 @@ export default function Vendas() {
               Controle financeiro das suas vendas
             </p>
           </div>
-          <Button onClick={load} disabled={loading} variant="outline">
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCcw className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            {lastSync && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--lime)] animate-pulse" />
+                Atualizado {relativeTime(lastSync.getTime(), nowTick)} · auto 30s
+              </span>
             )}
-            Atualizar
-          </Button>
+            <Button onClick={() => load()} disabled={loading} variant="outline">
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCcw className="w-4 h-4" />
+              )}
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-3 mt-6">
