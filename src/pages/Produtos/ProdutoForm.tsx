@@ -1164,6 +1164,15 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         competitorPrices={prices}
       />
 
+      {/* ============================================================ */}
+      {/* IMAGENS DO PRODUTO                                           */}
+      {/* ============================================================ */}
+      <ProductImages
+        images={(formData.images || []) as ProductImage[]}
+        onChange={(imgs) => setFormData({ ...formData, images: imgs })}
+        productId={productId}
+      />
+
 
       {/* ============================================================ */}
       {/* 5. TEXTOS DO PRODUTO                                         */}
