@@ -196,8 +196,9 @@ export default function Vendas() {
   const [ads, setAds] = useState<MatchedAd[]>([]);
   const [overrides, setOverrides] = useState<SaleOverride[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [editing, setEditing] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<Record<string, string[]>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
+
 
   // Verifica token ML e busca o seller_id via /users/me
   useEffect(() => {
