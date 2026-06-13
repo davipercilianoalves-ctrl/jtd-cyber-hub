@@ -122,6 +122,7 @@ export function computePricing(state: PricingState): PricingResult {
 
   const feePctTotal = state.fees.filter((f) => f.active).reduce((s, f) => s + (Number(f.value) || 0), 0) / 100;
   const taxPctTotal = state.taxes.filter((t) => t.active).reduce((s, t) => s + (Number(t.value) || 0), 0) / 100;
+  const investmentPct = Math.max(0, (Number(state.investmentPct) || 0) / 100);
 
   // Resolver objetivo
   let goalPct = 0;
