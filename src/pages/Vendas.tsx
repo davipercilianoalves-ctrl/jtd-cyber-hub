@@ -240,7 +240,7 @@ export default function Vendas() {
   const [details, setDetails] = useState<Record<string, any>>({});
   const [detailsLoading, setDetailsLoading] = useState<Record<string, boolean>>({});
 
-  const { fetchOrderDetails } = useVendas();
+
 
   async function toggleExpand(oid: string, order: MLOrder) {
     setExpanded((s) => ({ ...s, [oid]: !s[oid] }));
