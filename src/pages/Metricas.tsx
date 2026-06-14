@@ -630,8 +630,16 @@ export default function Metricas() {
           </div>
 
           {ordersError && (
-            <div className="jtd-glass p-3 flex items-center gap-2 text-sm text-red-500">
-              <AlertTriangle size={16} /> {ordersError}
+            <div className="jtd-glass p-4 flex items-start gap-3 border border-yellow-500/30">
+              <AlertTriangle className="text-yellow-500 mt-0.5 shrink-0" size={18} />
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-yellow-500">Dados parcialmente indisponíveis</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">{ordersError}</p>
+              </div>
+              <button onClick={loadOrders} disabled={ordersLoading}
+                className="rounded-md border border-yellow-500/40 text-yellow-500 px-3 py-1 text-xs font-mono uppercase tracking-wider hover:bg-yellow-500/10 disabled:opacity-50">
+                {ordersLoading ? <Loader2 className="inline animate-spin" size={12} /> : "Tentar novamente"}
+              </button>
             </div>
           )}
 
