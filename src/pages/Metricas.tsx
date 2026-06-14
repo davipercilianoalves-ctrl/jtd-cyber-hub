@@ -279,6 +279,7 @@ interface MlOrder {
 
 interface LocalAd {
   id: string;
+  product_id?: string | null;
   is_active: boolean;
   final_price: number | null;
   cost_price: number | null;
