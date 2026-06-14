@@ -634,7 +634,7 @@ export default function Vendas() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>
