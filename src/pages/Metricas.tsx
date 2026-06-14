@@ -809,7 +809,7 @@ function ByAdView({
                 <th className="text-right px-4 py-3">Preço Venda</th>
                 <th className="text-right px-4 py-3">Você Recebe</th>
                 <th className="text-right px-4 py-3">Vendas</th>
-                <th className="text-right px-4 py-3">Tentativas</th>
+                <th className="text-right px-4 py-3" title="Visitas disponíveis via API do ML ao vincular ML item ID">Visitas 7d</th>
                 <th className="text-right px-4 py-3">Conversão</th>
                 <th className="text-right px-4 py-3">Lucro</th>
                 <th className="text-center px-4 py-3">Status</th>
