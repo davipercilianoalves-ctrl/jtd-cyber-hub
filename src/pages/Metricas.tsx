@@ -127,9 +127,9 @@ function SalesChart({ data, loading }: { data: Array<{ date: string; total: numb
     <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-          <XAxis dataKey="date" stroke="rgba(255,255,255,0.4)" fontSize={11} />
-          <YAxis stroke="rgba(255,255,255,0.4)" fontSize={11} tickFormatter={(v) => `R$${Math.round(Number(v))}`} />
+          <CartesianGrid stroke="hsl(var(--foreground) / 0.08)" vertical={false} />
+          <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+          <YAxis tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickFormatter={(v) => `R$${Math.round(Number(v))}`} />
           <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(0,255,255,0.2)" }} />
           <Line type="monotone" dataKey="total" stroke="#00FFFF" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#00FFFF" }} />
         </LineChart>
@@ -138,19 +138,70 @@ function SalesChart({ data, loading }: { data: Array<{ date: string; total: numb
   );
 }
 
-function Funnel({ visits, cartAttempts, sales, salesValue, cartValue }: {
-  visits: number; cartAttempts: number; sales: number; salesValue: number; cartValue: number;
+function Funnel({ visits, cartAttempts, sales, salesValue, cartValue, stages = 3 }: {
+  visits: number; cartAttempts: number; sales: number; salesValue: number; cartValue: number; stages?: 2 | 3;
 }) {
   const noData = visits === 0;
+  const H = 120;
+
+  if (stages === 2) {
+    const conv = visits > 0 ? ((sales / visits) * 100).toFixed(1) : "0.0";
+    const max = Math.max(visits, 1);
+    const w1 = 100;
+    const w2 = Math.max(10, (sales / max) * 100);
+
+    function trap(x1: number, x2: number, l: number, r: number) {
+      const yT1 = (H - (H * l) / 100) / 2;
+      const yB1 = H - yT1;
+      const yT2 = (H - (H * r) / 100) / 2;
+      const yB2 = H - yT2;
+      return <polygon points={`${x1},${yT1} ${x2},${yT2} ${x2},${yB2} ${x1},${yB1}`} fill="url(#funnelGrad)" />;
+    }
+
+    return (
+      <div className="space-y-3">
+        {noData && (
+          <div className="flex items-center gap-2 text-xs text-yellow-500/80">
+            <AlertTriangle size={14} /> Dados de visitas indisponíveis via API
+          </div>
+        )}
+        <div className="w-full overflow-hidden">
+          <svg viewBox="0 0 800 140" className="w-full h-auto">
+            <defs>
+              <linearGradient id="funnelGrad" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="#00FFFF" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#BFFF00" stopOpacity="0.9" />
+              </linearGradient>
+            </defs>
+            {trap(0, 780, w1, w2)}
+            <g>
+              <rect x={390 - 32} y="125" width="64" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
+              <text x={390} y="135" textAnchor="middle" fontSize="10" fill="#00FFFF" fontFamily="monospace">{conv}%</text>
+            </g>
+          </svg>
+        </div>
+        <div className="grid grid-cols-2 gap-3 text-center">
+          <div>
+            <div className="text-[10px] font-mono uppercase text-muted-foreground">Visitas Únicas</div>
+            <div className="text-lg font-bold text-[color:var(--cyan)]">{noData ? "—" : visits.toLocaleString("pt-BR")}</div>
+          </div>
+          <div>
+            <div className="text-[10px] font-mono uppercase text-muted-foreground">Vendas</div>
+            <div className="text-lg font-bold text-[color:var(--lime)]">{sales.toLocaleString("pt-BR")}</div>
+            <div className="text-[10px] text-muted-foreground">{BRL(salesValue)}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const v2c = visits > 0 ? ((cartAttempts / visits) * 100).toFixed(1) : "0.0";
   const c2s = cartAttempts > 0 ? ((sales / cartAttempts) * 100).toFixed(1) : "0.0";
 
-  // Larguras proporcionais para o SVG
   const max = Math.max(visits, 1);
   const w1 = 100;
   const w2 = Math.max(20, (cartAttempts / max) * 100);
   const w3 = Math.max(10, (sales / max) * 100);
-  const H = 120;
   const cx1 = 0, cx2 = 260, cx3 = 520, cx4 = 780;
 
   function trapezoid(x1: number, x2: number, leftPct: number, rightPct: number, color: string) {
@@ -179,11 +230,10 @@ function Funnel({ visits, cartAttempts, sales, salesValue, cartValue }: {
           {trapezoid(cx1, cx2, w1, w2, "url(#funnelGrad)")}
           {trapezoid(cx2, cx3, w2, w3, "url(#funnelGrad)")}
           {trapezoid(cx3, cx4, w3, Math.max(8, w3 * 0.85), "url(#funnelGrad)")}
-          {/* Badges de conversão */}
           <g>
-            <rect x={cx2 - 30} y="125" width="60" height="14" rx="7" fill="rgba(0,0,0,0.6)" stroke="rgba(0,255,255,0.4)" />
+            <rect x={cx2 - 30} y="125" width="60" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
             <text x={cx2} y="135" textAnchor="middle" fontSize="10" fill="#00FFFF" fontFamily="monospace">{v2c}%</text>
-            <rect x={cx3 - 30} y="125" width="60" height="14" rx="7" fill="rgba(0,0,0,0.6)" stroke="rgba(191,255,0,0.4)" />
+            <rect x={cx3 - 30} y="125" width="60" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
             <text x={cx3} y="135" textAnchor="middle" fontSize="10" fill="#BFFF00" fontFamily="monospace">{c2s}%</text>
           </g>
         </svg>
@@ -229,6 +279,7 @@ interface MlOrder {
 
 interface LocalAd {
   id: string;
+  product_id?: string | null;
   is_active: boolean;
   final_price: number | null;
   cost_price: number | null;
@@ -580,8 +631,16 @@ export default function Metricas() {
           </div>
 
           {ordersError && (
-            <div className="jtd-glass p-3 flex items-center gap-2 text-sm text-red-500">
-              <AlertTriangle size={16} /> {ordersError}
+            <div className="jtd-glass p-4 flex items-start gap-3 border border-yellow-500/30">
+              <AlertTriangle className="text-yellow-500 mt-0.5 shrink-0" size={18} />
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-yellow-500">Dados parcialmente indisponíveis</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">{ordersError}</p>
+              </div>
+              <button onClick={loadOrders} disabled={ordersLoading}
+                className="rounded-md border border-yellow-500/40 text-yellow-500 px-3 py-1 text-xs font-mono uppercase tracking-wider hover:bg-yellow-500/10 disabled:opacity-50">
+                {ordersLoading ? <Loader2 className="inline animate-spin" size={12} /> : "Tentar novamente"}
+              </button>
             </div>
           )}
 
@@ -634,8 +693,11 @@ function OverviewView({
         <MetricCard label="Visitas Únicas" value={visitsTotal ?? "—"} icon={<Eye className="text-[color:var(--cyan)]" size={18} />} loading={visitsLoading} valueClass="text-[color:var(--cyan)]" />
         <MetricCard label="Total de Visitas" value={visitsTotal ?? "—"} icon={<Eye className="text-muted-foreground" size={18} />} loading={visitsLoading} />
         <MetricCard label="Compradores Únicos" value={overview.buyers} icon={<Users className="text-pink-400" size={18} />} loading={ordersLoading} valueClass="text-pink-400" />
-        <MetricCard label="Conversão da Conta" value={conv != null ? `${conv.toFixed(1)}%` : "—"} icon={<Percent className="text-[color:var(--lime)]" size={18} />} loading={visitsLoading} valueClass="text-[color:var(--lime)]" />
+        <div title="Vendas ÷ Visitas Únicas">
+          <MetricCard label="Conversão da Conta" value={conv != null ? `${conv.toFixed(1)}%` : "—"} icon={<Percent className="text-[color:var(--lime)]" size={18} />} loading={visitsLoading} valueClass="text-[color:var(--lime)]" />
+        </div>
       </div>
+      <p className="text-[10px] text-muted-foreground italic -mt-2">* Dados de visitas agregados da conta via API do ML</p>
 
       {/* SEÇÃO 2 — Gráfico */}
       <div className="jtd-glass p-6">
@@ -647,11 +709,12 @@ function OverviewView({
       <div className="jtd-glass p-6">
         <h3 className="text-lg font-bold mb-4">Funil de Conversão</h3>
         <Funnel
+          stages={2}
           visits={visitsTotal || 0}
-          cartAttempts={Math.max(overview.orderCount, 0)}
+          cartAttempts={0}
           sales={overview.orderCount}
           salesValue={overview.grossSales}
-          cartValue={overview.grossSales}
+          cartValue={0}
         />
       </div>
 
@@ -747,7 +810,7 @@ function ByAdView({
                 <th className="text-right px-4 py-3">Preço Venda</th>
                 <th className="text-right px-4 py-3">Você Recebe</th>
                 <th className="text-right px-4 py-3">Vendas</th>
-                <th className="text-right px-4 py-3">Tentativas</th>
+                <th className="text-right px-4 py-3" title="Visitas disponíveis via API do ML ao vincular ML item ID">Visitas 7d</th>
                 <th className="text-right px-4 py-3">Conversão</th>
                 <th className="text-right px-4 py-3">Lucro</th>
                 <th className="text-center px-4 py-3">Status</th>
@@ -765,9 +828,11 @@ function ByAdView({
                 const price = Number(r.ad.final_price || 0);
                 const feePct = Number(r.ad.marketplace_fee || 0);
                 const youGet = price * (1 - feePct / 100);
-                const conv = r.visits > 0 ? (r.sales / r.visits) * 100 : (r.sales > 0 ? 100 : 0);
-                const convColor = conv > 2 ? "text-[color:var(--lime)]" : conv >= 1 ? "text-yellow-500" : "text-red-500";
-                const profitColor = r.profit >= 0 ? "text-[color:var(--lime)]" : "text-red-500";
+                const hasVisits = r.visits > 0;
+                const conv = hasVisits ? (r.sales / r.visits) * 100 : null;
+                const convColor = conv == null ? "text-muted-foreground" : conv > 2 ? "text-[color:var(--lime)]" : conv >= 1 ? "text-yellow-500" : "text-red-500";
+                const hasRevenue = r.revenue > 0;
+                const profitColor = !hasRevenue ? "text-muted-foreground" : r.profit >= 0 ? "text-[color:var(--lime)]" : "text-red-500";
                 return (
                   <tr key={r.ad.id} onClick={() => onSelect(r.ad.id)} className="hover:bg-muted/10 cursor-pointer">
                     <td className="px-4 py-3 max-w-[280px]">
@@ -777,9 +842,9 @@ function ByAdView({
                     <td className="px-4 py-3 text-right text-[color:var(--cyan)] font-bold">{BRL(price)}</td>
                     <td className="px-4 py-3 text-right">{BRL(youGet)}</td>
                     <td className="px-4 py-3 text-right">{r.sales}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">{r.attempts}</td>
-                    <td className={`px-4 py-3 text-right font-bold ${convColor}`}>{conv.toFixed(1)}%</td>
-                    <td className={`px-4 py-3 text-right font-bold ${profitColor}`}>{BRL(r.profit)}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground" title="Visitas disponíveis via API do ML ao vincular ML item ID">{hasVisits ? r.visits : "—"}</td>
+                    <td className={`px-4 py-3 text-right font-bold ${convColor}`}>{conv == null ? "—" : `${conv.toFixed(1)}%`}</td>
+                    <td className={`px-4 py-3 text-right font-bold ${profitColor}`}>{hasRevenue ? BRL(r.profit) : "—"}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase ${r.ad.is_active ? "bg-green-500/10 text-green-500" : "bg-muted/20 text-muted-foreground"}`}>
                         {r.ad.is_active ? "Ativo" : "Inativo"}
@@ -799,6 +864,33 @@ function ByAdView({
 
 function AdDetailView({ row, orders, onBack }: any) {
   const ad: LocalAd = row.ad;
+  const [marketPos, setMarketPos] = useState<{ label: string; color: string; min: number; avg: number; max: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!ad.product_id) { setMarketPos(null); return; }
+      const { data } = await supabase
+        .from("product_competitors")
+        .select("price")
+        .eq("product_id", ad.product_id);
+      if (cancelled) return;
+      const prices = (data || []).map((c: any) => Number(c.price)).filter((p: number) => p > 0);
+      if (!prices.length) { setMarketPos(null); return; }
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+      const price = Number(ad.final_price || 0);
+      const pos = price <= min * 1.05
+        ? { label: "Abaixo do mercado", color: "text-[color:var(--lime)]" }
+        : price <= avg * 1.10
+        ? { label: "Dentro do mercado", color: "text-[color:var(--cyan)]" }
+        : { label: "Acima do mercado", color: "text-red-500" };
+      setMarketPos({ ...pos, min, avg, max });
+    })();
+    return () => { cancelled = true; };
+  }, [ad]);
+
 
   // Orders desse anúncio
   const adOrders = useMemo(() => {
@@ -847,13 +939,23 @@ function AdDetailView({ row, orders, onBack }: any) {
           Métricas / <span className="text-foreground">{row.title}</span>
         </div>
         <h2 className="text-2xl font-bold">{row.title}</h2>
-        <div className="flex items-center gap-3 mt-2">
+        <div className="flex flex-wrap items-center gap-3 mt-2">
           <span className="text-xs font-mono text-muted-foreground">SKU {row.sku || "—"}</span>
           <span className="text-2xl font-bold text-[color:var(--cyan)]">{BRL(adCosts.price)}</span>
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase ${ad.is_active ? "bg-green-500/10 text-green-500" : "bg-muted/20 text-muted-foreground"}`}>
             {ad.is_active ? "Ativo" : "Inativo"}
           </span>
+          {marketPos && (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase border border-current/30 ${marketPos.color}`}>
+              {marketPos.label}
+            </span>
+          )}
         </div>
+        {marketPos && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Concorrentes: Min {BRL(marketPos.min)} · Médio {BRL(marketPos.avg)} · Máx {BRL(marketPos.max)}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
