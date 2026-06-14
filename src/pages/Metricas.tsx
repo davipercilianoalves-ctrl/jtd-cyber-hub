@@ -692,8 +692,11 @@ function OverviewView({
         <MetricCard label="Visitas Únicas" value={visitsTotal ?? "—"} icon={<Eye className="text-[color:var(--cyan)]" size={18} />} loading={visitsLoading} valueClass="text-[color:var(--cyan)]" />
         <MetricCard label="Total de Visitas" value={visitsTotal ?? "—"} icon={<Eye className="text-muted-foreground" size={18} />} loading={visitsLoading} />
         <MetricCard label="Compradores Únicos" value={overview.buyers} icon={<Users className="text-pink-400" size={18} />} loading={ordersLoading} valueClass="text-pink-400" />
-        <MetricCard label="Conversão da Conta" value={conv != null ? `${conv.toFixed(1)}%` : "—"} icon={<Percent className="text-[color:var(--lime)]" size={18} />} loading={visitsLoading} valueClass="text-[color:var(--lime)]" />
+        <div title="Vendas ÷ Visitas Únicas">
+          <MetricCard label="Conversão da Conta" value={conv != null ? `${conv.toFixed(1)}%` : "—"} icon={<Percent className="text-[color:var(--lime)]" size={18} />} loading={visitsLoading} valueClass="text-[color:var(--lime)]" />
+        </div>
       </div>
+      <p className="text-[10px] text-muted-foreground italic -mt-2">* Dados de visitas agregados da conta via API do ML</p>
 
       {/* SEÇÃO 2 — Gráfico */}
       <div className="jtd-glass p-6">
