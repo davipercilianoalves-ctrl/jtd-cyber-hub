@@ -864,6 +864,33 @@ function ByAdView({
 
 function AdDetailView({ row, orders, onBack }: any) {
   const ad: LocalAd = row.ad;
+  const [marketPos, setMarketPos] = useState<{ label: string; color: string; min: number; avg: number; max: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!ad.product_id) { setMarketPos(null); return; }
+      const { data } = await supabase
+        .from("product_competitors")
+        .select("price")
+        .eq("product_id", ad.product_id);
+      if (cancelled) return;
+      const prices = (data || []).map((c: any) => Number(c.price)).filter((p: number) => p > 0);
+      if (!prices.length) { setMarketPos(null); return; }
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+      const price = Number(ad.final_price || 0);
+      const pos = price <= min * 1.05
+        ? { label: "Abaixo do mercado", color: "text-[color:var(--lime)]" }
+        : price <= avg * 1.10
+        ? { label: "Dentro do mercado", color: "text-[color:var(--cyan)]" }
+        : { label: "Acima do mercado", color: "text-red-500" };
+      setMarketPos({ ...pos, min, avg, max });
+    })();
+    return () => { cancelled = true; };
+  }, [ad]);
+
 
   // Orders desse anúncio
   const adOrders = useMemo(() => {
