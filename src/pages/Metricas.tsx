@@ -127,9 +127,9 @@ function SalesChart({ data, loading }: { data: Array<{ date: string; total: numb
     <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-          <XAxis dataKey="date" stroke="rgba(255,255,255,0.4)" fontSize={11} />
-          <YAxis stroke="rgba(255,255,255,0.4)" fontSize={11} tickFormatter={(v) => `R$${Math.round(Number(v))}`} />
+          <CartesianGrid stroke="hsl(var(--foreground) / 0.08)" vertical={false} />
+          <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+          <YAxis tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickFormatter={(v) => `R$${Math.round(Number(v))}`} />
           <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(0,255,255,0.2)" }} />
           <Line type="monotone" dataKey="total" stroke="#00FFFF" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#00FFFF" }} />
         </LineChart>
