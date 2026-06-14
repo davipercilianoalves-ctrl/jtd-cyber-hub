@@ -827,9 +827,11 @@ function ByAdView({
                 const price = Number(r.ad.final_price || 0);
                 const feePct = Number(r.ad.marketplace_fee || 0);
                 const youGet = price * (1 - feePct / 100);
-                const conv = r.visits > 0 ? (r.sales / r.visits) * 100 : (r.sales > 0 ? 100 : 0);
-                const convColor = conv > 2 ? "text-[color:var(--lime)]" : conv >= 1 ? "text-yellow-500" : "text-red-500";
-                const profitColor = r.profit >= 0 ? "text-[color:var(--lime)]" : "text-red-500";
+                const hasVisits = r.visits > 0;
+                const conv = hasVisits ? (r.sales / r.visits) * 100 : null;
+                const convColor = conv == null ? "text-muted-foreground" : conv > 2 ? "text-[color:var(--lime)]" : conv >= 1 ? "text-yellow-500" : "text-red-500";
+                const hasRevenue = r.revenue > 0;
+                const profitColor = !hasRevenue ? "text-muted-foreground" : r.profit >= 0 ? "text-[color:var(--lime)]" : "text-red-500";
                 return (
                   <tr key={r.ad.id} onClick={() => onSelect(r.ad.id)} className="hover:bg-muted/10 cursor-pointer">
                     <td className="px-4 py-3 max-w-[280px]">
@@ -839,9 +841,9 @@ function ByAdView({
                     <td className="px-4 py-3 text-right text-[color:var(--cyan)] font-bold">{BRL(price)}</td>
                     <td className="px-4 py-3 text-right">{BRL(youGet)}</td>
                     <td className="px-4 py-3 text-right">{r.sales}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">{r.attempts}</td>
-                    <td className={`px-4 py-3 text-right font-bold ${convColor}`}>{conv.toFixed(1)}%</td>
-                    <td className={`px-4 py-3 text-right font-bold ${profitColor}`}>{BRL(r.profit)}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground" title="Visitas disponíveis via API do ML ao vincular ML item ID">{hasVisits ? r.visits : "—"}</td>
+                    <td className={`px-4 py-3 text-right font-bold ${convColor}`}>{conv == null ? "—" : `${conv.toFixed(1)}%`}</td>
+                    <td className={`px-4 py-3 text-right font-bold ${profitColor}`}>{hasRevenue ? BRL(r.profit) : "—"}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase ${r.ad.is_active ? "bg-green-500/10 text-green-500" : "bg-muted/20 text-muted-foreground"}`}>
                         {r.ad.is_active ? "Ativo" : "Inativo"}
