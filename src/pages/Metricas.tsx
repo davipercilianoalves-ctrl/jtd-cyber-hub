@@ -604,7 +604,7 @@ export default function Metricas() {
               setSearch={setSearch}
               adFilter={adFilter}
               setAdFilter={setAdFilter}
-              onSelect={(id) => setSelectedAdId(id)}
+              onSelect={(id: string) => setSelectedAdId(id)}
             />
           )}
 
