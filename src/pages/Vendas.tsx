@@ -1,5 +1,5 @@
 // Vendas — controle financeiro das vendas do Mercado Livre
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ShoppingCart,
