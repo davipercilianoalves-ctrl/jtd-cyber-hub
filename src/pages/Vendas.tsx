@@ -482,7 +482,7 @@ export default function Vendas() {
                 const firstItem = c.items[0];
                 const extra = c.items.length - 1;
                 return (
-                  <>
+                  <Fragment key={oid}>
                     <tr
                       key={oid}
                       onClick={() => setExpanded((s) => ({ ...s, [oid]: !s[oid] }))}
