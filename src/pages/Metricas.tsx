@@ -708,11 +708,12 @@ function OverviewView({
       <div className="jtd-glass p-6">
         <h3 className="text-lg font-bold mb-4">Funil de Conversão</h3>
         <Funnel
+          stages={2}
           visits={visitsTotal || 0}
-          cartAttempts={Math.max(overview.orderCount, 0)}
+          cartAttempts={0}
           sales={overview.orderCount}
           salesValue={overview.grossSales}
-          cartValue={overview.grossSales}
+          cartValue={0}
         />
       </div>
 
