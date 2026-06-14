@@ -939,13 +939,23 @@ function AdDetailView({ row, orders, onBack }: any) {
           Métricas / <span className="text-foreground">{row.title}</span>
         </div>
         <h2 className="text-2xl font-bold">{row.title}</h2>
-        <div className="flex items-center gap-3 mt-2">
+        <div className="flex flex-wrap items-center gap-3 mt-2">
           <span className="text-xs font-mono text-muted-foreground">SKU {row.sku || "—"}</span>
           <span className="text-2xl font-bold text-[color:var(--cyan)]">{BRL(adCosts.price)}</span>
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase ${ad.is_active ? "bg-green-500/10 text-green-500" : "bg-muted/20 text-muted-foreground"}`}>
             {ad.is_active ? "Ativo" : "Inativo"}
           </span>
+          {marketPos && (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase border border-current/30 ${marketPos.color}`}>
+              {marketPos.label}
+            </span>
+          )}
         </div>
+        {marketPos && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Concorrentes: Min {BRL(marketPos.min)} · Médio {BRL(marketPos.avg)} · Máx {BRL(marketPos.max)}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
