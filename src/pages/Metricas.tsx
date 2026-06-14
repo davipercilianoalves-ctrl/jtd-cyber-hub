@@ -138,19 +138,70 @@ function SalesChart({ data, loading }: { data: Array<{ date: string; total: numb
   );
 }
 
-function Funnel({ visits, cartAttempts, sales, salesValue, cartValue }: {
-  visits: number; cartAttempts: number; sales: number; salesValue: number; cartValue: number;
+function Funnel({ visits, cartAttempts, sales, salesValue, cartValue, stages = 3 }: {
+  visits: number; cartAttempts: number; sales: number; salesValue: number; cartValue: number; stages?: 2 | 3;
 }) {
   const noData = visits === 0;
+  const H = 120;
+
+  if (stages === 2) {
+    const conv = visits > 0 ? ((sales / visits) * 100).toFixed(1) : "0.0";
+    const max = Math.max(visits, 1);
+    const w1 = 100;
+    const w2 = Math.max(10, (sales / max) * 100);
+
+    function trap(x1: number, x2: number, l: number, r: number) {
+      const yT1 = (H - (H * l) / 100) / 2;
+      const yB1 = H - yT1;
+      const yT2 = (H - (H * r) / 100) / 2;
+      const yB2 = H - yT2;
+      return <polygon points={`${x1},${yT1} ${x2},${yT2} ${x2},${yB2} ${x1},${yB1}`} fill="url(#funnelGrad)" />;
+    }
+
+    return (
+      <div className="space-y-3">
+        {noData && (
+          <div className="flex items-center gap-2 text-xs text-yellow-500/80">
+            <AlertTriangle size={14} /> Dados de visitas indisponíveis via API
+          </div>
+        )}
+        <div className="w-full overflow-hidden">
+          <svg viewBox="0 0 800 140" className="w-full h-auto">
+            <defs>
+              <linearGradient id="funnelGrad" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="#00FFFF" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#BFFF00" stopOpacity="0.9" />
+              </linearGradient>
+            </defs>
+            {trap(0, 780, w1, w2)}
+            <g>
+              <rect x={390 - 32} y="125" width="64" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
+              <text x={390} y="135" textAnchor="middle" fontSize="10" fill="#00FFFF" fontFamily="monospace">{conv}%</text>
+            </g>
+          </svg>
+        </div>
+        <div className="grid grid-cols-2 gap-3 text-center">
+          <div>
+            <div className="text-[10px] font-mono uppercase text-muted-foreground">Visitas Únicas</div>
+            <div className="text-lg font-bold text-[color:var(--cyan)]">{noData ? "—" : visits.toLocaleString("pt-BR")}</div>
+          </div>
+          <div>
+            <div className="text-[10px] font-mono uppercase text-muted-foreground">Vendas</div>
+            <div className="text-lg font-bold text-[color:var(--lime)]">{sales.toLocaleString("pt-BR")}</div>
+            <div className="text-[10px] text-muted-foreground">{BRL(salesValue)}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const v2c = visits > 0 ? ((cartAttempts / visits) * 100).toFixed(1) : "0.0";
   const c2s = cartAttempts > 0 ? ((sales / cartAttempts) * 100).toFixed(1) : "0.0";
 
-  // Larguras proporcionais para o SVG
   const max = Math.max(visits, 1);
   const w1 = 100;
   const w2 = Math.max(20, (cartAttempts / max) * 100);
   const w3 = Math.max(10, (sales / max) * 100);
-  const H = 120;
   const cx1 = 0, cx2 = 260, cx3 = 520, cx4 = 780;
 
   function trapezoid(x1: number, x2: number, leftPct: number, rightPct: number, color: string) {
@@ -179,11 +230,10 @@ function Funnel({ visits, cartAttempts, sales, salesValue, cartValue }: {
           {trapezoid(cx1, cx2, w1, w2, "url(#funnelGrad)")}
           {trapezoid(cx2, cx3, w2, w3, "url(#funnelGrad)")}
           {trapezoid(cx3, cx4, w3, Math.max(8, w3 * 0.85), "url(#funnelGrad)")}
-          {/* Badges de conversão */}
           <g>
-            <rect x={cx2 - 30} y="125" width="60" height="14" rx="7" fill="rgba(0,0,0,0.6)" stroke="rgba(0,255,255,0.4)" />
+            <rect x={cx2 - 30} y="125" width="60" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
             <text x={cx2} y="135" textAnchor="middle" fontSize="10" fill="#00FFFF" fontFamily="monospace">{v2c}%</text>
-            <rect x={cx3 - 30} y="125" width="60" height="14" rx="7" fill="rgba(0,0,0,0.6)" stroke="rgba(191,255,0,0.4)" />
+            <rect x={cx3 - 30} y="125" width="60" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
             <text x={cx3} y="135" textAnchor="middle" fontSize="10" fill="#BFFF00" fontFamily="monospace">{c2s}%</text>
           </g>
         </svg>
