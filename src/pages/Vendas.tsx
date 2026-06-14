@@ -1,34 +1,25 @@
 // Vendas — controle financeiro das vendas do Mercado Livre
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  DollarSign,
+  ShoppingCart,
   RefreshCcw,
   Plug,
   ChevronDown,
   ChevronUp,
   Loader2,
-  Search,
-  AlertCircle,
-  User,
-  FileText,
-  MapPin,
+  Receipt,
   Truck,
   Package,
-  CheckCircle2,
-  Clock,
-  ShieldAlert,
-  ShieldCheck,
-  Hash,
+  Box,
+  Percent,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendas, type MLOrder, type MatchedAd, type SaleOverride } from "@/hooks/useVendas";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
-type Marketplace = "ALL" | "ML";
 type Period = "TODAY" | "MONTH" | "YEAR" | "CUSTOM";
 
 const BRL = (n: number) =>
@@ -37,36 +28,20 @@ const BRL = (n: number) =>
     currency: "BRL",
   });
 
-function fmtDateTime(iso: string) {
+function fmtDate(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleString("pt-BR", {
+  return d.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
-
-function relativeTime(ts: number, now: number) {
-  const s = Math.max(0, Math.floor((now - ts) / 1000));
-  if (s < 5) return "agora";
-  if (s < 60) return `há ${s}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `há ${m}min`;
-  const h = Math.floor(m / 60);
-  return `há ${h}h`;
-}
-
 
 function periodRange(p: Period, from?: string, to?: string): { from: Date; to: Date } {
   const now = new Date();
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
   if (p === "TODAY") {
-    return {
-      from: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      to: end,
-    };
+    return { from: new Date(now.getFullYear(), now.getMonth(), now.getDate()), to: end };
   }
   if (p === "MONTH") return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: end };
   if (p === "YEAR") return { from: new Date(now.getFullYear(), 0, 1), to: end };
@@ -76,42 +51,43 @@ function periodRange(p: Period, from?: string, to?: string): { from: Date; to: D
   return { from: f, to: t };
 }
 
-function statusBadge(status: string) {
+function StatusPill({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    paid: { label: "Pago", cls: "bg-[var(--lime)]/15 text-[var(--lime)] border-[var(--lime)]/40" },
-    pending: { label: "Pendente", cls: "bg-yellow-500/15 text-yellow-500 border-yellow-500/40" },
-    cancelled: { label: "Cancelado", cls: "bg-destructive/15 text-destructive border-destructive/40" },
+    paid: { label: "Pago", cls: "bg-green-500/10 text-green-500" },
+    pending: { label: "Pendente", cls: "bg-yellow-500/10 text-yellow-500" },
+    cancelled: { label: "Cancelado", cls: "bg-red-500/10 text-red-500" },
   };
-  const cfg = map[status] || { label: status, cls: "bg-muted text-muted-foreground border-border" };
-  return <Badge variant="outline" className={cfg.cls}>{cfg.label}</Badge>;
+  const cfg = map[status] || { label: status, cls: "bg-muted/20 text-muted-foreground" };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider ${cfg.cls}`}>
+      {cfg.label}
+    </span>
+  );
 }
+
+type ItemBreakdown = {
+  itemId: string;
+  title: string;
+  sku?: string | null;
+  qty: number;
+  unitPrice: number;
+  ad: MatchedAd | null;
+  unitCost: number;
+  defaultCost: number;
+  hasOverride: boolean;
+  feeBRL: number;
+  shipping: number;
+  packaging: number;
+  transport: number;
+  taxBRL: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+};
 
 type Computed = {
   order: MLOrder;
-  itemsBreakdown: Array<{
-    itemId: string;
-    title: string;
-    sku?: string | null;
-    qty: number;
-    unitPrice: number;
-    ad: MatchedAd | null;
-    unitCosts: number[]; // length = qty
-    cost: number; // sum(unitCosts)
-    defaultCost: number; // unitário do cadastro
-    hasOverride: boolean;
-    feePct: number;
-    feeBRL: number;
-    feeSource: "ad" | "ml" | "none";
-    shipping: number;
-    shippingSource: "ad" | "ml" | "none";
-    packaging: number;
-    transport: number;
-    taxPct: number;
-    taxBRL: number;
-    revenue: number;
-    profit: number;
-
-  }>;
+  items: ItemBreakdown[];
   totals: {
     revenue: number;
     cost: number;
@@ -122,6 +98,7 @@ type Computed = {
     tax: number;
     profit: number;
   };
+  hasAnyAd: boolean;
 };
 
 function computeOrder(
@@ -129,74 +106,56 @@ function computeOrder(
   ads: MatchedAd[],
   overridesByKey: Map<string, SaleOverride>,
   findAd: (ads: MatchedAd[], title: string, sku?: string | null) => MatchedAd | null,
+  liveCosts: Record<string, number>,
 ): Computed {
   const items = order.order_items || [];
-  // Totais do ML para fallback
   const mlShippingTotal =
     Number(order.shipping?.cost ?? 0) ||
     (order.payments || []).reduce((s, p) => s + Number(p?.shipping_cost || 0), 0);
   const orderRevenueAll = items.reduce((s, it) => s + it.unit_price * it.quantity, 0);
 
-  const totals = {
-    revenue: 0,
-    cost: 0,
-    fee: 0,
-    shipping: 0,
-    packaging: 0,
-    transport: 0,
-    tax: 0,
-    profit: 0,
-  };
-  const itemsBreakdown = items.map((it) => {
+  const totals = { revenue: 0, cost: 0, fee: 0, shipping: 0, packaging: 0, transport: 0, tax: 0, profit: 0 };
+  let hasAnyAd = false;
+
+  const itemsBreakdown: ItemBreakdown[] = items.map((it) => {
     const itemId = String(it.item.id);
     const key = `${order.id}::${itemId}`;
     const ad = findAd(ads, it.item.title, it.item.seller_sku || null);
+    if (ad) hasAnyAd = true;
     const defaultCost = Number(ad?.cost_price ?? ad?.products?.cost_price ?? 0) || 0;
     const ov = overridesByKey.get(key);
-    const ovArr = Array.isArray(ov?.unit_costs) ? (ov!.unit_costs as number[]) : null;
-    const ovSingle = ov?.custom_cost_price != null ? Number(ov!.custom_cost_price) : null;
-    const unitCosts: number[] = Array.from({ length: it.quantity }, (_, i) => {
-      if (ovArr && ovArr[i] != null) return Number(ovArr[i]);
-      if (ovSingle != null) return ovSingle;
-      return defaultCost;
-    });
-    const hasOverride = !!(ovArr?.length || ovSingle != null);
+    const ovSingle = ov?.custom_cost_price != null ? Number(ov.custom_cost_price) : null;
+    const baseUnitCost = ovSingle ?? defaultCost;
+    const unitCost = liveCosts[key] != null ? liveCosts[key] : baseUnitCost;
+    const hasOverride = ovSingle != null;
 
-    const adFeePct = Number(ad?.marketplace_fee ?? 0);
-    const taxPct = Number(ad?.tax ?? 0);
-    const adShippingUnit = Number(ad?.shipping_cost ?? 0);
-    const packaging = Number(ad?.packaging_cost ?? 0) * it.quantity;
-    const transport = Number(ad?.transport_cost ?? 0) * it.quantity;
     const revenue = it.unit_price * it.quantity;
+    const cost = unitCost * it.quantity;
 
-    // Taxa ML — preferir cadastro; senão usar sale_fee do próprio ML
+    // Taxa ML
+    const adFeePct = Number(ad?.marketplace_fee ?? 0);
     let feeBRL = 0;
-    let feePct = 0;
-    let feeSource: "ad" | "ml" | "none" = "none";
-    if (adFeePct > 0) {
-      feePct = adFeePct;
+    if (ad && adFeePct > 0) {
       feeBRL = revenue * (adFeePct / 100);
-      feeSource = "ad";
     } else if (it.sale_fee != null && Number(it.sale_fee) > 0) {
       feeBRL = Number(it.sale_fee) * it.quantity;
-      feePct = revenue > 0 ? (feeBRL / revenue) * 100 : 0;
-      feeSource = "ml";
     }
 
-    // Frete — preferir cadastro; senão ratear o frete pago no ML por participação na receita
+    // Frete
     let shipping = 0;
-    let shippingSource: "ad" | "ml" | "none" = "none";
-    if (adShippingUnit > 0) {
+    const adShippingUnit = Number(ad?.shipping_cost ?? 0);
+    if (ad && adShippingUnit > 0) {
       shipping = adShippingUnit * it.quantity;
-      shippingSource = "ad";
-    } else if (mlShippingTotal > 0 && orderRevenueAll > 0) {
+    } else if (ad && mlShippingTotal > 0 && orderRevenueAll > 0) {
       shipping = mlShippingTotal * (revenue / orderRevenueAll);
-      shippingSource = "ml";
     }
 
+    const packaging = ad ? Number(ad.packaging_cost ?? 0) * it.quantity : 0;
+    const transport = ad ? Number(ad.transport_cost ?? 0) * it.quantity : 0;
+    const taxPct = ad ? Number(ad.tax ?? 0) : 0;
     const taxBRL = revenue * (taxPct / 100);
-    const cost = unitCosts.reduce((s, n) => s + n, 0);
-    const profit = revenue - cost - feeBRL - shipping - packaging - transport - taxBRL;
+
+    const profit = ad ? revenue - cost - feeBRL - shipping - packaging - transport - taxBRL : 0;
 
     totals.revenue += revenue;
     totals.cost += cost;
@@ -208,44 +167,22 @@ function computeOrder(
     totals.profit += profit;
 
     return {
-      itemId,
-      title: it.item.title,
-      sku: it.item.seller_sku,
-      qty: it.quantity,
-      unitPrice: it.unit_price,
-      ad,
-      unitCosts,
-      cost,
-      defaultCost,
-      hasOverride,
-      feePct,
-      feeBRL,
-      feeSource,
-      shipping,
-      shippingSource,
-      packaging,
-      transport,
-      taxPct,
-      taxBRL,
-      revenue,
-      profit,
+      itemId, title: it.item.title, sku: it.item.seller_sku, qty: it.quantity,
+      unitPrice: it.unit_price, ad, unitCost, defaultCost, hasOverride,
+      feeBRL, shipping, packaging, transport, taxBRL, revenue, cost, profit,
     };
-
   });
-  return { order, itemsBreakdown, totals };
+
+  return { order, items: itemsBreakdown, totals, hasAnyAd };
 }
 
-
 export default function Vendas() {
-  const { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd, fetchOrderDetails } =
-    useVendas();
-
+  const { fetchOrders, fetchOverrides, saveOverride, removeOverride, fetchAds, findAd } = useVendas();
 
   const [tokenChecked, setTokenChecked] = useState(false);
   const [hasToken, setHasToken] = useState(false);
   const [mlUserId, setMlUserId] = useState<string | null>(null);
 
-  const [marketplace, setMarketplace] = useState<Marketplace>("ALL");
   const [period, setPeriod] = useState<Period>("MONTH");
   const [customFrom, setCustomFrom] = useState<string>("");
   const [customTo, setCustomTo] = useState<string>("");
@@ -255,45 +192,9 @@ export default function Vendas() {
   const [ads, setAds] = useState<MatchedAd[]>([]);
   const [overrides, setOverrides] = useState<SaleOverride[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [editing, setEditing] = useState<Record<string, string[]>>({});
-  const [editMode, setEditMode] = useState<Record<string, "uniform" | "individual">>({});
+  const [liveCosts, setLiveCosts] = useState<Record<string, number>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
-  const [details, setDetails] = useState<Record<string, any>>({});
-  const [detailsLoading, setDetailsLoading] = useState<Record<string, boolean>>({});
-  const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [nowTick, setNowTick] = useState(Date.now());
-  const expandedRef = useRef(expanded);
-  expandedRef.current = expanded;
 
-
-  async function refreshOrderDetails(oid: string, order: MLOrder) {
-    try {
-      const d = await fetchOrderDetails(order.id, order.shipping?.id || null, order.buyer?.id || null);
-      setDetails((s) => ({ ...s, [oid]: d }));
-    } catch {
-      // silencioso em refresh
-    }
-  }
-
-  async function toggleExpand(oid: string, order: MLOrder) {
-    setExpanded((s) => ({ ...s, [oid]: !s[oid] }));
-    if (!expanded[oid] && !details[oid] && !detailsLoading[oid]) {
-      setDetailsLoading((s) => ({ ...s, [oid]: true }));
-      try {
-        const d = await fetchOrderDetails(order.id, order.shipping?.id || null, order.buyer?.id || null);
-        setDetails((s) => ({ ...s, [oid]: d }));
-      } catch (e: any) {
-        toast.error("Não foi possível buscar detalhes do ML");
-      } finally {
-        setDetailsLoading((s) => ({ ...s, [oid]: false }));
-      }
-    }
-  }
-
-
-
-
-  // Verifica token ML e busca o seller_id via /users/me
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("ml_tokens").select("id").maybeSingle();
@@ -304,9 +205,7 @@ export default function Vendas() {
             body: { endpoint: "/users/me", method: "GET" },
           });
           if (me?.id) setMlUserId(String(me.id));
-        } catch {
-          // ignora — tela mostra vazio
-        }
+        } catch { /* noop */ }
       }
       setTokenChecked(true);
     })();
@@ -318,9 +217,9 @@ export default function Vendas() {
     return m;
   }, [overrides]);
 
-  async function load(opts: { silent?: boolean } = {}) {
+  async function load() {
     if (!hasToken || !mlUserId) return;
-    if (!opts.silent) setLoading(true);
+    setLoading(true);
     try {
       const { from, to } = periodRange(period, customFrom, customTo);
       const [orderList, adList] = await Promise.all([
@@ -332,57 +231,35 @@ export default function Vendas() {
       const ids = orderList.map((o) => String(o.id));
       const ovs = await fetchOverrides(ids);
       setOverrides(ovs);
-      setLastSync(new Date());
-      // Atualiza detalhes dos pedidos abertos em background
-      const openIds = Object.keys(expandedRef.current).filter((k) => expandedRef.current[k]);
-      openIds.forEach((oid) => {
-        const o = orderList.find((x) => String(x.id) === oid);
-        if (o) refreshOrderDetails(oid, o);
-      });
     } catch (e: any) {
-      if (!opts.silent) toast.error(e?.message || "Erro ao carregar vendas");
+      toast.error(e?.message || "Erro ao carregar vendas");
     } finally {
-      if (!opts.silent) setLoading(false);
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (tokenChecked && hasToken) load();
+    if (tokenChecked && hasToken && mlUserId) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenChecked, hasToken, mlUserId, period, customFrom, customTo]);
 
-  // Auto-refresh a cada 30s enquanto a aba está visível
+  // Auto-refresh a cada 30s
   useEffect(() => {
     if (!hasToken || !mlUserId) return;
     const iv = setInterval(() => {
-      if (document.visibilityState === "visible") load({ silent: true });
+      if (document.visibilityState === "visible") load();
     }, 30000);
     return () => clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasToken, mlUserId, period, customFrom, customTo]);
 
-  // Tick para "atualizado há X" relativo
-  useEffect(() => {
-    const iv = setInterval(() => setNowTick(Date.now()), 15000);
-    return () => clearInterval(iv);
-  }, []);
-
   const computed = useMemo<Computed[]>(
-    () => orders.map((o) => computeOrder(o, ads, overridesByKey, findAd)),
-    [orders, ads, overridesByKey, findAd],
+    () => orders.map((o) => computeOrder(o, ads, overridesByKey, findAd, liveCosts)),
+    [orders, ads, overridesByKey, findAd, liveCosts],
   );
 
   const summary = useMemo(() => {
-    const s = {
-      revenue: 0,
-      count: orders.length,
-      profit: 0,
-      fee: 0,
-      shipping: 0,
-      packaging: 0,
-      transport: 0,
-      tax: 0,
-    };
+    const s = { revenue: 0, count: orders.length, profit: 0, fee: 0, shipping: 0, packaging: 0, transport: 0, tax: 0 };
     computed.forEach((c) => {
       s.revenue += c.totals.revenue;
       s.profit += c.totals.profit;
@@ -395,29 +272,19 @@ export default function Vendas() {
     return s;
   }, [computed, orders.length]);
 
-  async function handleSaveOverride(orderId: string, itemId: string, qty: number, fallback: number) {
+  async function handleSave(orderId: string, itemId: string, qty: number) {
     const key = `${orderId}::${itemId}`;
-    const raw = editing[key] || [];
-    const arr: number[] = [];
-    for (let i = 0; i < qty; i++) {
-      const v = (raw[i] ?? "").toString().replace(",", ".").trim();
-      const n = v === "" ? fallback : Number(v);
-      if (!Number.isFinite(n) || n < 0) {
-        toast.error(`Custo inválido na unidade ${i + 1}`);
-        return;
-      }
-      arr.push(n);
+    const cost = liveCosts[key];
+    if (cost == null || !Number.isFinite(cost) || cost < 0) {
+      toast.error("Custo inválido");
+      return;
     }
     setSavingKey(key);
     try {
-      await saveOverride(orderId, itemId, arr);
+      await saveOverride(orderId, itemId, Array.from({ length: qty }, () => cost));
       const ovs = await fetchOverrides(orders.map((o) => String(o.id)));
       setOverrides(ovs);
-      setEditing((s) => {
-        const n = { ...s };
-        delete n[key];
-        return n;
-      });
+      setLiveCosts((s) => { const n = { ...s }; delete n[key]; return n; });
       toast.success("Custo atualizado");
     } catch (e: any) {
       toast.error(e?.message || "Erro ao salvar");
@@ -426,15 +293,15 @@ export default function Vendas() {
     }
   }
 
-
-  async function handleRemoveOverride(orderId: string, itemId: string) {
+  async function handleReset(orderId: string, itemId: string) {
     const key = `${orderId}::${itemId}`;
     setSavingKey(key);
     try {
       await removeOverride(orderId, itemId);
       const ovs = await fetchOverrides(orders.map((o) => String(o.id)));
       setOverrides(ovs);
-      toast.success("Padrão restaurado");
+      setLiveCosts((s) => { const n = { ...s }; delete n[key]; return n; });
+      toast.success("Custo restaurado");
     } catch (e: any) {
       toast.error(e?.message || "Erro");
     } finally {
@@ -447,760 +314,333 @@ export default function Vendas() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="jtd-glass p-10 text-center max-w-md">
-          <Plug className="w-16 h-16 mx-auto mb-4 text-[var(--cyan)]" />
+          <Plug className="w-16 h-16 mx-auto mb-4 text-primary" />
           <h2 className="text-2xl font-bold mb-2">Conecte o Mercado Livre</h2>
           <p className="text-muted-foreground mb-6">
-            Para visualizar suas vendas, conecte sua conta do Mercado Livre.
+            Conecte o Mercado Livre para ver suas vendas
           </p>
-          <Button asChild>
-            <Link to="/api">Ir para API</Link>
-          </Button>
+          <Link to="/api" className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-black font-bold hover:opacity-90 transition-opacity">
+            Ir para API
+          </Link>
         </div>
       </div>
     );
   }
 
+  const periods: { id: Period; label: string }[] = [
+    { id: "TODAY", label: "Hoje" },
+    { id: "MONTH", label: "Mês" },
+    { id: "YEAR", label: "Ano" },
+    { id: "CUSTOM", label: "Personalizado" },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* HEADER + FILTROS */}
+      {/* BLOCO 1 — HEADER + FILTROS */}
       <div className="jtd-glass p-6">
-        <div className="flex items-start justify-between flex-wrap gap-4">
+        <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-[var(--lime)]" />
+              <ShoppingCart className="w-8 h-8 text-cyan-400" />
               Vendas
             </h1>
             <p className="text-muted-foreground mt-1">
               Controle financeiro das suas vendas
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            {lastSync && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--lime)] animate-pulse" />
-                Atualizado {relativeTime(lastSync.getTime(), nowTick)} · auto 30s
-              </span>
-            )}
-            <Button onClick={() => load()} disabled={loading} variant="outline">
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCcw className="w-4 h-4" />
-              )}
-              Atualizar
-            </Button>
-          </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 mt-6">
-          <div className="flex gap-1 bg-internal-20 rounded-md p-1">
-            {(["ALL", "ML"] as Marketplace[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMarketplace(m)}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition ${
-                  marketplace === m
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {m === "ALL" ? "Todos" : "Mercado Livre"}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-1 bg-internal-20 rounded-md p-1">
-            {(["TODAY", "MONTH", "YEAR", "CUSTOM"] as Period[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition ${
-                  period === p
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {p === "TODAY"
-                  ? "Hoje"
-                  : p === "MONTH"
-                    ? "Mês"
-                    : p === "YEAR"
-                      ? "Ano"
-                      : "Personalizado"}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {periods.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setPeriod(p.id)}
+              className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-colors ${
+                period === p.id
+                  ? "bg-primary text-black"
+                  : "bg-muted/20 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
 
           {period === "CUSTOM" && (
-            <div className="flex gap-2 items-center">
+            <>
               <input
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="bg-internal-20 border border-sidebar-border rounded-md px-3 py-1.5 text-sm"
+                className="bg-muted/20 border border-border rounded-md px-3 py-1.5 text-sm font-mono"
               />
-              <span className="text-muted-foreground">até</span>
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="bg-internal-20 border border-sidebar-border rounded-md px-3 py-1.5 text-sm"
+                className="bg-muted/20 border border-border rounded-md px-3 py-1.5 text-sm font-mono"
               />
-            </div>
+            </>
           )}
+
+          <button
+            onClick={() => load()}
+            disabled={loading}
+            className="ml-auto inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+            Atualizar
+          </button>
         </div>
       </div>
 
-      {/* RESUMO */}
-      <div className="jtd-glass p-6">
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
+      {/* BLOCO 2 — RESUMO */}
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="jtd-glass p-6"><Skeleton className="h-24 w-full" /></div>
+          <div className="jtd-glass p-6"><Skeleton className="h-24 w-full" /></div>
+        </div>
+      ) : orders.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="jtd-glass p-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Total vendido</div>
+                <div className="text-2xl font-mono font-bold text-cyan-400">{BRL(summary.revenue)}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Nº de vendas</div>
+                <div className="text-2xl font-mono font-bold text-foreground">{summary.count}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Lucro líquido</div>
+                <div className={`text-2xl font-mono font-bold ${summary.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
+                  {BRL(summary.profit)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Ticket médio</div>
+                <div className="text-2xl font-mono font-bold text-pink-400">
+                  {BRL(summary.count > 0 ? summary.revenue / summary.count : 0)}
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <SummaryCard label="Total Vendido" value={BRL(summary.revenue)} color="cyan" />
-              <SummaryCard label="Total de Vendas" value={String(summary.count)} color="foreground" />
-              <SummaryCard label="Lucro Líquido" value={BRL(summary.profit)} color="lime" />
-              <SummaryCard
-                label="Ticket Médio"
-                value={BRL(summary.count ? summary.revenue / summary.count : 0)}
-                color="magenta"
-              />
-            </div>
-            <div className="mt-6 pt-6 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <span>Taxa ML: <strong className="text-foreground">{BRL(summary.fee)}</strong></span>
-              <span>Frete: <strong className="text-foreground">{BRL(summary.shipping)}</strong></span>
-              <span>Imposto: <strong className="text-foreground">{BRL(summary.tax)}</strong></span>
-              <span>Embalagem: <strong className="text-foreground">{BRL(summary.packaging)}</strong></span>
-              <span>Transporte: <strong className="text-foreground">{BRL(summary.transport)}</strong></span>
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* TABELA */}
-      <div className="jtd-glass p-6">
-        <h2 className="text-xl font-bold mb-4">Vendas do Período</h2>
+          <div className="jtd-glass p-6">
+            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3">Custos do período</div>
+            <div className="space-y-2 text-sm">
+              {[
+                { icon: Receipt, label: "Taxa ML", value: summary.fee },
+                { icon: Truck, label: "Frete", value: summary.shipping },
+                { icon: Package, label: "Embalagem", value: summary.packaging },
+                { icon: Box, label: "Transporte", value: summary.transport },
+                { icon: Percent, label: "Imposto", value: summary.tax },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-center justify-between py-1 border-b border-border/40 last:border-0">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{label}</span>
+                  </div>
+                  <span className="font-mono">{BRL(value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* BLOCO 3 — TABELA */}
+      <div className="jtd-glass p-0 overflow-hidden">
         {loading ? (
-          <div className="space-y-2">
+          <div className="p-6 space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-14" />
+              <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
-        ) : computed.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Nenhuma venda encontrada no período selecionado.</p>
-            <p className="text-sm mt-2">Tente alterar o período.</p>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-20">
+            <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-primary opacity-30" />
+            <h3 className="text-lg font-bold mb-1">Nenhuma venda encontrada neste período</h3>
+            <p className="text-sm text-muted-foreground">Tente selecionar um período maior</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-border">
-                <tr className="text-left text-muted-foreground">
-                  <th className="py-2 pr-4">Data</th>
-                  <th className="py-2 pr-4">Produto(s)</th>
-                  <th className="py-2 pr-4 text-right">Valor Venda</th>
-                  <th className="py-2 pr-4 text-right">Custo Real</th>
-                  <th className="py-2 pr-4 text-right">Lucro</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2 pr-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {computed.map((c) => {
-                  const oid = String(c.order.id);
-                  const isOpen = !!expanded[oid];
-                  const items = c.order.order_items || [];
-                  const totalCost =
-                    c.totals.cost +
-                    c.totals.fee +
-                    c.totals.shipping +
-                    c.totals.packaging +
-                    c.totals.transport +
-                    c.totals.tax;
-                  return (
-                    <>
-                      <tr key={oid} className="border-b border-border/60 hover:bg-internal-20">
-                        <td className="py-3 pr-4 whitespace-nowrap">
-                          {fmtDateTime(c.order.date_created)}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <div className="flex items-center gap-2">
-                            <span className="line-clamp-1">{items[0]?.item.title || "—"}</span>
-                            {items.length > 1 && (
-                              <Badge variant="secondary">+{items.length - 1}</Badge>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 pr-4 text-right font-mono text-[var(--cyan)]">
-                          {BRL(c.totals.revenue)}
-                        </td>
-                        <td className="py-3 pr-4 text-right font-mono text-destructive">
-                          {BRL(totalCost)}
-                        </td>
-                        <td
-                          className={`py-3 pr-4 text-right font-mono ${
-                            c.totals.profit >= 0 ? "text-[var(--lime)]" : "text-destructive"
-                          }`}
-                        >
-                          {BRL(c.totals.profit)}
-                        </td>
-                        <td className="py-3 pr-4">{statusBadge(c.order.status)}</td>
-                        <td className="py-3 pr-4 text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => toggleExpand(oid, c.order)}
-
-                          >
-                            {isOpen ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                            Detalhes
-                          </Button>
-                        </td>
-                      </tr>
-                      {isOpen && (
-                        <tr key={oid + "-exp"}>
-                          <td colSpan={7} className="bg-internal-20 p-4">
-                            <OrderDetailsPanel
-                              orderId={oid}
-                              order={c.order}
-                              data={details[oid]}
-                              loading={!!detailsLoading[oid]}
-                            />
-                            <div className="space-y-3 mt-4">
-
-                              {c.itemsBreakdown.map((b) => {
-                                const key = `${oid}::${b.itemId}`;
-                                const editArr = editing[key];
-                                const displayUnits: string[] = Array.from(
-                                  { length: b.qty },
-                                  (_, i) =>
-                                    editArr?.[i] ??
-                                    (b.unitCosts[i] ?? b.defaultCost).toFixed(2),
-                                );
-                                return (
-                                  <div key={key} className="jtd-glass p-4 rounded-lg">
-                                    {/* Header */}
-                                    <div className="flex items-start justify-between flex-wrap gap-2 pb-3 border-b border-border/60">
-                                      <div className="min-w-0">
-                                        <div className="font-semibold line-clamp-2">{b.title}</div>
-                                        <div className="text-xs text-muted-foreground mt-1 flex gap-3 flex-wrap">
-                                          <span>SKU: {b.ad?.products?.sku || b.sku || "—"}</span>
-                                          <span>Venda unit.: <span className="font-mono text-[var(--cyan)]">{BRL(b.unitPrice)}</span></span>
-                                          <span>Receita total: <span className="font-mono text-[var(--cyan)]">{BRL(b.revenue)}</span></span>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <Badge variant="outline">Qtd: {b.qty}</Badge>
-                                        {b.hasOverride && (
-                                          <Badge variant="outline" className="border-[var(--magenta)]/50 text-[var(--magenta)]">custom</Badge>
+          <table className="w-full">
+            <thead>
+              <tr className="bg-muted/20 border-b border-border">
+                <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Data</th>
+                <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Produto</th>
+                <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Valor</th>
+                <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Lucro</th>
+                <th className="text-center px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Status</th>
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {computed.map((c) => {
+                const oid = String(c.order.id);
+                const isOpen = !!expanded[oid];
+                const firstItem = c.items[0];
+                const extra = c.items.length - 1;
+                return (
+                  <>
+                    <tr
+                      key={oid}
+                      onClick={() => setExpanded((s) => ({ ...s, [oid]: !s[oid] }))}
+                      className="border-b border-border hover:bg-muted/[0.04] cursor-pointer transition-colors"
+                    >
+                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
+                        {fmtDate(c.order.date_created)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate max-w-[200px] text-sm">{firstItem?.title || "-"}</span>
+                          {extra > 0 && (
+                            <span className="bg-muted/20 text-xs px-1.5 py-0.5 rounded font-mono">+{extra}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right text-cyan-400 font-mono font-bold whitespace-nowrap">
+                        {BRL(c.totals.revenue)}
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        {c.hasAnyAd ? (
+                          <span className={`font-mono font-bold ${c.totals.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
+                            {BRL(c.totals.profit)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <StatusPill status={c.order.status} />
+                      </td>
+                      <td className="px-4 py-3 text-center text-muted-foreground">
+                        {isOpen ? <ChevronUp className="w-4 h-4 inline" /> : <ChevronDown className="w-4 h-4 inline" />}
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr key={`${oid}-exp`} className="bg-muted/[0.03] border-b border-border animate-in slide-in-from-top-2 duration-200">
+                        <td colSpan={6} className="p-6">
+                          <div className="space-y-4">
+                            {c.items.map((it) => {
+                              const key = `${oid}::${it.itemId}`;
+                              const liveValue = liveCosts[key];
+                              const inputValue = liveValue != null ? liveValue : it.unitCost;
+                              const isSaving = savingKey === key;
+                              return (
+                                <div key={it.itemId} className="border border-border rounded-lg p-4 bg-background/40">
+                                  <div className="flex items-start justify-between gap-4 mb-3">
+                                    <div className="flex-1">
+                                      <div className="font-bold mb-1">{it.title}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {it.ad ? (
+                                          <span className="text-lime-500">✓ Anúncio: {it.ad.products?.name || it.ad.titles?.[0] || it.ad.id}</span>
+                                        ) : (
+                                          <span className="text-yellow-500">✗ Anúncio não encontrado</span>
                                         )}
                                       </div>
                                     </div>
+                                    <div className="text-xs font-mono text-muted-foreground">Qtd: {it.qty}</div>
+                                  </div>
 
-                                    {!b.ad && (
-                                      <div className="mt-3 flex items-start gap-2 text-xs text-yellow-500">
-                                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                                        <span>
-                                          Cadastre um anúncio com este título/SKU para puxar
-                                          taxas, frete, embalagem e imposto automaticamente.
-                                        </span>
-                                      </div>
-                                    )}
+                                  <div className="text-sm mb-3">
+                                    <span className="text-muted-foreground">Preço de venda unit.: </span>
+                                    <span className="font-mono font-bold text-cyan-400">{BRL(it.unitPrice)}</span>
+                                  </div>
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mt-4">
-                                      {/* Per-unit cost editor */}
+                                  {!it.ad && (
+                                    <div className="flex items-start gap-2 p-3 mb-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-500">
+                                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                                      <span>
+                                        Anúncio não encontrado no app — os custos foram zerados. Cadastre o anúncio para calcular o lucro real.
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  <div className="mb-4">
+                                    <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+                                      Custo de compra (unit.)
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={inputValue}
+                                        onChange={(e) => {
+                                          const v = Number(e.target.value);
+                                          setLiveCosts((s) => ({ ...s, [key]: v }));
+                                        }}
+                                        className="bg-muted/20 border border-border rounded p-2 font-mono text-sm w-32"
+                                      />
+                                      <span className="text-xs text-muted-foreground">
+                                        Padrão do cadastro: <span className="font-mono">{BRL(it.defaultCost)}</span>
+                                      </span>
+                                      <button
+                                        disabled={isSaving}
+                                        onClick={() => handleReset(oid, it.itemId)}
+                                        className="text-xs px-3 py-1.5 rounded border border-border hover:bg-muted/20 transition-colors disabled:opacity-50"
+                                      >
+                                        Usar padrão
+                                      </button>
+                                      <button
+                                        disabled={isSaving}
+                                        onClick={() => handleSave(oid, it.itemId, it.qty)}
+                                        className="bg-primary text-black text-xs font-bold px-3 py-1.5 rounded hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-1"
+                                      >
+                                        {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                        Salvar custo
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Breakdown</div>
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
                                       <div>
-                                        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-                                          <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                                            Custo de compra
-                                          </div>
-                                          <div className="flex items-center gap-1 bg-internal-20 rounded-md p-0.5 border border-sidebar-border">
-                                            {(() => {
-                                              const allEqual = b.unitCosts.every((u) => u === b.unitCosts[0]);
-                                              const mode = editMode[key] ?? (b.qty > 1 && !allEqual ? "individual" : "uniform");
-                                              return (["uniform", "individual"] as const).map((m) => (
-                                                <button
-                                                  key={m}
-                                                  onClick={() => {
-                                                    setEditMode((s) => ({ ...s, [key]: m }));
-                                                    setEditing((s) => {
-                                                      const n = { ...s };
-                                                      delete n[key];
-                                                      return n;
-                                                    });
-                                                  }}
-                                                  disabled={b.qty <= 1 && m === "individual"}
-                                                  className={`px-2 py-1 rounded text-[11px] font-medium transition ${
-                                                    mode === m
-                                                      ? "bg-primary text-primary-foreground"
-                                                      : "text-muted-foreground hover:text-foreground disabled:opacity-30"
-                                                  }`}
-                                                >
-                                                  {m === "uniform" ? "Todos iguais" : "Por unidade"}
-                                                </button>
-                                              ));
-                                            })()}
-                                          </div>
-                                        </div>
-                                        <div className="text-xs text-muted-foreground mb-2">
-                                          Padrão do cadastro: <span className="font-mono text-foreground">{BRL(b.defaultCost)}</span>
-                                        </div>
-                                        {(() => {
-                                          const allEqual = b.unitCosts.every((u) => u === b.unitCosts[0]);
-                                          const mode = editMode[key] ?? (b.qty > 1 && !allEqual ? "individual" : "uniform");
-                                          if (mode === "uniform") {
-                                            const uniformVal =
-                                              editing[key]?.[0] ?? (b.unitCosts[0] ?? b.defaultCost).toFixed(2);
-                                            return (
-                                              <div>
-                                                <input
-                                                  type="number"
-                                                  step="0.01"
-                                                  value={uniformVal}
-                                                  onChange={(e) =>
-                                                    setEditing((s) => ({
-                                                      ...s,
-                                                      [key]: Array.from({ length: b.qty }, () => e.target.value),
-                                                    }))
-                                                  }
-                                                  className="w-40 bg-background/40 border border-sidebar-border rounded px-3 py-2 text-sm font-mono"
-                                                  placeholder="0,00"
-                                                />
-                                                {b.qty > 1 && (
-                                                  <span className="text-xs text-muted-foreground ml-2">
-                                                    × {b.qty} unidades
-                                                  </span>
-                                                )}
-                                              </div>
-                                            );
-                                          }
-                                          return (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                              {displayUnits.map((val, i) => (
-                                                <div key={i} className="bg-internal-20 rounded-md p-2 border border-sidebar-border">
-                                                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                                                    Unidade #{i + 1}
-                                                  </div>
-                                                  <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={val}
-                                                    onChange={(e) =>
-                                                      setEditing((s) => {
-                                                        const cur = s[key] ? [...s[key]] : [...displayUnits];
-                                                        cur[i] = e.target.value;
-                                                        return { ...s, [key]: cur };
-                                                      })
-                                                    }
-                                                    className="w-full bg-background/40 border border-sidebar-border rounded px-2 py-1 text-sm font-mono"
-                                                  />
-                                                </div>
-                                              ))}
-                                            </div>
-                                          );
-                                        })()}
-
-                                        <div className="flex items-center gap-2 mt-3">
-                                          <Button
-                                            size="sm"
-                                            onClick={() => handleSaveOverride(oid, b.itemId, b.qty, b.defaultCost)}
-                                            disabled={savingKey === key}
-                                          >
-                                            {savingKey === key ? (
-                                              <Loader2 className="w-3 h-3 animate-spin" />
-                                            ) : (
-                                              "Salvar custos"
-                                            )}
-                                          </Button>
-                                          {b.hasOverride && (
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
-                                              onClick={() => handleRemoveOverride(oid, b.itemId)}
-                                              disabled={savingKey === key}
-                                            >
-                                              Restaurar padrão
-                                            </Button>
-                                          )}
-                                          <span className="text-xs text-muted-foreground ml-auto">
-                                            Total custos: <span className="font-mono text-foreground">{BRL(b.cost)}</span>
-                                          </span>
-                                        </div>
+                                        <div className="text-xs text-muted-foreground">Taxa ML</div>
+                                        <div className="font-mono">{BRL(it.feeBRL)}</div>
                                       </div>
-
-                                      {/* Financial breakdown */}
-                                      <div className="bg-internal-20 rounded-md p-3 space-y-1.5">
-                                        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-                                          Onde vai o dinheiro
-                                        </div>
-                                        <Row k="Receita" v={BRL(b.revenue)} />
-                                        <Row k="Custo dos produtos" v={`- ${BRL(b.cost)}`} />
-                                        <Row k={`Taxa ML (${b.feePct.toFixed(1)}%)${b.feeSource === "ml" ? " · do ML" : b.feeSource === "none" ? " · sem dado" : ""}`} v={`- ${BRL(b.feeBRL)}`} />
-                                        <Row k={`Imposto (${b.taxPct}%)`} v={`- ${BRL(b.taxBRL)}`} />
-                                        <Row k={`Frete${b.shippingSource === "ml" ? " · do ML" : b.shippingSource === "none" ? " · sem dado" : ""}`} v={`- ${BRL(b.shipping)}`} />
-
-                                        <Row k="Embalagem" v={`- ${BRL(b.packaging)}`} />
-                                        <Row k="Transporte" v={`- ${BRL(b.transport)}`} />
-                                        <div className="flex justify-between pt-2 mt-1 border-t border-border font-semibold">
-                                          <span>Lucro</span>
-                                          <span className={`font-mono ${b.profit >= 0 ? "text-[var(--lime)]" : "text-destructive"}`}>
-                                            {BRL(b.profit)}
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between text-xs text-muted-foreground">
-                                          <span>Margem</span>
-                                          <span className="font-mono">
-                                            {b.revenue > 0 ? ((b.profit / b.revenue) * 100).toFixed(1) : "0.0"}%
-                                          </span>
-                                        </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground">Frete</div>
+                                        <div className="font-mono">{BRL(it.shipping)}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground">Embalagem</div>
+                                        <div className="font-mono">{BRL(it.packaging)}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground">Transporte</div>
+                                        <div className="font-mono">{BRL(it.transport)}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground">Imposto</div>
+                                        <div className="font-mono">{BRL(it.taxBRL)}</div>
                                       </div>
                                     </div>
                                   </div>
-                                );
-                              })}
 
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                                  <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                                    <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                                      Lucro desta venda
+                                    </span>
+                                    <span className={`font-mono font-bold text-lg ${it.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
+                                      {it.ad ? BRL(it.profit) : "—"}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
   );
 }
-
-function SummaryCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: "cyan" | "lime" | "magenta" | "foreground";
-}) {
-  const colorClass =
-    color === "cyan"
-      ? "text-[var(--cyan)]"
-      : color === "lime"
-        ? "text-[var(--lime)]"
-        : color === "magenta"
-          ? "text-[var(--magenta)]"
-          : "text-foreground";
-  return (
-    <div className="bg-internal-20 rounded-lg p-4">
-      <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
-      <div className={`text-2xl font-bold font-mono mt-2 ${colorClass}`}>{value}</div>
-    </div>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex justify-between text-sm">
-      <span className="text-muted-foreground">{k}</span>
-      <span className="font-mono">{v}</span>
-    </div>
-  );
-}
-
-const SHIPMENT_STEPS: Array<{ key: string; label: string; icon: any }> = [
-  { key: "pending", label: "Pendente", icon: Clock },
-  { key: "handling", label: "Preparando", icon: Package },
-  { key: "ready_to_ship", label: "Pronto", icon: Package },
-  { key: "shipped", label: "A caminho", icon: Truck },
-  { key: "out_for_delivery", label: "Em rota", icon: Truck },
-  { key: "delivered", label: "Entregue", icon: CheckCircle2 },
-];
-
-function ShipmentTimeline({ shipment }: { shipment: any }) {
-  if (!shipment) {
-    return (
-      <div className="text-xs text-muted-foreground flex items-center gap-2">
-        <Truck className="w-4 h-4" /> Sem dados de envio do ML.
-      </div>
-    );
-  }
-  const status = String(shipment.status || "");
-  const substatus = String(shipment.substatus || "");
-  const history: any[] = shipment.status_history
-    ? Object.entries(shipment.status_history)
-        .filter(([, v]) => !!v)
-        .map(([k, v]) => ({ key: k, at: v }))
-    : [];
-  const currentIdx = Math.max(
-    0,
-    SHIPMENT_STEPS.findIndex(
-      (s) =>
-        s.key === status ||
-        (status === "shipped" && substatus === "out_for_delivery" && s.key === "out_for_delivery"),
-    ),
-  );
-  const dateFor = (key: string) => {
-    const map: Record<string, string> = {
-      pending: "date_pending",
-      handling: "date_handling",
-      ready_to_ship: "date_ready_to_ship",
-      shipped: "date_shipped",
-      out_for_delivery: "date_first_visit",
-      delivered: "date_delivered",
-    };
-    const v = shipment.status_history?.[map[key]];
-    return v ? new Date(v).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : null;
-  };
-  const pct = SHIPMENT_STEPS.length > 1 ? (currentIdx / (SHIPMENT_STEPS.length - 1)) * 100 : 0;
-  return (
-    <div>
-      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <Truck className="w-4 h-4 text-[var(--cyan)]" />
-          Rastreio do envio
-        </div>
-        <div className="text-xs text-muted-foreground flex gap-4 flex-wrap">
-          {shipment.tracking_number && (
-            <span className="flex items-center gap-1">
-              <Hash className="w-3 h-3" />
-              <span className="font-mono text-foreground">{shipment.tracking_number}</span>
-            </span>
-          )}
-          {shipment.logistic_type && (
-            <span className="uppercase tracking-wider">{shipment.logistic_type}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Trilho horizontal com bolinhas */}
-      <div className="relative px-3">
-        <div className="absolute left-3 right-3 top-3 h-0.5 bg-sidebar-border" />
-        <div
-          className="absolute left-3 top-3 h-0.5 bg-[var(--lime)] transition-all"
-          style={{ width: `calc((100% - 24px) * ${pct / 100})` }}
-        />
-        <div className="relative grid grid-cols-6 gap-1">
-          {SHIPMENT_STEPS.map((s, i) => {
-            const done = i <= currentIdx;
-            const isCurrent = i === currentIdx;
-            const at = dateFor(s.key);
-            const Icon = s.icon;
-            return (
-              <div key={s.key} className="flex flex-col items-center text-center">
-                <div
-                  className={`relative z-10 grid place-items-center w-6 h-6 rounded-full border-2 transition ${
-                    done
-                      ? "bg-[var(--lime)] border-[var(--lime)] text-black"
-                      : "bg-background border-sidebar-border text-muted-foreground"
-                  } ${isCurrent ? "ring-4 ring-[var(--lime)]/20" : ""}`}
-                >
-                  <Icon className="w-3 h-3" />
-                </div>
-                <div
-                  className={`text-[10px] uppercase tracking-wider mt-1.5 font-semibold ${
-                    done ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  {s.label}
-                </div>
-                <div className="text-[10px] font-mono text-muted-foreground leading-tight">
-                  {at || "—"}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {history.length > 0 && (
-        <details className="mt-4 text-xs text-muted-foreground">
-          <summary className="cursor-pointer hover:text-foreground">Histórico completo ({history.length})</summary>
-          <ul className="mt-2 space-y-0.5 font-mono bg-internal-20 rounded p-2">
-            {history.map((h) => (
-              <li key={h.key} className="flex justify-between">
-                <span>{h.key}</span>
-                <span>{new Date(h.at).toLocaleString("pt-BR")}</span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-    </div>
-  );
-}
-
-function InfoLine({ icon: Icon, label, value, mono }: { icon?: any; label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex items-start justify-between gap-3 py-1 border-b border-border/30 last:border-0">
-      <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
-        {Icon && <Icon className="w-3 h-3" />}
-        {label}
-      </span>
-      <span className={`text-xs text-right ${mono ? "font-mono" : ""} text-foreground truncate max-w-[60%]`} title={value}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function SectionCard({
-  icon: Icon,
-  title,
-  accent,
-  children,
-}: {
-  icon: any;
-  title: string;
-  accent: "cyan" | "lime" | "magenta";
-  children: React.ReactNode;
-}) {
-  const color =
-    accent === "cyan" ? "text-[var(--cyan)]" : accent === "lime" ? "text-[var(--lime)]" : "text-[var(--magenta)]";
-  return (
-    <div className="bg-background/40 border border-sidebar-border rounded-lg p-3">
-      <div className={`flex items-center gap-2 text-xs uppercase tracking-wider font-bold mb-2 pb-2 border-b border-sidebar-border ${color}`}>
-        <Icon className="w-3.5 h-3.5" />
-        {title}
-      </div>
-      <div className="space-y-0.5">{children}</div>
-    </div>
-  );
-}
-
-function OrderDetailsPanel({
-  orderId,
-  order,
-  data,
-  loading,
-}: {
-  orderId: string;
-  order: MLOrder;
-  data: any;
-  loading: boolean;
-}) {
-  if (loading && !data) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-20" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-        </div>
-      </div>
-    );
-  }
-  const full = data?.full || order;
-  const buyer = data?.buyer || full?.buyer;
-  const billing = data?.billing;
-  const shipment = data?.shipment;
-  const feedback = data?.feedback;
-
-  const addr = shipment?.receiver_address;
-  const billPayer = billing?.billing_info?.doc_number || billing?.buyer?.billing_info?.doc_number;
-  const billDocType = billing?.billing_info?.doc_type || billing?.buyer?.billing_info?.doc_type;
-  const reputationAffected =
-    feedback?.sale?.reputation_status === "affected" ||
-    feedback?.purchase?.reputation_status === "affected" ||
-    (Array.isArray(full?.tags) && full.tags.includes("not_delivered"));
-  const totalTx = Number(buyer?.buyer_reputation?.transactions?.total ?? 0);
-  const cancelTx = Number(buyer?.buyer_reputation?.transactions?.canceled?.total ?? 0);
-  const buyerName = [buyer?.first_name, buyer?.last_name].filter(Boolean).join(" ") || buyer?.nickname || "—";
-
-  return (
-    <div className="space-y-3">
-      {/* Faixa de status + rastreio (full width) */}
-      <div className="bg-background/40 border border-sidebar-border rounded-lg p-4">
-        <ShipmentTimeline shipment={shipment} />
-      </div>
-
-      {/* Faixa de alertas/badges */}
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Badge variant="outline" className="font-mono">#{orderId}</Badge>
-        {full?.pack_id && <Badge variant="outline" className="font-mono">pack {String(full.pack_id)}</Badge>}
-        {Array.isArray(full?.tags) && full.tags.includes("invoice_generated") && (
-          <Badge variant="outline" className="border-[var(--cyan)]/50 text-[var(--cyan)]">
-            <FileText className="w-3 h-3 mr-1" /> NF emitida
-          </Badge>
-        )}
-        {reputationAffected ? (
-          <Badge variant="outline" className="border-destructive/50 text-destructive">
-            <ShieldAlert className="w-3 h-3 mr-1" /> Reputação afetada
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="border-[var(--lime)]/50 text-[var(--lime)]">
-            <ShieldCheck className="w-3 h-3 mr-1" /> Reputação ok
-          </Badge>
-        )}
-      </div>
-
-      {/* 3 colunas: Cliente / NF / Entrega */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <SectionCard icon={User} title="Cliente" accent="cyan">
-          <InfoLine label="Nome" value={buyerName} />
-          <InfoLine label="Nickname" value={buyer?.nickname || "—"} mono />
-          <InfoLine label="ID" value={String(buyer?.id ?? "—")} mono />
-          <InfoLine
-            label="Compras"
-            value={totalTx ? `${totalTx} (${cancelTx} cancel.)` : "—"}
-            mono
-          />
-        </SectionCard>
-
-        <SectionCard icon={FileText} title="Nota Fiscal" accent="magenta">
-          <InfoLine
-            label="CPF/CNPJ"
-            value={billPayer ? `${billDocType || ""} ${billPayer}`.trim() : "—"}
-            mono
-          />
-          <InfoLine
-            label="Razão"
-            value={billing?.billing_info?.business_name || billing?.billing_info?.name || "—"}
-          />
-          <InfoLine label="IE" value={billing?.billing_info?.state_registration || "—"} mono />
-          <InfoLine
-            label="End. fiscal"
-            value={
-              billing?.billing_info?.street_name
-                ? `${billing.billing_info.street_name}, ${billing.billing_info.street_number || "s/n"} — ${billing.billing_info.city || ""}/${billing.billing_info.state || ""}`
-                : "—"
-            }
-          />
-        </SectionCard>
-
-        <SectionCard icon={MapPin} title="Entrega" accent="lime">
-          {addr ? (
-            <>
-              <InfoLine label="Destinatário" value={addr.receiver_name || "—"} />
-              <InfoLine
-                label="Endereço"
-                value={`${addr.street_name || ""}, ${addr.street_number || "s/n"}${addr.comment ? " — " + addr.comment : ""}`}
-              />
-              <InfoLine
-                label="Bairro/Cidade"
-                value={`${addr.neighborhood?.name || "—"} · ${addr.city?.name || ""}/${addr.state?.name || ""}`}
-              />
-              <InfoLine label="CEP" value={addr.zip_code || "—"} mono />
-            </>
-          ) : (
-            <div className="text-xs text-muted-foreground">Sem endereço.</div>
-          )}
-        </SectionCard>
-      </div>
-    </div>
-  );
-}
-
-
