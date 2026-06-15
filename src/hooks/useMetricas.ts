@@ -29,10 +29,22 @@ export function useMetricas() {
 
   async function getItemsVisits(itemIds: string[], from: string, to: string) {
     if (!itemIds.length) return [];
-    const ids = itemIds.slice(0, 20).map((id) => encodeURIComponent(id)).join(',');
     const fromDate = toMlDate(from);
     const toDate = toMlDate(to, true);
-    return callML(`/items/visits?ids=${ids}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`);
+    // ML /items/visits accepts only 1 id per request — fetch in parallel and merge
+    const results = await Promise.all(
+      itemIds.slice(0, 20).map(async (id) => {
+        try {
+          const res = await callML(
+            `/items/visits?ids=${encodeURIComponent(id)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`
+          );
+          return Array.isArray(res) ? res[0] : res;
+        } catch {
+          return null;
+        }
+      })
+    );
+    return results.filter(Boolean);
   }
 
   // Busca todos os anúncios ativos do vendedor
