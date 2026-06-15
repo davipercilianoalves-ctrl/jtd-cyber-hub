@@ -28,6 +28,8 @@ export type Database = {
           keywords: string[] | null
           marketplace: string
           marketplace_fee: number | null
+          ml_item_id: string | null
+          ml_item_ids: string[] | null
           packaging_cost: number | null
           product_id: string
           profit_margin: number | null
@@ -53,6 +55,8 @@ export type Database = {
           keywords?: string[] | null
           marketplace?: string
           marketplace_fee?: number | null
+          ml_item_id?: string | null
+          ml_item_ids?: string[] | null
           packaging_cost?: number | null
           product_id: string
           profit_margin?: number | null
@@ -78,6 +82,8 @@ export type Database = {
           keywords?: string[] | null
           marketplace?: string
           marketplace_fee?: number | null
+          ml_item_id?: string | null
+          ml_item_ids?: string[] | null
           packaging_cost?: number | null
           product_id?: string
           profit_margin?: number | null
