@@ -106,45 +106,73 @@ function VinculacaoML() {
   const [token, setToken] = useState<any>(null);
 
   useEffect(() => {
-    supabase.from('ml_tokens').select('*').maybeSingle()
-      .then(({ data }) => setToken(data));
+    (async () => {
+      const { data: tk } = await supabase.from('ml_tokens').select('*').maybeSingle();
+      setToken(tk);
 
-    supabase.from('ads')
-      .select('id, titles, ml_item_id, products(name, sku)')
-      .eq('is_active', true)
-      .then(({ data }) => {
-        const ads = (data as any[]) || [];
-        setLocalAds(ads);
-        const saved: Record<string, string> = {};
-        ads.forEach((ad: any) => {
-          if (ad.ml_item_id) saved[ad.ml_item_id] = ad.id;
-        });
-        setVinculacoes(saved);
+      const { data: adsData } = await supabase.from('ads')
+        .select('id, titles, ml_item_id, products(name, sku)')
+        .eq('is_active', true);
+      const ads = (adsData as any[]) || [];
+      setLocalAds(ads);
+      const saved: Record<string, string> = {};
+      ads.forEach((ad: any) => {
+        if (ad.ml_item_id) saved[ad.ml_item_id] = ad.id;
       });
+      setVinculacoes(saved);
+
+      if (tk) {
+        await handleBuscar(tk, ads, saved);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleBuscar() {
-    if (!token) return;
+  async function handleBuscar(
+    tk: any = token,
+    ads: any[] = localAds,
+    jaVinc: Record<string, string> = vinculacoes,
+  ) {
+    if (!tk) return;
     setLoading(true);
     try {
-      const items = await fetchMLItems(token.user_id);
+      const items = await fetchMLItems(tk.user_id);
       setMLItems(items);
 
+      // Auto-cruzar e auto-SALVAR por SKU exato (não toca em vínculos manuais)
       const autoCruz: Record<string, string> = {};
+      const toPersist: Array<{ adId: string; mlItemId: string }> = [];
       items.forEach((item: any) => {
-        const match = cruzarItem(item, localAds);
-        if (match && !vinculacoes[item.id]) {
-          autoCruz[item.id] = match.id;
+        if (jaVinc[item.id]) return;
+        const match = cruzarItem(item, ads);
+        if (!match) return;
+        autoCruz[item.id] = match.id;
+        const mlSku = (item.seller_sku || item.seller_custom_field || '').toLowerCase().trim();
+        const adSku = (match.products?.sku || '').toLowerCase().trim();
+        if (mlSku && adSku && mlSku === adSku && !match.ml_item_id) {
+          toPersist.push({ adId: match.id, mlItemId: item.id });
         }
       });
       setVinculacoes(prev => ({ ...prev, ...autoCruz }));
 
-      if (Object.keys(autoCruz).length > 0) {
-        toast.success(`${Object.keys(autoCruz).length} anúncios vinculados automaticamente!`);
+      let salvos = 0;
+      for (const v of toPersist) {
+        try {
+          await vincularItem(v.adId, v.mlItemId);
+          salvos++;
+        } catch {}
+      }
+
+      if (salvos > 0) {
+        toast.success(`${salvos} anúncios vinculados automaticamente por SKU!`);
+        const { data } = await supabase.from('ads')
+          .select('id, titles, ml_item_id, products(name, sku)')
+          .eq('is_active', true);
+        setLocalAds((data as any[]) || []);
       } else if (items.length === 0) {
         toast.info('Nenhum anúncio ativo encontrado no ML');
       }
-    } catch (e: any) {
+    } catch {
       toast.error('Erro ao buscar anúncios do ML');
     } finally {
       setLoading(false);

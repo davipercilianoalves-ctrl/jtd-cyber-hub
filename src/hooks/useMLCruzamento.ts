@@ -2,31 +2,35 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export function useMLCruzamento() {
-  // Busca todos os items ativos do vendedor no ML
+  // Busca TODOS os items ativos do vendedor no ML (paginado via scan)
   async function fetchMLItems(userId: string | number): Promise<any[]> {
     try {
-      const { data } = await supabase.functions.invoke('ml-proxy', {
-        body: {
-          endpoint: `/users/${userId}/items/search?status=active&limit=50`,
-        },
-      });
-
-      const ids: string[] = data?.results || [];
-      if (!ids.length) return [];
-
-      // Buscar detalhes dos items em lote (máx 20 por vez)
-      const chunks: string[][] = [];
-      for (let i = 0; i < ids.length; i += 20) {
-        chunks.push(ids.slice(i, i + 20));
+      const ids: string[] = [];
+      let scrollId: string | null = null;
+      for (let page = 0; page < 50; page++) {
+        const qs: string = scrollId
+          ? `search_type=scan&scroll_id=${encodeURIComponent(scrollId)}`
+          : `search_type=scan&status=active&limit=100`;
+        const { data }: { data: any } = await supabase.functions.invoke('ml-proxy', {
+          body: { endpoint: `/users/${userId}/items/search?${qs}` },
+        });
+        const pageIds: string[] = data?.results || [];
+        ids.push(...pageIds);
+        scrollId = data?.scroll_id || null;
+        if (!scrollId || pageIds.length === 0) break;
       }
 
+      if (!ids.length) return [];
+
       const results: any[] = [];
-      for (const chunk of chunks) {
+      for (let i = 0; i < ids.length; i += 20) {
+        const chunk = ids.slice(i, i + 20);
         const { data: items } = await supabase.functions.invoke('ml-proxy', {
-          body: { endpoint: `/items?ids=${chunk.join(',')}` },
+          body: {
+            endpoint: `/items?ids=${chunk.join(',')}&attributes=id,title,thumbnail,price,seller_sku,seller_custom_field,available_quantity,status,permalink`,
+          },
         });
         if (Array.isArray(items)) {
-          // /items?ids= returns [{code, body}, ...]
           items.forEach((wrap: any) => {
             if (wrap?.body) results.push(wrap.body);
             else if (wrap?.id) results.push(wrap);
