@@ -429,7 +429,7 @@ export default function Metricas() {
       if (bid) buyers.add(bid);
     });
     const avgUnit = units > 0 ? grossSales / units : 0;
-    const conv = visitsTotal && visitsTotal > 0 ? (safeOrders.length / visitsTotal) * 100 : null;
+    const conv = visitsTotal != null ? (visitsTotal > 0 ? (safeOrders.length / visitsTotal) * 100 : 0) : null;
     return { grossSales, paidSales, units, avgUnit, buyers: buyers.size, conv, orderCount: safeOrders.length };
   }, [orders, marketplace, visitsTotal]);
 
@@ -583,11 +583,35 @@ export default function Metricas() {
     if (tab !== "BY_AD" || !token || !adsAgg.length) return;
     const toFetch = adsAgg.slice(0, 20).filter((r) => adVisitsMap[r.ad.id] === undefined);
     if (!toFetch.length) return;
-    // Mapeia ad.id -> ML item via title/sku — só podemos usar visits se conhecemos o ML item id.
-    // Como local ads não armazenam ML item id, marcamos 0 e dependemos do agregado de orders.
-    const next: Record<string, number> = {};
-    toFetch.forEach((r) => { next[r.ad.id] = 0; });
-    setAdVisitsMap((prev) => ({ ...prev, ...next }));
+    let cancelled = false;
+    (async () => {
+      const from = startOfPeriod(period, customFrom).toISOString();
+      const to = endOfPeriod(period, customTo).toISOString();
+      const idToRows = new Map<string, string[]>();
+      toFetch.forEach((r) => {
+        const itemIds = getMlItemIds(r.ad);
+        if (!itemIds.length) idToRows.set(`missing:${r.ad.id}`, [r.ad.id]);
+        itemIds.forEach((itemId) => idToRows.set(itemId, [...(idToRows.get(itemId) || []), r.ad.id]));
+      });
+      const next: Record<string, number> = {};
+      idToRows.forEach((rowIds, key) => { if (key.startsWith("missing:")) rowIds.forEach((rowId) => { next[rowId] = 0; }); });
+      const mlIds = Array.from(idToRows.keys()).filter((id) => !id.startsWith("missing:"));
+      try {
+        for (let i = 0; i < mlIds.length; i += 20) {
+          const result = await m.getItemsVisits(mlIds.slice(i, i + 20), from, to);
+          const items = Array.isArray(result) ? result : [result];
+          items.forEach((item: any) => {
+            const itemId = String(item?.item_id || "");
+            const total = parseVisitTotal(item);
+            (idToRows.get(itemId) || []).forEach((rowId) => { next[rowId] = total; });
+          });
+        }
+      } catch {
+        mlIds.forEach((itemId) => (idToRows.get(itemId) || []).forEach((rowId) => { next[rowId] = 0; }));
+      }
+      if (!cancelled) setAdVisitsMap((prev) => ({ ...prev, ...next }));
+    })();
+    return () => { cancelled = true; };
   }, [tab, token, adsAgg]); // eslint-disable-line
 
   const mlConnected = !!token;
@@ -692,6 +716,7 @@ export default function Metricas() {
               ordersLoading={ordersLoading}
               visitsLoading={visitsLoading}
               visitsTotal={visitsTotal}
+              visitsError={visitsError}
               salesSeries={salesSeries}
               costs={costs}
             />
