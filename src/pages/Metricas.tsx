@@ -1105,3 +1105,36 @@ function AdDetailView({ row, orders, onBack }: any) {
     </div>
   );
 }
+
+function ProductView({ ads, token, selectedId, onSelect }: any) {
+  const activeFirst = useMemo(() => {
+    return [...(ads || [])].sort((a: any, b: any) => Number(b.is_active) - Number(a.is_active));
+  }, [ads]);
+  const selected = activeFirst.find((a: any) => a.id === selectedId) || activeFirst[0] || null;
+
+  useEffect(() => {
+    if (!selectedId && selected) onSelect(selected.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
+  if (!ads || ads.length === 0) {
+    return (
+      <div className="bg-card border border-border rounded-xl p-10 text-center text-sm text-muted-foreground">
+        Nenhum produto cadastrado. Cadastre anúncios primeiro para ver o histórico anual.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
+      <ProductPicker ads={activeFirst} selectedId={selected?.id || null} onSelect={onSelect} />
+      {selected ? (
+        <YearlyProductChart ad={selected} token={token} />
+      ) : (
+        <div className="bg-card border border-border rounded-xl p-10 text-center text-sm text-muted-foreground">
+          Selecione um produto à esquerda
+        </div>
+      )}
+    </div>
+  );
+}
