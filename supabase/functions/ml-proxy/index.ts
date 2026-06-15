@@ -20,9 +20,9 @@ serve(async (req) => {
     )
 
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return new Response('Unauthorized', { status: 401 })
+    if (!authHeader) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
     const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (!user) return new Response('Unauthorized', { status: 401 })
+    if (!user) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
 
     const { data: token } = await supabase
       .from('ml_tokens')
@@ -30,7 +30,7 @@ serve(async (req) => {
       .eq('owner_id', user.id)
       .single()
 
-    if (!token) return new Response('Não autenticado', { status: 401 })
+    if (!token) return new Response('Não autenticado', { status: 401, headers: corsHeaders })
 
     // Check if token expired
     const isExpired = new Date(token.expires_at) < new Date()
@@ -69,9 +69,21 @@ serve(async (req) => {
       body: body ? JSON.stringify(body) : null
     })
 
-    const data = await res.json()
+    const text = await res.text()
+    let data
+    try {
+      data = text ? JSON.parse(text) : null
+    } catch (_error) {
+      data = { error: text || 'Resposta inválida do Mercado Livre' }
+    }
+
+    if (!res.ok) {
+      console.error('ML API error', { endpoint, status: res.status, data })
+      data = { ...data, ml_status: res.status, ml_endpoint: endpoint }
+    }
     
     return new Response(JSON.stringify(data), {
+      status: res.ok ? 200 : res.status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   } catch (error) {
