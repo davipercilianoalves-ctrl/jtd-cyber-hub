@@ -736,6 +736,17 @@ function OverviewView({
         <SalesChart data={salesSeries} loading={ordersLoading} />
       </div>
 
+      {/* SEÇÃO 2.5 — Top Rankings */}
+      {adsAgg && adsAgg.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold">Top Anúncios do Período</h3>
+            <span className="text-xs text-muted-foreground">Clique para ver detalhes</span>
+          </div>
+          <TopRankings rows={adsAgg} onSelect={onSelectAd} />
+        </div>
+      )}
+
       {/* SEÇÃO 3 — Funil */}
       <div className="jtd-glass p-6">
         <h3 className="text-lg font-bold mb-4">Funil de Conversão</h3>
