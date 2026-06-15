@@ -949,11 +949,12 @@ function AdDetailView({ row, orders, onBack }: any) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Receita" value={BRL(row.revenue)} icon={<DollarSign className="text-[color:var(--cyan)]" size={18} />} valueClass="text-[color:var(--cyan)]" />
-        <MetricCard label="Vendas" value={row.sales} icon={<CheckCircle2 className="text-[color:var(--lime)]" size={18} />} valueClass="text-[color:var(--lime)]" />
-        <MetricCard label="Unidades" value={row.units} icon={<Package className="text-pink-400" size={18} />} valueClass="text-pink-400" />
-        <MetricCard label="Lucro" value={BRL(row.profit)} icon={<TrendingUp size={18} />} valueClass={row.profit >= 0 ? "text-[color:var(--lime)]" : "text-red-500"} />
+        <MetricCard label="Receita" value={BRL(row.revenue)} />
+        <MetricCard label="Vendas" value={row.sales} />
+        <MetricCard label="Unidades" value={row.units} />
+        <MetricCard label="Lucro" value={BRL(row.profit)} highlight={row.profit >= 0} />
       </div>
+
 
       <div className="jtd-glass p-6">
         <h3 className="text-lg font-bold mb-4">Evolução de Vendas do Anúncio</h3>
