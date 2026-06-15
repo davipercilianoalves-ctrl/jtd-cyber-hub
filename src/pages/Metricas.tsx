@@ -317,6 +317,7 @@ export default function Metricas() {
   const [adFilter, setAdFilter] = useState<"ALL" | "PROFIT" | "VISITS" | "LOW_CONV" | "LOSS">("ALL");
   const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
   const [adVisitsMap, setAdVisitsMap] = useState<Record<string, number>>({});
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
