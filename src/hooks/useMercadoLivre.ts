@@ -14,7 +14,7 @@ export function useMercadoLivre() {
   }
 
   async function getVisits(itemId: string) {
-    return callML(`/visits/items?ids=${itemId}`);
+    return callML(`/items/visits?ids=${encodeURIComponent(itemId)}`);
   }
 
   async function getUserInfo(userId: string) {

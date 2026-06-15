@@ -51,6 +51,26 @@ function fmtDM(iso: string) {
   return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
 }
 
+function parseVisitTotal(data: any): number {
+  if (!data) return 0;
+  if (Array.isArray(data)) return data.reduce((sum, item) => sum + parseVisitTotal(item), 0);
+  const direct = Number(data.total_visits ?? data.total ?? data.visits ?? 0) || 0;
+  if (direct > 0) return direct;
+  if (Array.isArray(data.visits_detail)) {
+    return data.visits_detail.reduce((sum: number, item: any) => sum + (Number(item?.quantity ?? item?.total) || 0), 0);
+  }
+  if (Array.isArray(data.results)) return data.results.reduce((sum: number, item: any) => sum + parseVisitTotal(item), 0);
+  return 0;
+}
+
+function getMlItemIds(ad: Partial<LocalAd> & { id?: string }): string[] {
+  const ids = new Set<string>();
+  if ((ad as any).ml_item_id) ids.add(String((ad as any).ml_item_id));
+  if (Array.isArray((ad as any).ml_item_ids)) (ad as any).ml_item_ids.forEach((id: any) => id && ids.add(String(id)));
+  if (ad.id?.startsWith("ml:")) ids.add(ad.id.slice(3));
+  return Array.from(ids);
+}
+
 // ============= Componentes auxiliares =============
 
 function PillButton({ active, onClick, children, disabled }: { active?: boolean; onClick?: () => void; children: React.ReactNode; disabled?: boolean }) {
@@ -266,6 +286,8 @@ interface LocalAd {
   tax: number | null;
   titles: string[] | null;
   keywords: string[] | null;
+  ml_item_id?: string | null;
+  ml_item_ids?: string[] | null;
   products?: { name: string | null; sku: string | null; cost_price: number | null; keywords: string[] | null } | null;
 }
 
@@ -304,6 +326,7 @@ export default function Metricas() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [visitsTotal, setVisitsTotal] = useState<number | null>(null);
+  const [visitsError, setVisitsError] = useState<string | null>(null);
   const [visitsLoading, setVisitsLoading] = useState(false);
   const [ads, setAds] = useState<LocalAd[]>([]);
   const [adsLoading, setAdsLoading] = useState(true);
@@ -346,6 +369,10 @@ export default function Metricas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, period, customFrom, customTo, refreshTick]);
 
+  useEffect(() => {
+    setAdVisitsMap({});
+  }, [period, customFrom, customTo, refreshTick]);
+
   async function loadOrders() {
     if (!token) return;
     setOrdersLoading(true);
@@ -366,22 +393,15 @@ export default function Metricas() {
   async function loadVisits() {
     if (!token) return;
     setVisitsLoading(true);
+    setVisitsError(null);
     try {
       const from = startOfPeriod(period, customFrom).toISOString();
       const to = endOfPeriod(period, customTo).toISOString();
       const data = await m.getVisitsTrend(token.user_id, from, to);
-      // ML /users/{id}/items_visits returns: [{ date, total }, ...] OR { total_visits, results: [...] }
-      let total = 0;
-      if (Array.isArray(data)) {
-        total = data.reduce((sum: number, d: any) => sum + (Number(d?.total) || 0), 0);
-      } else if (Array.isArray(data?.results)) {
-        total = data.results.reduce((sum: number, d: any) => sum + (Number(d?.total ?? d?.visits) || 0), 0);
-      } else {
-        total = Number(data?.total_visits ?? data?.total ?? 0) || 0;
-      }
-      setVisitsTotal(total > 0 ? total : null);
-    } catch {
+      setVisitsTotal(parseVisitTotal(data));
+    } catch (e: any) {
       setVisitsTotal(null);
+      setVisitsError(e?.message || "Falha ao carregar visitas do Mercado Livre");
     } finally {
       setVisitsLoading(false);
     }
@@ -409,7 +429,7 @@ export default function Metricas() {
       if (bid) buyers.add(bid);
     });
     const avgUnit = units > 0 ? grossSales / units : 0;
-    const conv = visitsTotal && visitsTotal > 0 ? (safeOrders.length / visitsTotal) * 100 : null;
+    const conv = visitsTotal != null ? (visitsTotal > 0 ? (safeOrders.length / visitsTotal) * 100 : 0) : null;
     return { grossSales, paidSales, units, avgUnit, buyers: buyers.size, conv, orderCount: safeOrders.length };
   }, [orders, marketplace, visitsTotal]);
 
@@ -563,11 +583,35 @@ export default function Metricas() {
     if (tab !== "BY_AD" || !token || !adsAgg.length) return;
     const toFetch = adsAgg.slice(0, 20).filter((r) => adVisitsMap[r.ad.id] === undefined);
     if (!toFetch.length) return;
-    // Mapeia ad.id -> ML item via title/sku — só podemos usar visits se conhecemos o ML item id.
-    // Como local ads não armazenam ML item id, marcamos 0 e dependemos do agregado de orders.
-    const next: Record<string, number> = {};
-    toFetch.forEach((r) => { next[r.ad.id] = 0; });
-    setAdVisitsMap((prev) => ({ ...prev, ...next }));
+    let cancelled = false;
+    (async () => {
+      const from = startOfPeriod(period, customFrom).toISOString();
+      const to = endOfPeriod(period, customTo).toISOString();
+      const idToRows = new Map<string, string[]>();
+      toFetch.forEach((r) => {
+        const itemIds = getMlItemIds(r.ad);
+        if (!itemIds.length) idToRows.set(`missing:${r.ad.id}`, [r.ad.id]);
+        itemIds.forEach((itemId) => idToRows.set(itemId, [...(idToRows.get(itemId) || []), r.ad.id]));
+      });
+      const next: Record<string, number> = {};
+      idToRows.forEach((rowIds, key) => { if (key.startsWith("missing:")) rowIds.forEach((rowId) => { next[rowId] = 0; }); });
+      const mlIds = Array.from(idToRows.keys()).filter((id) => !id.startsWith("missing:"));
+      try {
+        for (let i = 0; i < mlIds.length; i += 20) {
+          const result = await m.getItemsVisits(mlIds.slice(i, i + 20), from, to);
+          const items = Array.isArray(result) ? result : [result];
+          items.forEach((item: any) => {
+            const itemId = String(item?.item_id || "");
+            const total = parseVisitTotal(item);
+            (idToRows.get(itemId) || []).forEach((rowId) => { next[rowId] = total; });
+          });
+        }
+      } catch {
+        mlIds.forEach((itemId) => (idToRows.get(itemId) || []).forEach((rowId) => { next[rowId] = 0; }));
+      }
+      if (!cancelled) setAdVisitsMap((prev) => ({ ...prev, ...next }));
+    })();
+    return () => { cancelled = true; };
   }, [tab, token, adsAgg]); // eslint-disable-line
 
   const mlConnected = !!token;
@@ -672,6 +716,7 @@ export default function Metricas() {
               ordersLoading={ordersLoading}
               visitsLoading={visitsLoading}
               visitsTotal={visitsTotal}
+              visitsError={visitsError}
               salesSeries={salesSeries}
               costs={costs}
             />
@@ -702,7 +747,7 @@ export default function Metricas() {
 // ============= Sub-views =============
 
 function OverviewView({
-  overview, ordersLoading, visitsLoading, visitsTotal, salesSeries, costs,
+  overview, ordersLoading, visitsLoading, visitsTotal, visitsError, salesSeries, costs,
 }: any) {
   const conv = overview.conv;
   return (
@@ -713,14 +758,20 @@ function OverviewView({
         <MetricCard label="Vendas Concluídas" value={BRL(overview.paidSales)} loading={ordersLoading} />
         <MetricCard label="Unidades Vendidas" value={overview.units} loading={ordersLoading} />
         <MetricCard label="Preço Médio / Un." value={BRL(overview.avgUnit)} loading={ordersLoading} />
-        <MetricCard label="Visitas Únicas" value={visitsTotal ?? "—"} loading={visitsLoading} />
-        <MetricCard label="Total de Visitas" value={visitsTotal ?? "—"} loading={visitsLoading} />
+        <MetricCard label="Visitas Únicas" value={visitsTotal} loading={visitsLoading} />
+        <MetricCard label="Total de Visitas" value={visitsTotal} loading={visitsLoading} />
         <MetricCard label="Compradores Únicos" value={overview.buyers} loading={ordersLoading} />
         <div title="Vendas ÷ Visitas Únicas">
           <MetricCard label="Conversão da Conta" value={conv != null ? `${conv.toFixed(1)}%` : "—"} loading={visitsLoading} highlight />
         </div>
       </div>
-      <p className="text-[11px] text-muted-foreground -mt-2">* Dados de visitas agregados da conta via API do ML</p>
+      {visitsError ? (
+        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 px-3 py-2 text-xs text-yellow-600">
+          API de visitas do Mercado Livre não retornou dados válidos: {visitsError}
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground -mt-2">* Dados de visitas agregados da conta via API do ML</p>
+      )}
 
 
       {/* SEÇÃO 2 — Gráfico */}
@@ -852,8 +903,8 @@ function ByAdView({
                 const price = Number(r.ad.final_price || 0);
                 const feePct = Number(r.ad.marketplace_fee || 0);
                 const youGet = price * (1 - feePct / 100);
-                const hasVisits = r.visits > 0;
-                const conv = hasVisits ? (r.sales / r.visits) * 100 : null;
+                const hasVisits = r.visits != null;
+                const conv = hasVisits ? (r.visits > 0 ? (r.sales / r.visits) * 100 : 0) : null;
                 const convColor = conv == null ? "text-muted-foreground" : conv > 2 ? "text-[color:var(--lime)]" : conv >= 1 ? "text-yellow-500" : "text-red-500";
                 const hasRevenue = r.revenue > 0;
                 const profitColor = !hasRevenue ? "text-muted-foreground" : r.profit >= 0 ? "text-[color:var(--lime)]" : "text-red-500";
@@ -866,7 +917,7 @@ function ByAdView({
                     <td className="px-4 py-3 text-right text-[color:var(--cyan)] font-bold">{BRL(price)}</td>
                     <td className="px-4 py-3 text-right">{BRL(youGet)}</td>
                     <td className="px-4 py-3 text-right">{r.sales}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground" title="Visitas disponíveis via API do ML ao vincular ML item ID">{hasVisits ? r.visits : "—"}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground" title="Visitas retornadas pela API do ML no período selecionado">{hasVisits ? r.visits : "—"}</td>
                     <td className={`px-4 py-3 text-right font-bold ${convColor}`}>{conv == null ? "—" : `${conv.toFixed(1)}%`}</td>
                     <td className={`px-4 py-3 text-right font-bold ${profitColor}`}>{hasRevenue ? BRL(r.profit) : "—"}</td>
                     <td className="px-4 py-3 text-center">
