@@ -19,6 +19,12 @@ export function useMetricas() {
     return callML(`/items/visits?ids=${encodeURIComponent(itemId)}${dateQuery}`);
   }
 
+  async function getItemsVisits(itemIds: string[], from: string, to: string) {
+    if (!itemIds.length) return [];
+    const ids = itemIds.slice(0, 20).map((id) => encodeURIComponent(id)).join(',');
+    return callML(`/items/visits?ids=${ids}&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`);
+  }
+
   // Busca todos os anúncios ativos do vendedor
   async function getSellerItems(userId: string) {
     return callML(`/users/${userId}/items/search?status=active&limit=50`);
@@ -100,6 +106,7 @@ export function useMetricas() {
 
   return {
     getItemVisits,
+    getItemsVisits,
     getSellerItems,
     getItemsDetails,
     getOrders,
