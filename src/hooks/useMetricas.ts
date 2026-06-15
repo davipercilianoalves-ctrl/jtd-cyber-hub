@@ -49,7 +49,10 @@ export function useMetricas() {
 
   // Busca tendências de visitas da conta
   async function getVisitsTrend(userId: string, from: string, to: string) {
-    return callML(`/users/${userId}/items_visits?date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`);
+    // ML exige YYYY-MM-DD nesse endpoint (não aceita ISO completo com Z)
+    const fromDate = from.slice(0, 10);
+    const toDate = to.slice(0, 10);
+    return callML(`/users/${userId}/items_visits?date_from=${fromDate}&date_to=${toDate}`);
   }
 
   // Busca métricas de um anúncio específico
