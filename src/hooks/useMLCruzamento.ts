@@ -103,7 +103,7 @@ export function useMLCruzamento() {
     try {
       const { data } = await supabase.functions.invoke('ml-proxy', {
         body: {
-          endpoint: `/visits/items?ids=${mlItemId}&date_from=${from}&date_to=${to}`,
+          endpoint: `/items/visits?ids=${encodeURIComponent(mlItemId)}&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`,
         },
       });
       return data;
