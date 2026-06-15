@@ -367,11 +367,19 @@ export default function Metricas() {
     if (!token) return;
     setVisitsLoading(true);
     try {
-      const from = startOfPeriod(period, customFrom).toISOString().slice(0, 10);
-      const to = endOfPeriod(period, customTo).toISOString().slice(0, 10);
+      const from = startOfPeriod(period, customFrom).toISOString();
+      const to = endOfPeriod(period, customTo).toISOString();
       const data = await m.getVisitsTrend(token.user_id, from, to);
-      const total = Number(data?.total_visits ?? data?.total ?? 0) || 0;
-      setVisitsTotal(total || null);
+      // ML /users/{id}/items_visits returns: [{ date, total }, ...] OR { total_visits, results: [...] }
+      let total = 0;
+      if (Array.isArray(data)) {
+        total = data.reduce((sum: number, d: any) => sum + (Number(d?.total) || 0), 0);
+      } else if (Array.isArray(data?.results)) {
+        total = data.results.reduce((sum: number, d: any) => sum + (Number(d?.total ?? d?.visits) || 0), 0);
+      } else {
+        total = Number(data?.total_visits ?? data?.total ?? 0) || 0;
+      }
+      setVisitsTotal(total > 0 ? total : null);
     } catch {
       setVisitsTotal(null);
     } finally {
