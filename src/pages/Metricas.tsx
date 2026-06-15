@@ -464,7 +464,7 @@ export default function Metricas() {
       attempts: number;
     };
     const map = new Map<string, Row>();
-    // Inicializa com todos os anúncios ativos
+    // Inicializa com todos os anúncios ativos cadastrados localmente
     ads.forEach((ad) => {
       if (!ad.is_active) return;
       const title = ad.titles?.[0] || ad.products?.name || "Sem título";
@@ -481,25 +481,51 @@ export default function Metricas() {
       const orderRev = (o.order_items || []).reduce((s, it) => s + it.unit_price * it.quantity, 0);
       (o.order_items || []).forEach((it) => {
         const ad = findAdForItem(ads, it.item.title, it.item.seller_sku || null);
-        if (!ad) return;
-        const row = map.get(ad.id);
-        if (!row) return;
         const revenue = it.unit_price * it.quantity;
-        const unitCost = Number(ad.cost_price ?? ad.products?.cost_price ?? 0) || 0;
-        const feePct = Number(ad.marketplace_fee ?? 0);
+
+        // Se não há anúncio local, cria linha "fantasma" a partir do item ML
+        let rowKey: string;
+        let row: Row | undefined;
+        if (ad) {
+          rowKey = ad.id;
+          row = map.get(rowKey);
+        } else {
+          rowKey = `ml:${it.item.id || it.item.title}`;
+          row = map.get(rowKey);
+          if (!row) {
+            row = {
+              ad: {
+                id: rowKey,
+                is_active: true,
+                final_price: it.unit_price,
+                marketplace_fee: 0,
+                titles: [it.item.title],
+                products: { name: it.item.title, sku: it.item.seller_sku || "" },
+              } as any,
+              title: it.item.title,
+              sku: it.item.seller_sku || "",
+              sales: 0, units: 0, revenue: 0, profit: 0,
+              visits: 0, attempts: 0,
+            };
+            map.set(rowKey, row);
+          }
+        }
+        if (!row) return;
+
+        const unitCost = ad ? (Number(ad.cost_price ?? ad.products?.cost_price ?? 0) || 0) : 0;
+        const feePct = ad ? Number(ad.marketplace_fee ?? 0) : 0;
         const fee = feePct > 0 ? revenue * (feePct / 100) : Number(it.sale_fee ?? 0) * it.quantity;
-        const adShip = Number(ad.shipping_cost ?? 0);
+        const adShip = ad ? Number(ad.shipping_cost ?? 0) : 0;
         const ship = adShip > 0 ? adShip * it.quantity : (mlShip > 0 && orderRev > 0 ? mlShip * (revenue / orderRev) : 0);
-        const pack = Number(ad.packaging_cost ?? 0) * it.quantity;
-        const trans = Number(ad.transport_cost ?? 0) * it.quantity;
-        const taxPct = Number(ad.tax ?? 0);
+        const pack = ad ? Number(ad.packaging_cost ?? 0) * it.quantity : 0;
+        const trans = ad ? Number(ad.transport_cost ?? 0) * it.quantity : 0;
+        const taxPct = ad ? Number(ad.tax ?? 0) : 0;
         const taxV = taxPct > 0 ? revenue * (taxPct / 100) : 0;
         const totalCost = unitCost * it.quantity + fee + ship + pack + trans + taxV;
         row.sales += 1;
         row.units += Number(it.quantity || 0);
         row.revenue += revenue;
         row.profit += revenue - totalCost;
-        // intenção de compra: usamos pelo menos o nº de pedidos como proxy se não houver outro
         row.attempts += 1;
       });
     });
