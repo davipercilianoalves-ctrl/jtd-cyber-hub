@@ -23,11 +23,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMetricas } from "@/hooks/useMetricas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { TopRankings } from "@/components/metricas/TopRankings";
+import { YearlyProductChart, ProductPicker } from "@/components/metricas/YearlyProductChart";
 
 
 type Marketplace = "ALL" | "ML";
 type Period = "7D" | "30D" | "MONTH" | "YEAR" | "CUSTOM";
-type Tab = "OVERVIEW" | "BY_AD";
+type Tab = "OVERVIEW" | "BY_AD" | "PRODUCT";
 
 const BRL = (n: number) =>
   (Number.isFinite(n) ? n : 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -315,6 +317,7 @@ export default function Metricas() {
   const [adFilter, setAdFilter] = useState<"ALL" | "PROFIT" | "VISITS" | "LOW_CONV" | "LOSS">("ALL");
   const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
   const [adVisitsMap, setAdVisitsMap] = useState<Record<string, number>>({});
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -626,12 +629,13 @@ export default function Metricas() {
             {([
               { id: "OVERVIEW", label: "Visão Geral" },
               { id: "BY_AD", label: "Por Anúncio" },
+              { id: "PRODUCT", label: "Por Produto" },
             ] as const).map((t) => {
               const active = tab === t.id;
               return (
                 <button
                   key={t.id}
-                  onClick={() => { setTab(t.id as Tab); if (t.id === "OVERVIEW") setSelectedAdId(null); }}
+                  onClick={() => { setTab(t.id as Tab); if (t.id !== "BY_AD") setSelectedAdId(null); }}
                   className={`pb-3 -mb-px text-sm transition-colors ${
                     active
                       ? "text-foreground font-semibold border-b-2 border-primary"
@@ -666,6 +670,8 @@ export default function Metricas() {
               visitsTotal={visitsTotal}
               salesSeries={salesSeries}
               costs={costs}
+              adsAgg={adsAgg}
+              onSelectAd={(id: string) => { setSelectedAdId(id); setTab("BY_AD"); }}
             />
           )}
 
@@ -684,6 +690,15 @@ export default function Metricas() {
           {tab === "BY_AD" && selectedRow && (
             <AdDetailView row={selectedRow} orders={orders} onBack={() => setSelectedAdId(null)} />
           )}
+
+          {tab === "PRODUCT" && (
+            <ProductView
+              ads={ads}
+              token={token}
+              selectedId={selectedProductId}
+              onSelect={setSelectedProductId}
+            />
+          )}
         </>
       )}
     </div>
@@ -694,7 +709,7 @@ export default function Metricas() {
 // ============= Sub-views =============
 
 function OverviewView({
-  overview, ordersLoading, visitsLoading, visitsTotal, salesSeries, costs,
+  overview, ordersLoading, visitsLoading, visitsTotal, salesSeries, costs, adsAgg, onSelectAd,
 }: any) {
   const conv = overview.conv;
   return (
@@ -720,6 +735,17 @@ function OverviewView({
         <h3 className="text-lg font-bold mb-4">Evolução de Vendas</h3>
         <SalesChart data={salesSeries} loading={ordersLoading} />
       </div>
+
+      {/* SEÇÃO 2.5 — Top Rankings */}
+      {adsAgg && adsAgg.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold">Top Anúncios do Período</h3>
+            <span className="text-xs text-muted-foreground">Clique para ver detalhes</span>
+          </div>
+          <TopRankings rows={adsAgg} onSelect={onSelectAd} />
+        </div>
+      )}
 
       {/* SEÇÃO 3 — Funil */}
       <div className="jtd-glass p-6">
@@ -1076,6 +1102,39 @@ function AdDetailView({ row, orders, onBack }: any) {
           </table>
         )}
       </div>
+    </div>
+  );
+}
+
+function ProductView({ ads, token, selectedId, onSelect }: any) {
+  const activeFirst = useMemo(() => {
+    return [...(ads || [])].sort((a: any, b: any) => Number(b.is_active) - Number(a.is_active));
+  }, [ads]);
+  const selected = activeFirst.find((a: any) => a.id === selectedId) || activeFirst[0] || null;
+
+  useEffect(() => {
+    if (!selectedId && selected) onSelect(selected.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
+  if (!ads || ads.length === 0) {
+    return (
+      <div className="bg-card border border-border rounded-xl p-10 text-center text-sm text-muted-foreground">
+        Nenhum produto cadastrado. Cadastre anúncios primeiro para ver o histórico anual.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
+      <ProductPicker ads={activeFirst} selectedId={selected?.id || null} onSelect={onSelect} />
+      {selected ? (
+        <YearlyProductChart ad={selected} token={token} />
+      ) : (
+        <div className="bg-card border border-border rounded-xl p-10 text-center text-sm text-muted-foreground">
+          Selecione um produto à esquerda
+        </div>
+      )}
     </div>
   );
 }
