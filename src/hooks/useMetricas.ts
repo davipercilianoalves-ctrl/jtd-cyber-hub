@@ -1,33 +1,34 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export function useMetricas() {
+  async function callML(endpoint: string) {
+    const { data, error } = await supabase.functions.invoke('ml-proxy', {
+      body: { endpoint }
+    });
+    if (error) throw new Error(error.message || 'Falha ao chamar o Mercado Livre');
+    if (data?.error || data?.message) {
+      const status = data?.ml_status ? ` (${data.ml_status})` : '';
+      throw new Error(`${data.error || data.message}${status}`);
+    }
+    return data;
+  }
   
   // Busca visitas de um item específico
-  async function getItemVisits(itemId: string) {
-    const { data } = await supabase.functions.invoke('ml-proxy', {
-      body: { endpoint: `/visits/items?ids=${itemId}` }
-    });
-    return data;
+  async function getItemVisits(itemId: string, from?: string, to?: string) {
+    const dateQuery = from && to ? `&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}` : '';
+    return callML(`/items/visits?ids=${encodeURIComponent(itemId)}${dateQuery}`);
   }
 
   // Busca todos os anúncios ativos do vendedor
   async function getSellerItems(userId: string) {
-    const { data } = await supabase.functions.invoke('ml-proxy', {
-      body: { 
-        endpoint: `/users/${userId}/items/search?status=active&limit=50` 
-      }
-    });
-    return data;
+    return callML(`/users/${userId}/items/search?status=active&limit=50`);
   }
 
   // Busca detalhes de múltiplos items de uma vez (máx 20)
   async function getItemsDetails(itemIds: string[]) {
     if (!itemIds.length) return [];
     const ids = itemIds.slice(0, 20).join(',');
-    const { data } = await supabase.functions.invoke('ml-proxy', {
-      body: { endpoint: `/items?ids=${ids}` }
-    });
-    return data || [];
+    return await callML(`/items?ids=${ids}`) || [];
   }
 
   // Busca pedidos do vendedor com filtro de período
@@ -37,40 +38,24 @@ export function useMetricas() {
     to: string,
     offset: number = 0
   ) {
-    const { data } = await supabase.functions.invoke('ml-proxy', {
-      body: {
-        endpoint: `/orders/search?seller=${userId}&sort=date_desc&order.date_created.from=${from}&order.date_created.to=${to}&limit=50&offset=${offset}`
-      }
-    });
-    return data;
+    return callML(`/orders/search?seller=${userId}&sort=date_desc&order.date_created.from=${encodeURIComponent(from)}&order.date_created.to=${encodeURIComponent(to)}&limit=50&offset=${offset}`);
   }
 
   // Busca tendências de visitas da conta
   async function getVisitsTrend(userId: string, from: string, to: string) {
-    const { data } = await supabase.functions.invoke('ml-proxy', {
-      body: {
-        endpoint: `/users/${userId}/items_visits?date_from=${from}&date_to=${to}`
-      }
-    });
-    return data;
+    return callML(`/users/${userId}/items_visits?date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`);
   }
 
   // Busca métricas de um anúncio específico
   async function getItemMetrics(itemId: string, from: string, to: string) {
     const [visits, orders] = await Promise.allSettled([
-      supabase.functions.invoke('ml-proxy', {
-        body: { endpoint: `/visits/items?ids=${itemId}&date_from=${from}&date_to=${to}` }
-      }),
-      supabase.functions.invoke('ml-proxy', {
-        body: {
-          endpoint: `/orders/search?item.id=${itemId}&sort=date_desc&order.date_created.from=${from}&order.date_created.to=${to}&limit=50`
-        }
-      })
+      callML(`/items/visits?ids=${encodeURIComponent(itemId)}&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`),
+      callML(`/orders/search?item.id=${encodeURIComponent(itemId)}&sort=date_desc&order.date_created.from=${encodeURIComponent(from)}&order.date_created.to=${encodeURIComponent(to)}&limit=50`)
     ]);
 
     return {
-      visits: visits.status === 'fulfilled' ? visits.value.data : null,
-      orders: orders.status === 'fulfilled' ? orders.value.data : null
+      visits: visits.status === 'fulfilled' ? visits.value : null,
+      orders: orders.status === 'fulfilled' ? orders.value : null
     };
   }
 
