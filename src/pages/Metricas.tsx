@@ -670,6 +670,8 @@ export default function Metricas() {
               visitsTotal={visitsTotal}
               salesSeries={salesSeries}
               costs={costs}
+              adsAgg={adsAgg}
+              onSelectAd={(id: string) => { setSelectedAdId(id); setTab("BY_AD"); }}
             />
           )}
 
@@ -687,6 +689,15 @@ export default function Metricas() {
 
           {tab === "BY_AD" && selectedRow && (
             <AdDetailView row={selectedRow} orders={orders} onBack={() => setSelectedAdId(null)} />
+          )}
+
+          {tab === "PRODUCT" && (
+            <ProductView
+              ads={ads}
+              token={token}
+              selectedId={selectedProductId}
+              onSelect={setSelectedProductId}
+            />
           )}
         </>
       )}
