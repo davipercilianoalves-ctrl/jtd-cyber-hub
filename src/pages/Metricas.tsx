@@ -747,7 +747,7 @@ export default function Metricas() {
 // ============= Sub-views =============
 
 function OverviewView({
-  overview, ordersLoading, visitsLoading, visitsTotal, salesSeries, costs,
+  overview, ordersLoading, visitsLoading, visitsTotal, visitsError, salesSeries, costs,
 }: any) {
   const conv = overview.conv;
   return (
@@ -758,14 +758,20 @@ function OverviewView({
         <MetricCard label="Vendas Concluídas" value={BRL(overview.paidSales)} loading={ordersLoading} />
         <MetricCard label="Unidades Vendidas" value={overview.units} loading={ordersLoading} />
         <MetricCard label="Preço Médio / Un." value={BRL(overview.avgUnit)} loading={ordersLoading} />
-        <MetricCard label="Visitas Únicas" value={visitsTotal ?? "—"} loading={visitsLoading} />
-        <MetricCard label="Total de Visitas" value={visitsTotal ?? "—"} loading={visitsLoading} />
+        <MetricCard label="Visitas Únicas" value={visitsTotal} loading={visitsLoading} />
+        <MetricCard label="Total de Visitas" value={visitsTotal} loading={visitsLoading} />
         <MetricCard label="Compradores Únicos" value={overview.buyers} loading={ordersLoading} />
         <div title="Vendas ÷ Visitas Únicas">
           <MetricCard label="Conversão da Conta" value={conv != null ? `${conv.toFixed(1)}%` : "—"} loading={visitsLoading} highlight />
         </div>
       </div>
-      <p className="text-[11px] text-muted-foreground -mt-2">* Dados de visitas agregados da conta via API do ML</p>
+      {visitsError ? (
+        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 px-3 py-2 text-xs text-yellow-600">
+          API de visitas do Mercado Livre não retornou dados válidos: {visitsError}
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground -mt-2">* Dados de visitas agregados da conta via API do ML</p>
+      )}
 
 
       {/* SEÇÃO 2 — Gráfico */}
@@ -897,8 +903,8 @@ function ByAdView({
                 const price = Number(r.ad.final_price || 0);
                 const feePct = Number(r.ad.marketplace_fee || 0);
                 const youGet = price * (1 - feePct / 100);
-                const hasVisits = r.visits > 0;
-                const conv = hasVisits ? (r.sales / r.visits) * 100 : null;
+                const hasVisits = r.visits != null;
+                const conv = hasVisits ? (r.visits > 0 ? (r.sales / r.visits) * 100 : 0) : null;
                 const convColor = conv == null ? "text-muted-foreground" : conv > 2 ? "text-[color:var(--lime)]" : conv >= 1 ? "text-yellow-500" : "text-red-500";
                 const hasRevenue = r.revenue > 0;
                 const profitColor = !hasRevenue ? "text-muted-foreground" : r.profit >= 0 ? "text-[color:var(--lime)]" : "text-red-500";
@@ -911,7 +917,7 @@ function ByAdView({
                     <td className="px-4 py-3 text-right text-[color:var(--cyan)] font-bold">{BRL(price)}</td>
                     <td className="px-4 py-3 text-right">{BRL(youGet)}</td>
                     <td className="px-4 py-3 text-right">{r.sales}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground" title="Visitas disponíveis via API do ML ao vincular ML item ID">{hasVisits ? r.visits : "—"}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground" title="Visitas retornadas pela API do ML no período selecionado">{hasVisits ? r.visits : "—"}</td>
                     <td className={`px-4 py-3 text-right font-bold ${convColor}`}>{conv == null ? "—" : `${conv.toFixed(1)}%`}</td>
                     <td className={`px-4 py-3 text-right font-bold ${profitColor}`}>{hasRevenue ? BRL(r.profit) : "—"}</td>
                     <td className="px-4 py-3 text-center">
