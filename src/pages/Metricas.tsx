@@ -2,16 +2,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  BarChart2,
   RefreshCcw,
   Plug,
-  DollarSign,
-  CheckCircle2,
-  Package,
-  TrendingUp,
-  Eye,
-  Users,
-  Percent,
   Search,
   ArrowLeft,
   ChevronRight,
@@ -19,8 +11,8 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -31,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMetricas } from "@/hooks/useMetricas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+
 
 type Marketplace = "ALL" | "ML";
 type Period = "7D" | "30D" | "MONTH" | "YEAR" | "CUSTOM";
