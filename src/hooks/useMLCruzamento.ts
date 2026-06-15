@@ -2,6 +2,14 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export function useMLCruzamento() {
+  function toMlDate(value: string, clampToToday = false) {
+    const date = value.slice(0, 10);
+    if (!clampToToday) return date;
+
+    const today = new Date().toISOString().slice(0, 10);
+    return date > today ? today : date;
+  }
+
   // Busca TODOS os items ativos do vendedor no ML (paginado via scan)
   async function fetchMLItems(userId: string | number): Promise<any[]> {
     try {
@@ -101,9 +109,11 @@ export function useMLCruzamento() {
 
   async function fetchItemVisits(mlItemId: string, from: string, to: string) {
     try {
+      const fromDate = toMlDate(from);
+      const toDate = toMlDate(to, true);
       const { data } = await supabase.functions.invoke('ml-proxy', {
         body: {
-          endpoint: `/items/visits?ids=${encodeURIComponent(mlItemId)}&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`,
+          endpoint: `/items/visits?ids=${encodeURIComponent(mlItemId)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`,
         },
       });
       return data;
