@@ -1,99 +1,84 @@
-## Módulo Precificação Inteligente — Plano
 
-Adicionar uma nova seção/aba **"Precificação Inteligente"** dentro de `src/pages/Produtos/ProdutoForm.tsx` (mesmo padrão `jtd-glass` das outras `<section>`) que substitui os campos soltos de custo/preço por uma calculadora completa, com persistência em uma única coluna `pricing` (jsonb) na tabela `products`.
+# Plano: Redesign da Página Métricas
 
-### 1. Banco de dados
-Migração adicionando uma coluna em `products`:
-- `pricing jsonb default '{}'::jsonb` — guarda toda a configuração da calculadora (custos padrão, custos personalizados, taxas, impostos, objetivos, promoção, cenários).
+Reformular `/_authenticated/metricas` aplicando os 7 componentes de referência coletados, conectados aos dados reais da conta Mercado Livre (vendas, anúncios, visitas, perguntas).
 
-Mantém `cost_price` e `sale_price` como espelho derivado (escritos no submit) para não quebrar telas que já consomem (Anúncios, listas, etc.). Sem nova tabela — todo o módulo vive no JSON do produto.
+## Estrutura final da página (top → bottom)
 
-### 2. Arquitetura de componentes
-Novo diretório `src/components/pricing/`:
-
-```text
-src/components/pricing/
-├── PricingModule.tsx        # container com sub-abas internas
-├── PricingSummary.tsx       # Bloco 1 — Resumo Financeiro (sticky topo)
-├── CostsSection.tsx         # Blocos 2 + 3 — custos padrão + personalizados
-├── FeesSection.tsx          # Bloco 4 — taxas/comissões
-├── TaxesSection.tsx         # Bloco 5 — impostos
-├── ProfitGoals.tsx          # Bloco 6 — objetivos
-├── PromoStrategy.tsx        # Bloco 7 — estratégia promocional
-├── ScenarioSimulator.tsx    # Bloco 8 — 3 cenários lado a lado
-├── PricingReport.tsx        # Bloco 9 — relatório detalhado
-├── PricingChart.tsx         # Bloco 11 — gráficos (recharts: pie + bar)
-├── PricingAlerts.tsx        # Bloco 12 — alertas
-├── CostRow.tsx              # linha editável (nome, tipo, valor, ativo, lixeira)
-└── usePricingEngine.ts      # hook puro com todas as fórmulas (useMemo)
+```
+┌─────────────────────────────────────────────────────────┐
+│ Header: título + seletor de período (7/30/90 dias)      │
+├─────────────────────────────────────────────────────────┤
+│ [1] Hero KPI Card (ref #6 - Incident Report)            │
+│     ┌──── Funil grande (vertical) ────┐ ┌─ 2 KPIs ─┐    │
+│     │ Visitas → Perguntas → Carrinho │ │ CountUp  │    │
+│     │ → Compradores → Vendas         │ │ + pills  │    │
+│     └────────────────────────────────┘ └──────────┘    │
+│     Lista de métricas secundárias com divisores         │
+├─────────────────────────────────────────────────────────┤
+│ [2] Grid 4 KPIs clicáveis (ref #7 - Line Chart 6)       │
+│     Vendas | Faturamento | Ticket Médio | Visitas       │
+│     Cada um com badge ↑/↓ % vs período anterior         │
+│     ↓ clicar troca a linha do gráfico abaixo            │
+│     Line chart com glow colorido + dot grid pattern     │
+├─────────────────────────────────────────────────────────┤
+│ [3] Grid 2 colunas:                                     │
+│   ┌─ Line Graph Stats (ref #4) ─┐ ┌─ Stat Cards ──┐    │
+│   │ Linha multi-série            │ │ ref #3        │    │
+│   │ Peak / Average / Growth      │ │ ícone tonal   │    │
+│   └──────────────────────────────┘ └───────────────┘    │
+└─────────────────────────────────────────────────────────┘
 ```
 
-`PricingModule` recebe `value: PricingState` + `onChange` e é plugado no `ProdutoForm` como mais uma `<section>` (entre Mídia e Concorrentes). Internamente usa abas (Resumo / Custos / Taxas & Impostos / Promoção / Simulações / Relatório) para não criar uma página gigante.
+## Mapeamento ref → seção
 
-### 3. Modelo de dados (TypeScript)
+| Ref | Componente | Onde entra |
+|---|---|---|
+| #5 Funnel animado (vertical) | Funil de conversão ML | Hero card, lado esquerdo |
+| #6 Incident Report (CountUp + métricas) | Wrapper do hero | Card grande no topo |
+| #7 Line Chart 6 (4 KPIs clicáveis) | Bloco principal de tendência | Meio da página |
+| #4 Line Graph (Peak/Avg/Growth) | Comparativo período | Grid inferior, esquerda |
+| #3 Statistic Card 12 (badge contexto) | Mini KPIs de apoio | Grid inferior, direita |
+| #1 Stats Cards / #2 Live Dashboard | Padrão visual de KPI | Reaproveitado nos cards |
 
-```ts
-type CostKind = "fixed" | "percent";
-interface CostItem { id: string; name: string; kind: CostKind; value: number; active: boolean; note?: string; }
-interface PricingState {
-  costs: CostItem[];        // produto, frete, embalagem, transporte, armazenagem, operacional + personalizados
-  fees: CostItem[];         // marketplace, comissão, cartão, gateway, financeira + personalizadas (percent)
-  taxes: CostItem[];        // ICMS, Simples, ISS, PIS, COFINS + personalizados (percent)
-  goal: { mode: "marginPct" | "profitPct" | "profitBRL"; value: number };
-  promo: { strategicMarkupPct: number };   // desconto exibido é calculado
-  scenarios: Array<{ name: string; overrides: Partial<PricingState> }>;
-  minMarginPct?: number;    // limite para alertas
-}
-```
+## Componentes a criar em `src/components/metricas/`
 
-Custos padrão são pré-semeados com `active: true` e `value: 0`; o usuário só edita o que importa.
+- `MetricsHeader.tsx` — título + Select de período (7/30/90 dias)
+- `FunnelHeroCard.tsx` — ref #6: funil vertical animado (Framer Motion) + 2 KPIs com CountUp + lista de métricas secundárias com divisores
+- `ConversionFunnel.tsx` — funil vertical com glow (SVG + Framer Motion), 5 etapas
+- `InteractiveLineChart.tsx` — ref #7: 4 KPI buttons trocam dataKey + Recharts LineChart com `feDropShadow` colorido e pattern `dotGrid`
+- `MultiSeriesChart.tsx` — ref #4: linha multi-série + cards Peak/Average/Growth calculados
+- `ContextStatCard.tsx` — ref #3: ícone tonal + badge "vs período anterior"
+- `CountUp.tsx` — hook/componente de animação numérica (raf-based, sem libs novas)
 
-### 4. Motor de cálculo (`usePricingEngine`)
-Função pura, totalmente memoizada, retorna:
+## Dados
 
-```text
-costFixedTotal  = Σ costs(active, kind=fixed).value
-feePctTotal     = Σ fees(active).value / 100
-taxPctTotal     = Σ taxes(active).value / 100
-costPctTotal    = Σ costs(active, kind=percent).value / 100   // % sobre preço
-goalPct         = depende do modo (marginPct/profitPct → direto; profitBRL → resolvido por bisseção)
+Reutilizar os hooks/queries já existentes em `src/pages/Metricas.tsx` (vendas, visitas, perguntas, anúncios). Adicionar agregadores client-side:
+- série diária por métrica (orders, revenue, ticket, visits)
+- totais período atual vs anterior → variação %
+- etapas do funil: `visitas → visitantes_unicos → perguntas+carrinho → compradores → vendas_concluidas`
 
-denom           = 1 - feePctTotal - taxPctTotal - costPctTotal - goalPct
-idealPrice      = costFixedTotal / denom            // erro se denom <= 0 → alerta
-minPrice        = costFixedTotal / (1 - feePctTotal - taxPctTotal - costPctTotal)
-profitBRL       = idealPrice * goalPct
-netMarginPct    = profitBRL / idealPrice * 100
-```
+Sem alterações de schema/edge functions. Apenas leitura.
 
-**Promoção (Bloco 7):**
+## Design tokens
 
-```text
-showcase    = real * (1 + markup/100)
-discountPct = (1 - real / showcase) * 100   // sempre diferente do markup
-final       = showcase * (1 - discountPct/100)  // === real (matemática garantida)
-```
+Tudo via `src/styles.css` (já tem semantic tokens). Cores das linhas/funil: usar variáveis Tailwind existentes (`--color-teal-500`, `--color-violet-500`, `--color-lime-500`, `--color-sky-500`). Glow via `feDropShadow` SVG na cor da métrica selecionada. Sem hard-coded hex em componentes.
 
-### 5. UI por bloco
-1. **Resumo** — grid sticky 4×2 com cartões neon (Cyber Acid em verde p/ positivo, vermelho p/ negativo). Atualiza ao vivo via `useMemo`.
-2/3. **Custos** — tabela editável com cabeçalho [Nome | Tipo (R$/%) | Valor | Ativo | 🗑]. Os 6 custos padrão vêm marcados; botão `+ Novo Custo` adiciona linha vazia. Tipo via toggle segmentado.
-4/5. **Taxas / Impostos** — mesmo padrão, sempre `%`. Botões `+ Nova Taxa` / `+ Novo Imposto`.
-6. **Objetivos** — 3 radios (margem % / lucro % / lucro R$) + input do valor escolhido.
-7. **Promoção** — 3 inputs visíveis (Preço Real, Aumento %, Preço Vitrine) + 2 read-only (Desconto Exibido %, Preço Final) destacando a equivalência.
-8. **Simulador** — 3 colunas; cada cenário é um clone do estado atual com overrides locais; tabela comparativa de Preço, Lucro, Margem.
-9. **Relatório** — lista vertical formatada igual ao exemplo do briefing, pronta para copiar/imprimir.
-11. **Gráficos** — `recharts` (já no projeto via shadcn chart): Pizza (composição) + Barras (custo vs taxa vs imposto vs lucro).
-12. **Alertas** — banner condicional acima do resumo: lucro negativo, margem < mínimo, soma de % ≥ 100, frete > X% do custo, preço < custo.
+## Dependências
 
-### 6. Integração no `ProdutoForm`
-- Substituir os campos "Preço de Venda / Preço de Custo" atuais por um resumo compacto que abre o módulo.
-- Adicionar `pricing` no `formData` (carrega de `data.pricing` ou default).
-- No submit: gravar `pricing` no jsonb e sincronizar `cost_price = costFixedTotal` e `sale_price = idealPrice` para retrocompatibilidade.
+Já instaladas: `recharts`, `framer-motion`, `lucide-react`, `class-variance-authority`, shadcn `card`/`badge`/`button`/`select`. **Nada novo a instalar.**
 
-### 7. Arquivos
-**Criar:** migração `add_pricing_to_products`, os 13 arquivos em `src/components/pricing/`.
-**Editar:** `src/pages/Produtos/ProdutoForm.tsx` (adicionar seção, estado, persistência).
-**Sem mudanças:** Anúncios, Fornecedores, listagens — continuam lendo `cost_price`/`sale_price`.
+## Arquivos modificados
 
-### Pontos a confirmar
-1. Manter `cost_price`/`sale_price` como espelho derivado (recomendado) ou migrar Anúncios/Listas para ler de `pricing` agora?
-2. As abas internas do módulo devem ser **sub-abas horizontais** (mais limpo) ou **acordeões empilhados** (mais próximo do estilo atual da página)?
+- **Criar:** 7 arquivos em `src/components/metricas/`
+- **Reescrever:** `src/pages/Metricas.tsx` (composição nova, mantendo data fetching atual)
+- **Não tocar:** rotas, layout, schema, edge functions
+
+## Fora de escopo
+
+- Dashboard, Vendas e outras páginas ficam como estão (só Métricas)
+- Sem novos endpoints ou tabelas
+- Sem mudanças de auth/permissões
+- Sem refactor dos componentes de UI base do shadcn
+
+Pronto pra implementar quando você aprovar.
