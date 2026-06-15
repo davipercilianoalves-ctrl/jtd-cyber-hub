@@ -8,10 +8,10 @@ export function useMLCruzamento() {
       const ids: string[] = [];
       let scrollId: string | null = null;
       for (let page = 0; page < 50; page++) {
-        const qs = scrollId
+        const qs: string = scrollId
           ? `search_type=scan&scroll_id=${encodeURIComponent(scrollId)}`
           : `search_type=scan&status=active&limit=100`;
-        const { data } = await supabase.functions.invoke('ml-proxy', {
+        const { data }: { data: any } = await supabase.functions.invoke('ml-proxy', {
           body: { endpoint: `/users/${userId}/items/search?${qs}` },
         });
         const pageIds: string[] = data?.results || [];
