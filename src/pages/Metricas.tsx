@@ -5,7 +5,7 @@ import {
   AlertTriangle,
   DollarSign,
   Eye,
-  MessageSquare,
+  
   Package,
   Percent,
   Plug,
