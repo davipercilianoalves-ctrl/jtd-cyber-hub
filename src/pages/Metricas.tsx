@@ -23,11 +23,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMetricas } from "@/hooks/useMetricas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { TopRankings } from "@/components/metricas/TopRankings";
+import { YearlyProductChart, ProductPicker } from "@/components/metricas/YearlyProductChart";
 
 
 type Marketplace = "ALL" | "ML";
 type Period = "7D" | "30D" | "MONTH" | "YEAR" | "CUSTOM";
-type Tab = "OVERVIEW" | "BY_AD";
+type Tab = "OVERVIEW" | "BY_AD" | "PRODUCT";
 
 const BRL = (n: number) =>
   (Number.isFinite(n) ? n : 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
