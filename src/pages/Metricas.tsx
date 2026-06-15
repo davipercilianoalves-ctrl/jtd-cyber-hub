@@ -709,7 +709,7 @@ export default function Metricas() {
 // ============= Sub-views =============
 
 function OverviewView({
-  overview, ordersLoading, visitsLoading, visitsTotal, salesSeries, costs,
+  overview, ordersLoading, visitsLoading, visitsTotal, salesSeries, costs, adsAgg, onSelectAd,
 }: any) {
   const conv = overview.conv;
   return (
