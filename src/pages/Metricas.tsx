@@ -542,31 +542,26 @@ export default function Metricas() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="jtd-glass p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex items-center gap-3">
-            <BarChart2 className="text-[color:var(--cyan)]" size={28} />
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">Métricas</h2>
-              <p className="text-sm text-muted-foreground">Análise completa da sua operação</p>
-            </div>
+      <div className="pb-4 border-b border-border">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Métricas</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Análise completa da sua operação</p>
           </div>
           <button
             onClick={handleRefresh}
             disabled={ordersLoading}
-            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:border-[color:var(--cyan)]/50 hover:text-[color:var(--cyan)] transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:text-primary transition-colors disabled:opacity-50"
           >
-            {ordersLoading ? <Loader2 className="animate-spin" size={14} /> : <RefreshCcw size={14} />}
+            {ordersLoading ? <Loader2 className="animate-spin" size={13} /> : <RefreshCcw size={13} />}
             Atualizar
           </button>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mr-1">Marketplace</span>
           <PillButton active={marketplace === "ALL"} onClick={() => setMarketplace("ALL")}>Todos</PillButton>
           <PillButton active={marketplace === "ML"} onClick={() => setMarketplace("ML")}>Mercado Livre</PillButton>
-          <span className="mx-3 h-4 w-px bg-border" />
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mr-1">Período</span>
+          <span className="mx-2 h-4 w-px bg-border" />
           {(["7D","30D","MONTH","YEAR","CUSTOM"] as Period[]).map((p) => (
             <PillButton key={p} active={period === p} onClick={() => setPeriod(p)}>
               {p === "7D" ? "7 Dias" : p === "30D" ? "30 Dias" : p === "MONTH" ? "Mês" : p === "YEAR" ? "Ano" : "Personalizado"}
@@ -586,13 +581,13 @@ export default function Metricas() {
 
       {/* Estado sem API */}
       {!tokenLoading && !mlConnected && (
-        <div className="jtd-glass p-8 text-center space-y-4">
+        <div className="bg-card border border-border rounded-xl p-10 text-center space-y-4">
           <Plug className="mx-auto text-muted-foreground" size={36} />
           <div>
-            <h3 className="text-lg font-bold">Mercado Livre não conectado</h3>
+            <h3 className="text-lg font-semibold">Mercado Livre não conectado</h3>
             <p className="text-sm text-muted-foreground">Conecte sua conta para visualizar as métricas.</p>
           </div>
-          <Link to="/api" className="inline-flex items-center gap-2 rounded-md bg-[color:var(--cyan)]/15 border border-[color:var(--cyan)]/40 text-[color:var(--cyan)] px-4 py-2 text-sm font-mono uppercase tracking-wider hover:bg-[color:var(--cyan)]/25">
+          <Link to="/api" className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90">
             Ir para API
           </Link>
         </div>
@@ -600,21 +595,38 @@ export default function Metricas() {
 
       {mlConnected && (
         <>
-          {/* TABS */}
-          <div className="flex items-center gap-2">
-            <PillButton active={tab === "OVERVIEW"} onClick={() => { setTab("OVERVIEW"); setSelectedAdId(null); }}>Visão Geral</PillButton>
-            <PillButton active={tab === "BY_AD"} onClick={() => setTab("BY_AD")}>Por Anúncio</PillButton>
+          {/* TABS — underline style */}
+          <div className="flex items-center gap-6 border-b border-border">
+            {([
+              { id: "OVERVIEW", label: "Visão Geral" },
+              { id: "BY_AD", label: "Por Anúncio" },
+            ] as const).map((t) => {
+              const active = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => { setTab(t.id as Tab); if (t.id === "OVERVIEW") setSelectedAdId(null); }}
+                  className={`pb-3 -mb-px text-sm transition-colors ${
+                    active
+                      ? "text-foreground font-semibold border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
 
           {ordersError && (
-            <div className="jtd-glass p-4 flex items-start gap-3 border border-yellow-500/30">
+            <div className="bg-card rounded-xl p-4 flex items-start gap-3 border border-yellow-500/30">
               <AlertTriangle className="text-yellow-500 mt-0.5 shrink-0" size={18} />
               <div className="flex-1">
-                <h4 className="text-sm font-bold text-yellow-500">Dados parcialmente indisponíveis</h4>
+                <h4 className="text-sm font-semibold text-yellow-500">Dados parcialmente indisponíveis</h4>
                 <p className="text-xs text-muted-foreground mt-0.5">{ordersError}</p>
               </div>
               <button onClick={loadOrders} disabled={ordersLoading}
-                className="rounded-md border border-yellow-500/40 text-yellow-500 px-3 py-1 text-xs font-mono uppercase tracking-wider hover:bg-yellow-500/10 disabled:opacity-50">
+                className="rounded-md border border-yellow-500/40 text-yellow-500 px-3 py-1 text-xs font-medium hover:bg-yellow-500/10 disabled:opacity-50">
                 {ordersLoading ? <Loader2 className="inline animate-spin" size={12} /> : "Tentar novamente"}
               </button>
             </div>
@@ -651,6 +663,7 @@ export default function Metricas() {
     </div>
   );
 }
+
 
 // ============= Sub-views =============
 
