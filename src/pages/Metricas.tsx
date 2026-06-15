@@ -51,6 +51,26 @@ function fmtDM(iso: string) {
   return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
 }
 
+function parseVisitTotal(data: any): number {
+  if (!data) return 0;
+  if (Array.isArray(data)) return data.reduce((sum, item) => sum + parseVisitTotal(item), 0);
+  const direct = Number(data.total_visits ?? data.total ?? data.visits ?? 0) || 0;
+  if (direct > 0) return direct;
+  if (Array.isArray(data.visits_detail)) {
+    return data.visits_detail.reduce((sum: number, item: any) => sum + (Number(item?.quantity ?? item?.total) || 0), 0);
+  }
+  if (Array.isArray(data.results)) return data.results.reduce((sum: number, item: any) => sum + parseVisitTotal(item), 0);
+  return 0;
+}
+
+function getMlItemIds(ad: Partial<LocalAd> & { id?: string }): string[] {
+  const ids = new Set<string>();
+  if ((ad as any).ml_item_id) ids.add(String((ad as any).ml_item_id));
+  if (Array.isArray((ad as any).ml_item_ids)) (ad as any).ml_item_ids.forEach((id: any) => id && ids.add(String(id)));
+  if (ad.id?.startsWith("ml:")) ids.add(ad.id.slice(3));
+  return Array.from(ids);
+}
+
 // ============= Componentes auxiliares =============
 
 function PillButton({ active, onClick, children, disabled }: { active?: boolean; onClick?: () => void; children: React.ReactNode; disabled?: boolean }) {
@@ -266,6 +286,8 @@ interface LocalAd {
   tax: number | null;
   titles: string[] | null;
   keywords: string[] | null;
+  ml_item_id?: string | null;
+  ml_item_ids?: string[] | null;
   products?: { name: string | null; sku: string | null; cost_price: number | null; keywords: string[] | null } | null;
 }
 
@@ -304,6 +326,7 @@ export default function Metricas() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [visitsTotal, setVisitsTotal] = useState<number | null>(null);
+  const [visitsError, setVisitsError] = useState<string | null>(null);
   const [visitsLoading, setVisitsLoading] = useState(false);
   const [ads, setAds] = useState<LocalAd[]>([]);
   const [adsLoading, setAdsLoading] = useState(true);
@@ -346,6 +369,10 @@ export default function Metricas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, period, customFrom, customTo, refreshTick]);
 
+  useEffect(() => {
+    setAdVisitsMap({});
+  }, [period, customFrom, customTo, refreshTick]);
+
   async function loadOrders() {
     if (!token) return;
     setOrdersLoading(true);
@@ -366,22 +393,15 @@ export default function Metricas() {
   async function loadVisits() {
     if (!token) return;
     setVisitsLoading(true);
+    setVisitsError(null);
     try {
       const from = startOfPeriod(period, customFrom).toISOString();
       const to = endOfPeriod(period, customTo).toISOString();
       const data = await m.getVisitsTrend(token.user_id, from, to);
-      // ML /users/{id}/items_visits returns: [{ date, total }, ...] OR { total_visits, results: [...] }
-      let total = 0;
-      if (Array.isArray(data)) {
-        total = data.reduce((sum: number, d: any) => sum + (Number(d?.total) || 0), 0);
-      } else if (Array.isArray(data?.results)) {
-        total = data.results.reduce((sum: number, d: any) => sum + (Number(d?.total ?? d?.visits) || 0), 0);
-      } else {
-        total = Number(data?.total_visits ?? data?.total ?? 0) || 0;
-      }
-      setVisitsTotal(total > 0 ? total : null);
-    } catch {
+      setVisitsTotal(parseVisitTotal(data));
+    } catch (e: any) {
       setVisitsTotal(null);
+      setVisitsError(e?.message || "Falha ao carregar visitas do Mercado Livre");
     } finally {
       setVisitsLoading(false);
     }
