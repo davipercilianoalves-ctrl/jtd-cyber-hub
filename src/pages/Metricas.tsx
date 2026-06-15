@@ -629,12 +629,13 @@ export default function Metricas() {
             {([
               { id: "OVERVIEW", label: "Visão Geral" },
               { id: "BY_AD", label: "Por Anúncio" },
+              { id: "PRODUCT", label: "Por Produto" },
             ] as const).map((t) => {
               const active = tab === t.id;
               return (
                 <button
                   key={t.id}
-                  onClick={() => { setTab(t.id as Tab); if (t.id === "OVERVIEW") setSelectedAdId(null); }}
+                  onClick={() => { setTab(t.id as Tab); if (t.id !== "BY_AD") setSelectedAdId(null); }}
                   className={`pb-3 -mb-px text-sm transition-colors ${
                     active
                       ? "text-foreground font-semibold border-b-2 border-primary"
