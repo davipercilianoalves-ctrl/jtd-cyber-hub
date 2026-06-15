@@ -58,10 +58,10 @@ function PillButton({ active, onClick, children, disabled }: { active?: boolean;
     <button
       disabled={disabled}
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-xs font-mono uppercase tracking-wider transition-colors ${
+      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
         active
-          ? "bg-[color:var(--cyan)]/15 border-[color:var(--cyan)]/50 text-[color:var(--cyan)]"
-          : "border-border text-muted-foreground hover:border-[color:var(--cyan)]/40 hover:text-foreground"
+          ? "bg-primary/10 border-primary/40 text-primary"
+          : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
       } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
     >
       {children}
@@ -72,26 +72,30 @@ function PillButton({ active, onClick, children, disabled }: { active?: boolean;
 function MetricCard({
   label,
   value,
-  icon,
   loading,
-  valueClass = "text-foreground",
+  highlight = false,
+  delta,
 }: {
   label: string;
   value: string | number | null;
-  icon: React.ReactNode;
   loading?: boolean;
-  valueClass?: string;
+  highlight?: boolean;
+  delta?: { value: number; positive: boolean } | null;
 }) {
   return (
-    <div className="jtd-glass p-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</span>
-        <div className="opacity-80">{icon}</div>
-      </div>
+    <div className="bg-card border border-border rounded-xl p-5 transition-colors hover:border-border/80">
+      <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</div>
       {loading ? (
-        <Skeleton className="h-7 w-24" />
+        <Skeleton className="h-8 w-28 mt-2" />
       ) : (
-        <div className={`text-2xl font-bold ${valueClass}`}>{value ?? "—"}</div>
+        <div className={`text-3xl font-bold mt-1 tabular-nums ${highlight ? "text-primary" : "text-foreground"}`}>
+          {value ?? "—"}
+        </div>
+      )}
+      {delta && !loading && (
+        <div className={`text-xs mt-1 font-medium ${delta.positive ? "text-emerald-500" : "text-red-500"}`}>
+          {delta.positive ? "↑" : "↓"} {Math.abs(delta.value).toFixed(1)}%
+        </div>
       )}
     </div>
   );
@@ -100,34 +104,85 @@ function MetricCard({
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-border/60 bg-background/90 backdrop-blur px-3 py-2 text-xs">
-      <div className="text-muted-foreground">{label}</div>
-      <div className="text-[color:var(--cyan)] font-bold">{BRL(Number(payload[0].value))}</div>
+    <div className="rounded-lg border border-border bg-card shadow-lg px-3 py-2 text-xs">
+      <div className="text-muted-foreground mb-0.5">{label}</div>
+      <div className="text-primary font-semibold tabular-nums">{BRL(Number(payload[0].value))}</div>
     </div>
   );
 }
 
 function SalesChart({ data, loading }: { data: Array<{ date: string; total: number }>; loading?: boolean }) {
-  if (loading) return <Skeleton className="h-[260px] w-full" />;
+  if (loading) return <Skeleton className="h-[220px] w-full" />;
   if (!data.length) {
     return (
-      <div className="h-[260px] flex items-center justify-center text-sm text-muted-foreground">
+      <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">
         Sem dados no período
       </div>
     );
   }
   return (
-    <div className="h-[260px] w-full">
+    <div className="h-[220px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="hsl(var(--foreground) / 0.08)" vertical={false} />
+        <AreaChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="salesArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
           <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
           <YAxis tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickFormatter={(v) => `R$${Math.round(Number(v))}`} />
-          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(0,255,255,0.2)" }} />
-          <Line type="monotone" dataKey="total" stroke="#00FFFF" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#00FFFF" }} />
-        </LineChart>
+          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "hsl(var(--primary) / 0.3)" }} />
+          <Area
+            type="monotone"
+            dataKey="total"
+            stroke="hsl(var(--primary))"
+            strokeWidth={1.5}
+            fill="url(#salesArea)"
+            dot={false}
+            activeDot={{ r: 3, fill: "hsl(var(--primary))" }}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
+  );
+}
+
+function FunnelShape({ stages }: { stages: Array<{ label: string; value: number; amount?: string }> }) {
+  const W = 800;
+  const H = 160;
+  const maxVal = stages[0]?.value || 1;
+  const heights = stages.map((s) => Math.max(0.08, (s.value || 0) / maxVal) * H);
+  const segW = W / stages.length;
+
+  const topPoints = stages.map((_, i) => ({ x: i * segW, y: (H - heights[i]) / 2 }));
+  topPoints.push({ x: W, y: (H - heights[stages.length - 1]) / 2 });
+  const botPoints = stages.map((_, i) => ({ x: i * segW, y: H - (H - heights[i]) / 2 }));
+  botPoints.push({ x: W, y: H - (H - heights[stages.length - 1]) / 2 });
+
+  let path = `M ${topPoints[0].x} ${topPoints[0].y}`;
+  for (let i = 0; i < topPoints.length - 1; i++) {
+    const cp = (topPoints[i].x + topPoints[i + 1].x) / 2;
+    path += ` C ${cp} ${topPoints[i].y} ${cp} ${topPoints[i + 1].y} ${topPoints[i + 1].x} ${topPoints[i + 1].y}`;
+  }
+  path += ` L ${botPoints[botPoints.length - 1].x} ${botPoints[botPoints.length - 1].y}`;
+  for (let i = botPoints.length - 1; i > 0; i--) {
+    const cp = (botPoints[i].x + botPoints[i - 1].x) / 2;
+    path += ` C ${cp} ${botPoints[i].y} ${cp} ${botPoints[i - 1].y} ${botPoints[i - 1].x} ${botPoints[i - 1].y}`;
+  }
+  path += " Z";
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 160 }} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="funnelFill" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.25" />
+        </linearGradient>
+      </defs>
+      <path d={path} fill="url(#funnelFill)" />
+    </svg>
   );
 }
 
@@ -135,121 +190,49 @@ function Funnel({ visits, cartAttempts, sales, salesValue, cartValue, stages = 3
   visits: number; cartAttempts: number; sales: number; salesValue: number; cartValue: number; stages?: 2 | 3;
 }) {
   const noData = visits === 0;
-  const H = 120;
+  const isTwo = stages === 2;
 
-  if (stages === 2) {
-    const conv = visits > 0 ? ((sales / visits) * 100).toFixed(1) : "0.0";
-    const max = Math.max(visits, 1);
-    const w1 = 100;
-    const w2 = Math.max(10, (sales / max) * 100);
-
-    function trap(x1: number, x2: number, l: number, r: number) {
-      const yT1 = (H - (H * l) / 100) / 2;
-      const yB1 = H - yT1;
-      const yT2 = (H - (H * r) / 100) / 2;
-      const yB2 = H - yT2;
-      return <polygon points={`${x1},${yT1} ${x2},${yT2} ${x2},${yB2} ${x1},${yB1}`} fill="url(#funnelGrad)" />;
-    }
-
-    return (
-      <div className="space-y-3">
-        {noData && (
-          <div className="flex items-center gap-2 text-xs text-yellow-500/80">
-            <AlertTriangle size={14} /> Dados de visitas indisponíveis via API
-          </div>
-        )}
-        <div className="w-full overflow-hidden">
-          <svg viewBox="0 0 800 140" className="w-full h-auto">
-            <defs>
-              <linearGradient id="funnelGrad" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#00FFFF" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#BFFF00" stopOpacity="0.9" />
-              </linearGradient>
-            </defs>
-            {trap(0, 780, w1, w2)}
-            <g>
-              <rect x={390 - 32} y="125" width="64" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
-              <text x={390} y="135" textAnchor="middle" fontSize="10" fill="#00FFFF" fontFamily="monospace">{conv}%</text>
-            </g>
-          </svg>
-        </div>
-        <div className="grid grid-cols-2 gap-3 text-center">
-          <div>
-            <div className="text-[10px] font-mono uppercase text-muted-foreground">Visitas Únicas</div>
-            <div className="text-lg font-bold text-[color:var(--cyan)]">{noData ? "—" : visits.toLocaleString("pt-BR")}</div>
-          </div>
-          <div>
-            <div className="text-[10px] font-mono uppercase text-muted-foreground">Vendas</div>
-            <div className="text-lg font-bold text-[color:var(--lime)]">{sales.toLocaleString("pt-BR")}</div>
-            <div className="text-[10px] text-muted-foreground">{BRL(salesValue)}</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const v2c = visits > 0 ? ((cartAttempts / visits) * 100).toFixed(1) : "0.0";
-  const c2s = cartAttempts > 0 ? ((sales / cartAttempts) * 100).toFixed(1) : "0.0";
-
-  const max = Math.max(visits, 1);
-  const w1 = 100;
-  const w2 = Math.max(20, (cartAttempts / max) * 100);
-  const w3 = Math.max(10, (sales / max) * 100);
-  const cx1 = 0, cx2 = 260, cx3 = 520, cx4 = 780;
-
-  function trapezoid(x1: number, x2: number, leftPct: number, rightPct: number, color: string) {
-    const yTop1 = (H - (H * leftPct) / 100) / 2;
-    const yBot1 = H - yTop1;
-    const yTop2 = (H - (H * rightPct) / 100) / 2;
-    const yBot2 = H - yTop2;
-    return <polygon points={`${x1},${yTop1} ${x2},${yTop2} ${x2},${yBot2} ${x1},${yBot1}`} fill={color} />;
-  }
+  const items = isTwo
+    ? [
+        { label: "Visitas Únicas", value: visits, amount: undefined as string | undefined },
+        { label: "Vendas", value: sales, amount: BRL(salesValue) },
+      ]
+    : [
+        { label: "Visitas Únicas", value: visits, amount: undefined as string | undefined },
+        { label: "Intenção de Compra", value: cartAttempts, amount: BRL(cartValue) },
+        { label: "Vendas", value: sales, amount: BRL(salesValue) },
+      ];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {noData && (
         <div className="flex items-center gap-2 text-xs text-yellow-500/80">
           <AlertTriangle size={14} /> Dados de visitas indisponíveis via API
         </div>
       )}
-      <div className="w-full overflow-hidden">
-        <svg viewBox="0 0 800 140" className="w-full h-auto">
-          <defs>
-            <linearGradient id="funnelGrad" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stopColor="#00FFFF" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#BFFF00" stopOpacity="0.9" />
-            </linearGradient>
-          </defs>
-          {trapezoid(cx1, cx2, w1, w2, "url(#funnelGrad)")}
-          {trapezoid(cx2, cx3, w2, w3, "url(#funnelGrad)")}
-          {trapezoid(cx3, cx4, w3, Math.max(8, w3 * 0.85), "url(#funnelGrad)")}
-          <g>
-            <rect x={cx2 - 30} y="125" width="60" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
-            <text x={cx2} y="135" textAnchor="middle" fontSize="10" fill="#00FFFF" fontFamily="monospace">{v2c}%</text>
-            <rect x={cx3 - 30} y="125" width="60" height="14" rx="7" fill="hsl(var(--background))" stroke="hsl(var(--primary) / 0.4)" />
-            <text x={cx3} y="135" textAnchor="middle" fontSize="10" fill="#BFFF00" fontFamily="monospace">{c2s}%</text>
-          </g>
-        </svg>
-      </div>
-      <div className="grid grid-cols-3 gap-3 text-center">
-        <div>
-          <div className="text-[10px] font-mono uppercase text-muted-foreground">Visitas Únicas</div>
-          <div className="text-lg font-bold text-[color:var(--cyan)]">{noData ? "—" : visits.toLocaleString("pt-BR")}</div>
-        </div>
-        <div>
-          <div className="text-[10px] font-mono uppercase text-muted-foreground">Intenção de Compra</div>
-          <div className="text-lg font-bold text-foreground">{noData ? "—" : cartAttempts.toLocaleString("pt-BR")}</div>
-          <div className="text-[10px] text-muted-foreground">{noData ? "" : BRL(cartValue)}</div>
-        </div>
-        <div>
-          <div className="text-[10px] font-mono uppercase text-muted-foreground">Vendas</div>
-          <div className="text-lg font-bold text-[color:var(--lime)]">{sales.toLocaleString("pt-BR")}</div>
-          <div className="text-[10px] text-muted-foreground">{BRL(salesValue)}</div>
-        </div>
+      <FunnelShape stages={items} />
+      <div className={`grid ${isTwo ? "grid-cols-2" : "grid-cols-3"} gap-3 text-center`}>
+        {items.map((it, i) => {
+          const prev = i > 0 ? items[i - 1].value : 0;
+          const pct = i > 0 && prev > 0 ? ((it.value / prev) * 100).toFixed(1) : null;
+          return (
+            <div key={it.label}>
+              <div className="text-[11px] text-muted-foreground uppercase tracking-wider">{it.label}</div>
+              <div className="text-xl font-bold text-foreground tabular-nums mt-0.5">
+                {noData && i === 0 ? "—" : it.value.toLocaleString("pt-BR")}
+              </div>
+              {it.amount && <div className="text-xs text-muted-foreground tabular-nums">{it.amount}</div>}
+              {pct && (
+                <div className="text-[11px] text-primary mt-0.5">{pct}% do anterior</div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
+
 
 // ============= Tipos =============
 
