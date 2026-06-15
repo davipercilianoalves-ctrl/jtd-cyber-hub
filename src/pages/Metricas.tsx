@@ -675,18 +675,19 @@ function OverviewView({
     <>
       {/* SEÇÃO 1 — Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Vendas Brutas" value={BRL(overview.grossSales)} icon={<DollarSign className="text-[color:var(--cyan)]" size={18} />} loading={ordersLoading} valueClass="text-[color:var(--cyan)]" />
-        <MetricCard label="Vendas Concluídas" value={BRL(overview.paidSales)} icon={<CheckCircle2 className="text-[color:var(--lime)]" size={18} />} loading={ordersLoading} valueClass="text-[color:var(--lime)]" />
-        <MetricCard label="Unidades Vendidas" value={overview.units} icon={<Package className="text-pink-400" size={18} />} loading={ordersLoading} valueClass="text-pink-400" />
-        <MetricCard label="Preço Médio / Un." value={BRL(overview.avgUnit)} icon={<TrendingUp size={18} />} loading={ordersLoading} />
-        <MetricCard label="Visitas Únicas" value={visitsTotal ?? "—"} icon={<Eye className="text-[color:var(--cyan)]" size={18} />} loading={visitsLoading} valueClass="text-[color:var(--cyan)]" />
-        <MetricCard label="Total de Visitas" value={visitsTotal ?? "—"} icon={<Eye className="text-muted-foreground" size={18} />} loading={visitsLoading} />
-        <MetricCard label="Compradores Únicos" value={overview.buyers} icon={<Users className="text-pink-400" size={18} />} loading={ordersLoading} valueClass="text-pink-400" />
+        <MetricCard label="Vendas Brutas" value={BRL(overview.grossSales)} loading={ordersLoading} />
+        <MetricCard label="Vendas Concluídas" value={BRL(overview.paidSales)} loading={ordersLoading} />
+        <MetricCard label="Unidades Vendidas" value={overview.units} loading={ordersLoading} />
+        <MetricCard label="Preço Médio / Un." value={BRL(overview.avgUnit)} loading={ordersLoading} />
+        <MetricCard label="Visitas Únicas" value={visitsTotal ?? "—"} loading={visitsLoading} />
+        <MetricCard label="Total de Visitas" value={visitsTotal ?? "—"} loading={visitsLoading} />
+        <MetricCard label="Compradores Únicos" value={overview.buyers} loading={ordersLoading} />
         <div title="Vendas ÷ Visitas Únicas">
-          <MetricCard label="Conversão da Conta" value={conv != null ? `${conv.toFixed(1)}%` : "—"} icon={<Percent className="text-[color:var(--lime)]" size={18} />} loading={visitsLoading} valueClass="text-[color:var(--lime)]" />
+          <MetricCard label="Conversão da Conta" value={conv != null ? `${conv.toFixed(1)}%` : "—"} loading={visitsLoading} highlight />
         </div>
       </div>
-      <p className="text-[10px] text-muted-foreground italic -mt-2">* Dados de visitas agregados da conta via API do ML</p>
+      <p className="text-[11px] text-muted-foreground -mt-2">* Dados de visitas agregados da conta via API do ML</p>
+
 
       {/* SEÇÃO 2 — Gráfico */}
       <div className="jtd-glass p-6">
