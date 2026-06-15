@@ -1,6 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export function useMetricas() {
+  function toMlDate(value: string, clampToToday = false) {
+    const date = value.slice(0, 10);
+    if (!clampToToday) return date;
+
+    const today = new Date().toISOString().slice(0, 10);
+    return date > today ? today : date;
+  }
+
   async function callML(endpoint: string) {
     const { data, error } = await supabase.functions.invoke('ml-proxy', {
       body: { endpoint }
@@ -49,10 +57,10 @@ export function useMetricas() {
 
   // Busca tendências de visitas da conta
   async function getVisitsTrend(userId: string, from: string, to: string) {
-    // ML exige YYYY-MM-DD nesse endpoint (não aceita ISO completo com Z)
-    const fromDate = from.slice(0, 10);
-    const toDate = to.slice(0, 10);
-    return callML(`/users/${userId}/items_visits?date_from=${fromDate}&date_to=${toDate}`);
+    // ML exige YYYY-MM-DD e rejeita date_to no futuro nesse endpoint.
+    const fromDate = toMlDate(from);
+    const toDate = toMlDate(to, true);
+    return callML(`/users/${userId}/items_visits?date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`);
   }
 
   // Busca métricas de um anúncio específico
