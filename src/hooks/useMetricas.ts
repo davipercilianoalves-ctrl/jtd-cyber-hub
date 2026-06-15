@@ -23,14 +23,16 @@ export function useMetricas() {
   
   // Busca visitas de um item específico
   async function getItemVisits(itemId: string, from?: string, to?: string) {
-    const dateQuery = from && to ? `&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}` : '';
+    const dateQuery = from && to ? `&date_from=${encodeURIComponent(toMlDate(from))}&date_to=${encodeURIComponent(toMlDate(to, true))}` : '';
     return callML(`/items/visits?ids=${encodeURIComponent(itemId)}${dateQuery}`);
   }
 
   async function getItemsVisits(itemIds: string[], from: string, to: string) {
     if (!itemIds.length) return [];
     const ids = itemIds.slice(0, 20).map((id) => encodeURIComponent(id)).join(',');
-    return callML(`/items/visits?ids=${ids}&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`);
+    const fromDate = toMlDate(from);
+    const toDate = toMlDate(to, true);
+    return callML(`/items/visits?ids=${ids}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`);
   }
 
   // Busca todos os anúncios ativos do vendedor
@@ -65,8 +67,10 @@ export function useMetricas() {
 
   // Busca métricas de um anúncio específico
   async function getItemMetrics(itemId: string, from: string, to: string) {
+    const fromDate = toMlDate(from);
+    const toDate = toMlDate(to, true);
     const [visits, orders] = await Promise.allSettled([
-      callML(`/items/visits?ids=${encodeURIComponent(itemId)}&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`),
+      callML(`/items/visits?ids=${encodeURIComponent(itemId)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`),
       callML(`/orders/search?item.id=${encodeURIComponent(itemId)}&sort=date_desc&order.date_created.from=${encodeURIComponent(from)}&order.date_created.to=${encodeURIComponent(to)}&limit=50`)
     ]);
 
