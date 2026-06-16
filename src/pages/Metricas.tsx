@@ -145,11 +145,15 @@ function buildSeries(
   return out;
 }
 
+type Tab = "OVERVIEW" | "BY_AD" | "COSTS";
+
 export default function Metricas() {
   const m = useMetricas();
   const [period, setPeriod] = useState<MetricsPeriod>("30D");
   const [token, setToken] = useState<any>(null);
   const [tokenLoading, setTokenLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>("OVERVIEW");
+  const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
 
   const [orders, setOrders] = useState<MlOrder[]>([]);
   const [prevOrders, setPrevOrders] = useState<MlOrder[]>([]);
