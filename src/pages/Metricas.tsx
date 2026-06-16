@@ -395,12 +395,27 @@ export default function Metricas() {
     return map;
   }, [orders]);
 
-  // Cost breakdown rows
+  // Titles from current-period orders (fallback when ML catalog doesn't include the item)
+  const titlesFromOrders = useMemo(() => {
+    const map = new Map<string, string>();
+    orders.forEach((o) => {
+      (o.order_items || []).forEach((it) => {
+        if (it.item?.id && it.item?.title) map.set(it.item.id, it.item.title);
+      });
+    });
+    return map;
+  }, [orders]);
+
+  // Cost breakdown rows — local ads first, then ML-only items (no local pricing)
   const adCostRows: AdCostRow[] = useMemo(() => {
-    return localAds.map((a: any) => {
+    const coveredIds = new Set<string>();
+    const rows: AdCostRow[] = [];
+
+    localAds.forEach((a: any) => {
       const ids: string[] = Array.from(
         new Set([a.ml_item_id, ...(Array.isArray(a.ml_item_ids) ? a.ml_item_ids : [])].filter(Boolean))
       );
+      ids.forEach((id) => coveredIds.add(id));
       let unitsSold = 0;
       let revenue = 0;
       ids.forEach((id) => {
@@ -426,12 +441,15 @@ export default function Metricas() {
       const totalCost = totalProductCost + totalFee + totalShipping + totalPackaging + totalTransport + totalTax;
       const grossProfit = revenue - totalCost;
       const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
-      const title = (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || "Anúncio";
-      return {
+      const fallbackId = ids[0] || null;
+      const mlTitle = fallbackId ? mlItems.get(fallbackId)?.title : null;
+      const title =
+        (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || mlTitle || "Anúncio";
+      rows.push({
         adId: a.id,
-        mlItemId: ids[0] || null,
+        mlItemId: fallbackId,
         title,
-        sku: a.products?.sku || null,
+        sku: a.products?.sku || (fallbackId ? mlItems.get(fallbackId)?.sku || null : null),
         unitsSold,
         revenue,
         unitCost,
@@ -440,7 +458,7 @@ export default function Metricas() {
         packagingCost: packaging,
         transportCost: transport,
         tax,
-        finalPrice,
+        finalPrice: finalPrice || (fallbackId ? mlItems.get(fallbackId)?.price || 0 : 0),
         totalProductCost,
         totalFee,
         totalShipping,
@@ -450,9 +468,54 @@ export default function Metricas() {
         totalCost,
         grossProfit,
         margin,
-      };
+      });
     });
-  }, [localAds, unitsByItem]);
+
+    // ML-only items: from ML catalog OR from sold orders not yet covered
+    const extraIds = new Set<string>();
+    mlItems.forEach((_v, id) => {
+      if (!coveredIds.has(id)) extraIds.add(id);
+    });
+    unitsByItem.forEach((_v, id) => {
+      if (!coveredIds.has(id)) extraIds.add(id);
+    });
+
+    extraIds.forEach((id) => {
+      const sold = unitsByItem.get(id);
+      const info = mlItems.get(id);
+      const unitsSold = sold?.units || 0;
+      const revenue = sold?.revenue || 0;
+      const finalPrice = info?.price ?? (unitsSold > 0 ? revenue / unitsSold : 0);
+      const title = info?.title || titlesFromOrders.get(id) || id;
+      rows.push({
+        adId: `ml:${id}`,
+        mlItemId: id,
+        title,
+        sku: info?.sku || null,
+        unitsSold,
+        revenue,
+        unitCost: 0,
+        marketplaceFee: 0,
+        shippingCost: 0,
+        packagingCost: 0,
+        transportCost: 0,
+        tax: 0,
+        finalPrice,
+        totalProductCost: 0,
+        totalFee: 0,
+        totalShipping: 0,
+        totalPackaging: 0,
+        totalTransport: 0,
+        totalTax: 0,
+        totalCost: 0,
+        grossProfit: revenue,
+        margin: revenue > 0 ? 100 : 0,
+      });
+    });
+
+    return rows;
+  }, [localAds, unitsByItem, mlItems, titlesFromOrders]);
+
 
   // Composition aggregates
   const composition = useMemo(() => {
