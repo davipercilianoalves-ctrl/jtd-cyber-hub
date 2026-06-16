@@ -29,6 +29,9 @@ import { CostCompositionCard } from "@/components/metricas/CostCompositionCard";
 import { PriceSyncCard } from "@/components/metricas/PriceSyncCard";
 import { YearlySalesChart } from "@/components/metricas/YearlySalesChart";
 import { TopProductsSeasonality } from "@/components/metricas/TopProductsSeasonality";
+import { AdDetailView } from "@/components/metricas/AdDetailView";
+import { CostsRevenueView } from "@/components/metricas/CostsRevenueView";
+import { cn } from "@/lib/utils";
 import type { AdCostRow, PriceSyncRow, MonthlySalesPoint, TopProductRow } from "@/components/metricas/types";
 
 
