@@ -89,6 +89,7 @@ export function AdCostBreakdownTable({ rows, onSelect }: Props) {
                   <SortableTh label="Custo Total" active={sortKey === "totalCost"} dir={sortDir} onClick={() => toggleSort("totalCost")} />
                   <SortableTh label="Lucro" active={sortKey === "grossProfit"} dir={sortDir} onClick={() => toggleSort("grossProfit")} />
                   <SortableTh label="Margem" active={sortKey === "margin"} dir={sortDir} onClick={() => toggleSort("margin")} />
+                  {onSelect && <th className="w-10 px-2 py-3" />}
                 </tr>
               </thead>
               <tbody>
