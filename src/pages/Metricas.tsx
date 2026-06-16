@@ -165,6 +165,7 @@ export default function Metricas() {
   // Novos blocos
   const [localAds, setLocalAds] = useState<any[]>([]);
   const [mlPrices, setMlPrices] = useState<Map<string, { price: number | null }>>(new Map());
+  const [mlItems, setMlItems] = useState<Map<string, { title: string; price: number | null; sku: string | null }>>(new Map());
   const [yearOrders, setYearOrders] = useState<{ current: MlOrder[]; previous: MlOrder[] }>({ current: [], previous: [] });
   const [yearLoading, setYearLoading] = useState(false);
 
