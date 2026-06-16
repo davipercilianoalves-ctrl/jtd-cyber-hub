@@ -211,7 +211,7 @@ export default function Metricas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, period, tick]);
 
-  // Load local ads + ML prices once per token/tick
+  // Load local ads + ML seller items (titles + prices)
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
@@ -219,26 +219,66 @@ export default function Metricas() {
       const ads = await m.getLocalAds().catch(() => []);
       if (cancelled) return;
       setLocalAds(ads);
-      const ids = Array.from(
-        new Set(
-          ads
-            .flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || []))
-            .filter(Boolean)
-        )
-      ) as string[];
-      if (ids.length === 0) {
-        setMlPrices(new Map());
+
+      // 1) IDs known from local ads
+      const localIds = ads
+        .flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || []))
+        .filter(Boolean) as string[];
+
+      // 2) IDs from seller's ML catalog
+      let sellerIds: string[] = [];
+      try {
+        const res = await m.getSellerItems(token.user_id);
+        sellerIds = (res?.results || []) as string[];
+      } catch {
+        sellerIds = [];
+      }
+
+      const allIds = Array.from(new Set([...localIds, ...sellerIds].filter(Boolean)));
+      if (allIds.length === 0) {
+        if (!cancelled) {
+          setMlPrices(new Map());
+          setMlItems(new Map());
+        }
         return;
       }
-      const prices = await m.getMlPricesForItems(ids).catch(() => new Map());
+
+      // Fetch item details (title + price + sku) in chunks of 20
+      const chunks: string[][] = [];
+      for (let i = 0; i < allIds.length; i += 20) chunks.push(allIds.slice(i, i + 20));
+      const results = await Promise.allSettled(chunks.map((c) => m.getItemsDetails(c)));
       if (cancelled) return;
-      setMlPrices(prices);
+
+      const itemsMap = new Map<string, { title: string; price: number | null; sku: string | null }>();
+      const pricesMap = new Map<string, { price: number | null }>();
+      results.forEach((r) => {
+        if (r.status !== "fulfilled") return;
+        const arr = Array.isArray(r.value) ? r.value : [];
+        arr.forEach((entry: any) => {
+          const body = entry?.body || entry;
+          const id = body?.id || entry?.code;
+          if (!id) return;
+          const price = typeof body?.price === "number" ? body.price : null;
+          const title = body?.title || id;
+          const sku =
+            body?.seller_sku ||
+            body?.seller_custom_field ||
+            body?.attributes?.find?.((x: any) => x.id === "SELLER_SKU")?.value_name ||
+            null;
+          itemsMap.set(id, { title, price, sku });
+          pricesMap.set(id, { price });
+        });
+      });
+      if (cancelled) return;
+      setMlItems(itemsMap);
+      setMlPrices(pricesMap);
     })();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tick]);
+
 
   // Load yearly orders once per token/tick (cached)
   useEffect(() => {
