@@ -69,6 +69,60 @@ export function useMetricas() {
     return callML(`/orders/search?seller=${userId}&sort=date_desc&order.date_created.from=${encodeURIComponent(from)}&order.date_created.to=${encodeURIComponent(to)}&limit=50&offset=${offset}`);
   }
 
+  // Pagina getOrders até esgotar (ou até maxPages)
+  async function getOrdersAllPages(userId: string, from: string, to: string, maxPages = 10) {
+    const all: any[] = [];
+    for (let i = 0; i < maxPages; i++) {
+      const res = await getOrders(userId, from, to, i * 50).catch(() => null);
+      const results = res?.results || [];
+      all.push(...results);
+      if (results.length < 50) break;
+    }
+    return all;
+  }
+
+  // Atalho: pedidos dos últimos 365 dias + 365 do ano anterior
+  async function getYearOrders(userId: string) {
+    const now = new Date();
+    const curTo = new Date(now);
+    const curFrom = new Date(now);
+    curFrom.setDate(curFrom.getDate() - 365);
+    const prevTo = new Date(curFrom);
+    const prevFrom = new Date(prevTo);
+    prevFrom.setDate(prevFrom.getDate() - 365);
+    const [current, previous] = await Promise.all([
+      getOrdersAllPages(userId, curFrom.toISOString(), curTo.toISOString(), 10),
+      getOrdersAllPages(userId, prevFrom.toISOString(), prevTo.toISOString(), 10),
+    ]);
+    return { current, previous };
+  }
+
+  // Busca preços ML de múltiplos itens (chunks de 20)
+  async function getMlPricesForItems(itemIds: string[]) {
+    const map = new Map<string, { price: number | null; status?: string; available_quantity?: number }>();
+    if (!itemIds.length) return map;
+    const unique = Array.from(new Set(itemIds.filter(Boolean)));
+    const chunks: string[][] = [];
+    for (let i = 0; i < unique.length; i += 20) chunks.push(unique.slice(i, i + 20));
+    const results = await Promise.allSettled(chunks.map((c) => getItemsDetails(c)));
+    results.forEach((r) => {
+      if (r.status !== "fulfilled") return;
+      const arr = Array.isArray(r.value) ? r.value : [];
+      arr.forEach((entry: any) => {
+        const body = entry?.body || entry;
+        const id = body?.id || entry?.code;
+        if (!id) return;
+        map.set(id, {
+          price: typeof body?.price === "number" ? body.price : null,
+          status: body?.status,
+          available_quantity: body?.available_quantity,
+        });
+      });
+    });
+    return map;
+  }
+
+
   // Busca tendências de visitas da conta
   async function getVisitsTrend(userId: string, from: string, to: string) {
     // ML exige YYYY-MM-DD e rejeita date_to no futuro nesse endpoint.
@@ -137,6 +191,9 @@ export function useMetricas() {
     getSellerItems,
     getItemsDetails,
     getOrders,
+    getOrdersAllPages,
+    getYearOrders,
+    getMlPricesForItems,
     getVisitsTrend,
     getItemMetrics,
     calcFunil,
@@ -145,3 +202,4 @@ export function useMetricas() {
     cachedCall
   };
 }
+

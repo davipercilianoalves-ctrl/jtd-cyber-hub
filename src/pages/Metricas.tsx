@@ -24,6 +24,14 @@ import { FunnelHeroCard } from "@/components/metricas/FunnelHeroCard";
 import { InteractiveLineChart, type InteractiveMetric } from "@/components/metricas/InteractiveLineChart";
 import { MultiSeriesChart } from "@/components/metricas/MultiSeriesChart";
 import { ContextStatCard } from "@/components/metricas/ContextStatCard";
+import { AdCostBreakdownTable } from "@/components/metricas/AdCostBreakdownTable";
+import { CostCompositionCard } from "@/components/metricas/CostCompositionCard";
+import { PriceSyncCard } from "@/components/metricas/PriceSyncCard";
+import { YearlySalesChart } from "@/components/metricas/YearlySalesChart";
+import { TopProductsSeasonality } from "@/components/metricas/TopProductsSeasonality";
+import type { AdCostRow, PriceSyncRow, MonthlySalesPoint, TopProductRow } from "@/components/metricas/types";
+
+
 
 const BRL = (n: number) =>
   (Number.isFinite(n) ? n : 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -147,6 +155,13 @@ export default function Metricas() {
   const [loading, setLoading] = useState(false);
   const [tick, setTick] = useState(0);
 
+  // Novos blocos
+  const [localAds, setLocalAds] = useState<any[]>([]);
+  const [mlPrices, setMlPrices] = useState<Map<string, { price: number | null }>>(new Map());
+  const [yearOrders, setYearOrders] = useState<{ current: MlOrder[]; previous: MlOrder[] }>({ current: [], previous: [] });
+  const [yearLoading, setYearLoading] = useState(false);
+
+
   useEffect(() => {
     (async () => {
       setTokenLoading(true);
@@ -187,6 +202,65 @@ export default function Metricas() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, period, tick]);
+
+  // Load local ads + ML prices once per token/tick
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      const ads = await m.getLocalAds().catch(() => []);
+      if (cancelled) return;
+      setLocalAds(ads);
+      const ids = Array.from(
+        new Set(
+          ads
+            .flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || []))
+            .filter(Boolean)
+        )
+      ) as string[];
+      if (ids.length === 0) {
+        setMlPrices(new Map());
+        return;
+      }
+      const prices = await m.getMlPricesForItems(ids).catch(() => new Map());
+      if (cancelled) return;
+      setMlPrices(prices);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, tick]);
+
+  // Load yearly orders once per token/tick (cached)
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      setYearLoading(true);
+      try {
+        const data = await m.cachedCall(
+          `year:${token.user_id}`,
+          () => m.getYearOrders(token.user_id),
+          10 * 60 * 1000
+        );
+        if (cancelled) return;
+        setYearOrders({
+          current: (data.current || []) as MlOrder[],
+          previous: (data.previous || []) as MlOrder[],
+        });
+      } catch {
+        if (!cancelled) setYearOrders({ current: [], previous: [] });
+      } finally {
+        if (!cancelled) setYearLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, tick]);
+
 
   const visitsTotal = useMemo(() => parseVisitTotal(visitsData), [visitsData]);
   const visitsByDay = useMemo(() => parseVisitsByDay(visitsData), [visitsData]);
@@ -256,6 +330,198 @@ export default function Metricas() {
   const conv = visitsTotal > 0 ? (current.orderCount / visitsTotal) * 100 : 0;
   const prevConv = prevVisitsTotal > 0 ? (previous.orderCount / prevVisitsTotal) * 100 : 0;
   const convDelta = prevConv > 0 ? ((conv - prevConv) / prevConv) * 100 : 0;
+
+  // Units sold per ml_item_id in the current period
+  const unitsByItem = useMemo(() => {
+    const map = new Map<string, { units: number; revenue: number }>();
+    orders.forEach((o) => {
+      (o.order_items || []).forEach((it) => {
+        const id = it.item?.id;
+        if (!id) return;
+        const cur = map.get(id) || { units: 0, revenue: 0 };
+        cur.units += Number(it.quantity || 0);
+        cur.revenue += Number(it.quantity || 0) * Number(it.unit_price || 0);
+        map.set(id, cur);
+      });
+    });
+    return map;
+  }, [orders]);
+
+  // Cost breakdown rows
+  const adCostRows: AdCostRow[] = useMemo(() => {
+    return localAds.map((a: any) => {
+      const ids: string[] = Array.from(
+        new Set([a.ml_item_id, ...(Array.isArray(a.ml_item_ids) ? a.ml_item_ids : [])].filter(Boolean))
+      );
+      let unitsSold = 0;
+      let revenue = 0;
+      ids.forEach((id) => {
+        const v = unitsByItem.get(id);
+        if (v) {
+          unitsSold += v.units;
+          revenue += v.revenue;
+        }
+      });
+      const unitCost = Number(a.cost_price || a.products?.cost_price || 0);
+      const fee = Number(a.marketplace_fee || 0);
+      const shipping = Number(a.shipping_cost || 0);
+      const packaging = Number(a.packaging_cost || 0);
+      const transport = Number(a.transport_cost || 0);
+      const tax = Number(a.tax || 0);
+      const finalPrice = Number(a.final_price || 0);
+      const totalProductCost = unitCost * unitsSold;
+      const totalFee = fee * unitsSold;
+      const totalShipping = shipping * unitsSold;
+      const totalPackaging = packaging * unitsSold;
+      const totalTransport = transport * unitsSold;
+      const totalTax = tax * unitsSold;
+      const totalCost = totalProductCost + totalFee + totalShipping + totalPackaging + totalTransport + totalTax;
+      const grossProfit = revenue - totalCost;
+      const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+      const title = (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || "Anúncio";
+      return {
+        adId: a.id,
+        mlItemId: ids[0] || null,
+        title,
+        sku: a.products?.sku || null,
+        unitsSold,
+        revenue,
+        unitCost,
+        marketplaceFee: fee,
+        shippingCost: shipping,
+        packagingCost: packaging,
+        transportCost: transport,
+        tax,
+        finalPrice,
+        totalProductCost,
+        totalFee,
+        totalShipping,
+        totalPackaging,
+        totalTransport,
+        totalTax,
+        totalCost,
+        grossProfit,
+        margin,
+      };
+    });
+  }, [localAds, unitsByItem]);
+
+  // Composition aggregates
+  const composition = useMemo(() => {
+    const sum = (key: keyof AdCostRow) => adCostRows.reduce((s, r) => s + (r[key] as number), 0);
+    const totalRevenue = sum("revenue");
+    return {
+      revenue: totalRevenue,
+      slices: [
+        { label: "Custo do Produto", value: sum("totalProductCost"), color: COLOR_PRIMARY },
+        { label: "Taxa Mercado Livre", value: sum("totalFee"), color: COLOR_MAGENTA },
+        { label: "Frete", value: sum("totalShipping"), color: COLOR_CYAN },
+        { label: "Embalagem", value: sum("totalPackaging"), color: COLOR_AMBER },
+        { label: "Transporte", value: sum("totalTransport"), color: "#8B5CF6" },
+        { label: "Imposto", value: sum("totalTax"), color: "#F43F5E" },
+      ],
+    };
+  }, [adCostRows]);
+
+  // Price sync rows
+  const priceSyncRows: PriceSyncRow[] = useMemo(() => {
+    const out: PriceSyncRow[] = [];
+    localAds.forEach((a: any) => {
+      const ids: string[] = Array.from(
+        new Set([a.ml_item_id, ...(Array.isArray(a.ml_item_ids) ? a.ml_item_ids : [])].filter(Boolean))
+      );
+      if (ids.length === 0) return;
+      const title = (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || "Anúncio";
+      const appPrice = Number(a.final_price || 0);
+      ids.forEach((id) => {
+        const ml = mlPrices.get(id);
+        const mlPrice = ml?.price ?? null;
+        const diff = mlPrice !== null ? mlPrice - appPrice : 0;
+        const diffPct = mlPrice !== null && appPrice > 0 ? (diff / appPrice) * 100 : 0;
+        let status: PriceSyncRow["status"] = "missing";
+        if (mlPrice !== null) {
+          const abs = Math.abs(diffPct);
+          status = abs < 1 ? "ok" : abs <= 5 ? "warn" : "alert";
+        }
+        out.push({ adId: `${a.id}:${id}`, mlItemId: id, title, appPrice, mlPrice, diff, diffPct, status });
+      });
+    });
+    return out;
+  }, [localAds, mlPrices]);
+
+  // Monthly sales (last 12 months current vs previous year)
+  const monthlySales: MonthlySalesPoint[] = useMemo(() => {
+    const monthsLabel = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const now = new Date();
+    const buckets: MonthlySalesPoint[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      buckets.push({
+        month: monthsLabel[d.getMonth()],
+        monthKey: key,
+        current: 0,
+        previous: 0,
+        orders: 0,
+        units: 0,
+      });
+    }
+    const idx = new Map(buckets.map((b, i) => [b.monthKey, i]));
+    yearOrders.current.forEach((o: any) => {
+      const dStr = (o.date_created || o.date_closed || "").slice(0, 7);
+      const i = idx.get(dStr);
+      if (i === undefined) return;
+      buckets[i].current += Number(o.total_amount || 0);
+      buckets[i].orders += 1;
+      (o.order_items || []).forEach((it: any) => {
+        buckets[i].units += Number(it.quantity || 0);
+      });
+    });
+    yearOrders.previous.forEach((o: any) => {
+      const d = new Date(o.date_created || o.date_closed || 0);
+      if (!d.getTime()) return;
+      // shift by +12 months to align with current period bucket
+      const aligned = new Date(d.getFullYear() + 1, d.getMonth(), 1);
+      const key = `${aligned.getFullYear()}-${String(aligned.getMonth() + 1).padStart(2, "0")}`;
+      const i = idx.get(key);
+      if (i === undefined) return;
+      buckets[i].previous += Number(o.total_amount || 0);
+    });
+    return buckets;
+  }, [yearOrders]);
+
+  // Top products with seasonality
+  const topProducts: TopProductRow[] = useMemo(() => {
+    const map = new Map<string, { title: string; units: number; revenue: number; monthly: number[] }>();
+    const monthIdx = new Map(monthlySales.map((b, i) => [b.monthKey, i]));
+    yearOrders.current.forEach((o: any) => {
+      const dStr = (o.date_created || o.date_closed || "").slice(0, 7);
+      const mi = monthIdx.get(dStr);
+      (o.order_items || []).forEach((it: any) => {
+        const id = it.item?.id;
+        if (!id) return;
+        const cur = map.get(id) || { title: it.item?.title || id, units: 0, revenue: 0, monthly: new Array(12).fill(0) };
+        const qty = Number(it.quantity || 0);
+        cur.units += qty;
+        cur.revenue += qty * Number(it.unit_price || 0);
+        if (mi !== undefined) cur.monthly[mi] += qty;
+        if (it.item?.title) cur.title = it.item.title;
+        map.set(id, cur);
+      });
+    });
+    return Array.from(map.entries())
+      .map(([itemId, v]) => ({
+        itemId,
+        title: v.title,
+        units: v.units,
+        revenue: v.revenue,
+        monthly: v.monthly,
+        peakMonth: v.monthly.reduce((bestIdx, val, i, arr) => (val > arr[bestIdx] ? i : bestIdx), 0),
+      }))
+      .sort((a, b) => b.units - a.units)
+      .slice(0, 10);
+  }, [yearOrders, monthlySales]);
+
 
   if (tokenLoading) {
     return (
@@ -424,8 +690,28 @@ export default function Metricas() {
               </div>
             </div>
           )}
+
+          {/* ============ Vendas no ano ============ */}
+          {yearLoading && yearOrders.current.length === 0 ? (
+            <Skeleton className="h-80 w-full" />
+          ) : (
+            <YearlySalesChart data={monthlySales} />
+          )}
+
+          {/* ============ Top produtos & sazonalidade ============ */}
+          <TopProductsSeasonality rows={topProducts} />
+
+          {/* ============ Composição de custos + Preços ML ============ */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <CostCompositionCard revenue={composition.revenue} slices={composition.slices} />
+            <PriceSyncCard rows={priceSyncRows} />
+          </div>
+
+          {/* ============ Custos por anúncio ============ */}
+          <AdCostBreakdownTable rows={adCostRows} />
         </>
       )}
+
     </div>
   );
 }
