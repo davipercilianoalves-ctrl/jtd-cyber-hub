@@ -203,6 +203,65 @@ export default function Metricas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, period, tick]);
 
+  // Load local ads + ML prices once per token/tick
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      const ads = await m.getLocalAds().catch(() => []);
+      if (cancelled) return;
+      setLocalAds(ads);
+      const ids = Array.from(
+        new Set(
+          ads
+            .flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || []))
+            .filter(Boolean)
+        )
+      ) as string[];
+      if (ids.length === 0) {
+        setMlPrices(new Map());
+        return;
+      }
+      const prices = await m.getMlPricesForItems(ids).catch(() => new Map());
+      if (cancelled) return;
+      setMlPrices(prices);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, tick]);
+
+  // Load yearly orders once per token/tick (cached)
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      setYearLoading(true);
+      try {
+        const data = await m.cachedCall(
+          `year:${token.user_id}`,
+          () => m.getYearOrders(token.user_id),
+          10 * 60 * 1000
+        );
+        if (cancelled) return;
+        setYearOrders({
+          current: (data.current || []) as MlOrder[],
+          previous: (data.previous || []) as MlOrder[],
+        });
+      } catch {
+        if (!cancelled) setYearOrders({ current: [], previous: [] });
+      } finally {
+        if (!cancelled) setYearLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, tick]);
+
+
   const visitsTotal = useMemo(() => parseVisitTotal(visitsData), [visitsData]);
   const visitsByDay = useMemo(() => parseVisitsByDay(visitsData), [visitsData]);
 
