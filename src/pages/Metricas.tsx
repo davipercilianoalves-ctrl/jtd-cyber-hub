@@ -690,8 +690,28 @@ export default function Metricas() {
               </div>
             </div>
           )}
+
+          {/* ============ Vendas no ano ============ */}
+          {yearLoading && yearOrders.current.length === 0 ? (
+            <Skeleton className="h-80 w-full" />
+          ) : (
+            <YearlySalesChart data={monthlySales} />
+          )}
+
+          {/* ============ Top produtos & sazonalidade ============ */}
+          <TopProductsSeasonality rows={topProducts} />
+
+          {/* ============ Composição de custos + Preços ML ============ */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <CostCompositionCard revenue={composition.revenue} slices={composition.slices} />
+            <PriceSyncCard rows={priceSyncRows} />
+          </div>
+
+          {/* ============ Custos por anúncio ============ */}
+          <AdCostBreakdownTable rows={adCostRows} />
         </>
       )}
+
     </div>
   );
 }
