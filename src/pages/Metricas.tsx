@@ -30,7 +30,7 @@ import { PriceSyncCard } from "@/components/metricas/PriceSyncCard";
 import { YearlySalesChart } from "@/components/metricas/YearlySalesChart";
 import { TopProductsSeasonality } from "@/components/metricas/TopProductsSeasonality";
 import type { AdCostRow, PriceSyncRow, MonthlySalesPoint, TopProductRow } from "@/components/metricas/types";
-import { Skeleton } from "@/components/ui/skeleton";
+
 
 
 const BRL = (n: number) =>
