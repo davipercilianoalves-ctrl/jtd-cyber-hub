@@ -618,30 +618,48 @@ export default function Metricas() {
         subtitle="Visão completa da operação no Mercado Livre"
       />
 
+      <div className="flex items-center gap-1 border-b border-border">
+        {([
+          ["OVERVIEW", "Visão Geral"],
+          ["BY_AD", "Por Anúncio"],
+          ["COSTS", "Custos & Receita"],
+        ] as Array<[Tab, string]>).map(([t, label]) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => {
+              setTab(t);
+              if (t !== "BY_AD") setSelectedAdId(null);
+            }}
+            className={cn(
+              "relative px-4 py-2.5 text-sm transition-colors",
+              tab === t
+                ? "text-foreground font-medium"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {label}
+            {tab === t && (
+              <span className="absolute inset-x-2 -bottom-px h-0.5 bg-primary rounded-full" />
+            )}
+          </button>
+        ))}
+      </div>
+
       {loading && orders.length === 0 ? (
         <div className="grid gap-4">
           <Skeleton className="h-[420px] w-full" />
           <Skeleton className="h-[400px] w-full" />
         </div>
-      ) : (
+      ) : tab === "OVERVIEW" ? (
         <>
           <FunnelHeroCard
             title="Funil de Conversão"
             subtitle="Da visita à venda concluída"
             funnel={funnel}
             kpis={[
-              {
-                label: "Faturamento",
-                value: current.revenue,
-                previous: previous.revenue,
-                format: BRL,
-              },
-              {
-                label: "Vendas",
-                value: current.orderCount,
-                previous: previous.orderCount,
-                format: INT,
-              },
+              { label: "Faturamento", value: current.revenue, previous: previous.revenue, format: BRL },
+              { label: "Vendas", value: current.orderCount, previous: previous.orderCount, format: INT },
             ]}
             secondary={[
               {
@@ -653,29 +671,13 @@ export default function Metricas() {
                   positive: convDelta >= 0,
                 },
               },
-              {
-                label: "Ticket médio",
-                value: BRL(current.avgTicket),
-                icon: <DollarSign className="size-4 text-muted-foreground" />,
-              },
-              {
-                label: "Unidades vendidas",
-                value: INT(current.units),
-                icon: <Package className="size-4 text-muted-foreground" />,
-              },
-              {
-                label: "Compradores únicos",
-                value: INT(current.buyers),
-                icon: <Users className="size-4 text-muted-foreground" />,
-              },
+              { label: "Ticket médio", value: BRL(current.avgTicket), icon: <DollarSign className="size-4 text-muted-foreground" /> },
+              { label: "Unidades vendidas", value: INT(current.units), icon: <Package className="size-4 text-muted-foreground" /> },
+              { label: "Compradores únicos", value: INT(current.buyers), icon: <Users className="size-4 text-muted-foreground" /> },
             ]}
           />
 
-          <InteractiveLineChart
-            metrics={interactiveMetrics}
-            data={series}
-            defaultKey="revenue"
-          />
+          <InteractiveLineChart metrics={interactiveMetrics} data={series} defaultKey="revenue" />
 
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
@@ -706,10 +708,7 @@ export default function Metricas() {
                 tone="cyan"
                 delta={
                   prevVisitsTotal > 0
-                    ? {
-                        value: ((visitsTotal - prevVisitsTotal) / prevVisitsTotal) * 100,
-                        positive: visitsTotal >= prevVisitsTotal,
-                      }
+                    ? { value: ((visitsTotal - prevVisitsTotal) / prevVisitsTotal) * 100, positive: visitsTotal >= prevVisitsTotal }
                     : undefined
                 }
                 context="Tráfego em todos os anúncios ativos"
@@ -721,10 +720,7 @@ export default function Metricas() {
                 tone="magenta"
                 delta={
                   previous.orderCount > 0
-                    ? {
-                        value: ((current.orderCount - previous.orderCount) / previous.orderCount) * 100,
-                        positive: current.orderCount >= previous.orderCount,
-                      }
+                    ? { value: ((current.orderCount - previous.orderCount) / previous.orderCount) * 100, positive: current.orderCount >= previous.orderCount }
                     : undefined
                 }
               />
@@ -740,30 +736,42 @@ export default function Metricas() {
             </div>
           )}
 
-          {/* ============ Vendas no ano ============ */}
           {yearLoading && yearOrders.current.length === 0 ? (
             <Skeleton className="h-80 w-full" />
           ) : (
             <YearlySalesChart data={monthlySales} />
           )}
 
-          {/* ============ Top produtos & sazonalidade ============ */}
           <TopProductsSeasonality rows={topProducts} />
 
-          {/* ============ Composição de custos + Preços ML ============ */}
           <div className="grid gap-4 lg:grid-cols-2">
             <CostCompositionCard revenue={composition.revenue} slices={composition.slices} />
             <PriceSyncCard rows={priceSyncRows} />
           </div>
-
-          {/* ============ Custos por anúncio ============ */}
-          <AdCostBreakdownTable rows={adCostRows} />
         </>
+      ) : tab === "BY_AD" ? (
+        selectedAdRow ? (
+          <AdDetailView row={selectedAdRow} onBack={() => setSelectedAdId(null)} />
+        ) : (
+          <AdCostBreakdownTable rows={adCostRows} onSelect={(id) => setSelectedAdId(id)} />
+        )
+      ) : (
+        <CostsRevenueView
+          rows={adCostRows}
+          grossRevenue={grossRevenue}
+          ordersCount={current.orderCount}
+          monthly={monthlySeries}
+          onSelectAd={(id) => {
+            setSelectedAdId(id);
+            setTab("BY_AD");
+          }}
+        />
       )}
 
     </div>
   );
 }
+
 
 function aggregate(orders: MlOrder[]) {
   let revenue = 0;
