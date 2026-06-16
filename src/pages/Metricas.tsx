@@ -155,6 +155,13 @@ export default function Metricas() {
   const [loading, setLoading] = useState(false);
   const [tick, setTick] = useState(0);
 
+  // Novos blocos
+  const [localAds, setLocalAds] = useState<any[]>([]);
+  const [mlPrices, setMlPrices] = useState<Map<string, { price: number | null }>>(new Map());
+  const [yearOrders, setYearOrders] = useState<{ current: MlOrder[]; previous: MlOrder[] }>({ current: [], previous: [] });
+  const [yearLoading, setYearLoading] = useState(false);
+
+
   useEffect(() => {
     (async () => {
       setTokenLoading(true);
