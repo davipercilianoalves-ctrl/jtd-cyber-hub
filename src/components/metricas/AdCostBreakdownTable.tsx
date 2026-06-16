@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, ChevronRight, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +14,10 @@ type SortKey = "unitsSold" | "revenue" | "totalCost" | "grossProfit" | "margin";
 
 interface Props {
   rows: AdCostRow[];
+  onSelect?: (adId: string) => void;
 }
 
-export function AdCostBreakdownTable({ rows }: Props) {
+export function AdCostBreakdownTable({ rows, onSelect }: Props) {
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("revenue");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
