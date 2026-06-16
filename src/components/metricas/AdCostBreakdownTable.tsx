@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, ChevronRight, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +14,10 @@ type SortKey = "unitsSold" | "revenue" | "totalCost" | "grossProfit" | "margin";
 
 interface Props {
   rows: AdCostRow[];
+  onSelect?: (adId: string) => void;
 }
 
-export function AdCostBreakdownTable({ rows }: Props) {
+export function AdCostBreakdownTable({ rows, onSelect }: Props) {
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("revenue");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -88,6 +89,7 @@ export function AdCostBreakdownTable({ rows }: Props) {
                   <SortableTh label="Custo Total" active={sortKey === "totalCost"} dir={sortDir} onClick={() => toggleSort("totalCost")} />
                   <SortableTh label="Lucro" active={sortKey === "grossProfit"} dir={sortDir} onClick={() => toggleSort("grossProfit")} />
                   <SortableTh label="Margem" active={sortKey === "margin"} dir={sortDir} onClick={() => toggleSort("margin")} />
+                  {onSelect && <th className="w-10 px-2 py-3" />}
                 </tr>
               </thead>
               <tbody>
@@ -130,6 +132,18 @@ export function AdCostBreakdownTable({ rows }: Props) {
                         {r.margin.toFixed(1)}%
                       </Badge>
                     </td>
+                    {onSelect && (
+                      <td className="px-2 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => onSelect(r.adId)}
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          title="Ver métricas"
+                        >
+                          Ver métricas <ChevronRight className="size-3.5" />
+                        </button>
+                      </td>
+                    )}
                   </motion.tr>
                 ))}
               </tbody>
