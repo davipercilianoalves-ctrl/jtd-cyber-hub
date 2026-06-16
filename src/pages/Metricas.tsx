@@ -165,6 +165,7 @@ export default function Metricas() {
   // Novos blocos
   const [localAds, setLocalAds] = useState<any[]>([]);
   const [mlPrices, setMlPrices] = useState<Map<string, { price: number | null }>>(new Map());
+  const [mlItems, setMlItems] = useState<Map<string, { title: string; price: number | null; sku: string | null }>>(new Map());
   const [yearOrders, setYearOrders] = useState<{ current: MlOrder[]; previous: MlOrder[] }>({ current: [], previous: [] });
   const [yearLoading, setYearLoading] = useState(false);
 
@@ -210,7 +211,7 @@ export default function Metricas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, period, tick]);
 
-  // Load local ads + ML prices once per token/tick
+  // Load local ads + ML seller items (titles + prices)
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
@@ -218,26 +219,66 @@ export default function Metricas() {
       const ads = await m.getLocalAds().catch(() => []);
       if (cancelled) return;
       setLocalAds(ads);
-      const ids = Array.from(
-        new Set(
-          ads
-            .flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || []))
-            .filter(Boolean)
-        )
-      ) as string[];
-      if (ids.length === 0) {
-        setMlPrices(new Map());
+
+      // 1) IDs known from local ads
+      const localIds = ads
+        .flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || []))
+        .filter(Boolean) as string[];
+
+      // 2) IDs from seller's ML catalog
+      let sellerIds: string[] = [];
+      try {
+        const res = await m.getSellerItems(token.user_id);
+        sellerIds = (res?.results || []) as string[];
+      } catch {
+        sellerIds = [];
+      }
+
+      const allIds = Array.from(new Set([...localIds, ...sellerIds].filter(Boolean)));
+      if (allIds.length === 0) {
+        if (!cancelled) {
+          setMlPrices(new Map());
+          setMlItems(new Map());
+        }
         return;
       }
-      const prices = await m.getMlPricesForItems(ids).catch(() => new Map());
+
+      // Fetch item details (title + price + sku) in chunks of 20
+      const chunks: string[][] = [];
+      for (let i = 0; i < allIds.length; i += 20) chunks.push(allIds.slice(i, i + 20));
+      const results = await Promise.allSettled(chunks.map((c) => m.getItemsDetails(c)));
       if (cancelled) return;
-      setMlPrices(prices);
+
+      const itemsMap = new Map<string, { title: string; price: number | null; sku: string | null }>();
+      const pricesMap = new Map<string, { price: number | null }>();
+      results.forEach((r) => {
+        if (r.status !== "fulfilled") return;
+        const arr = Array.isArray(r.value) ? r.value : [];
+        arr.forEach((entry: any) => {
+          const body = entry?.body || entry;
+          const id = body?.id || entry?.code;
+          if (!id) return;
+          const price = typeof body?.price === "number" ? body.price : null;
+          const title = body?.title || id;
+          const sku =
+            body?.seller_sku ||
+            body?.seller_custom_field ||
+            body?.attributes?.find?.((x: any) => x.id === "SELLER_SKU")?.value_name ||
+            null;
+          itemsMap.set(id, { title, price, sku });
+          pricesMap.set(id, { price });
+        });
+      });
+      if (cancelled) return;
+      setMlItems(itemsMap);
+      setMlPrices(pricesMap);
     })();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tick]);
+
 
   // Load yearly orders once per token/tick (cached)
   useEffect(() => {
@@ -354,12 +395,27 @@ export default function Metricas() {
     return map;
   }, [orders]);
 
-  // Cost breakdown rows
+  // Titles from current-period orders (fallback when ML catalog doesn't include the item)
+  const titlesFromOrders = useMemo(() => {
+    const map = new Map<string, string>();
+    orders.forEach((o) => {
+      (o.order_items || []).forEach((it) => {
+        if (it.item?.id && it.item?.title) map.set(it.item.id, it.item.title);
+      });
+    });
+    return map;
+  }, [orders]);
+
+  // Cost breakdown rows — local ads first, then ML-only items (no local pricing)
   const adCostRows: AdCostRow[] = useMemo(() => {
-    return localAds.map((a: any) => {
+    const coveredIds = new Set<string>();
+    const rows: AdCostRow[] = [];
+
+    localAds.forEach((a: any) => {
       const ids: string[] = Array.from(
         new Set([a.ml_item_id, ...(Array.isArray(a.ml_item_ids) ? a.ml_item_ids : [])].filter(Boolean))
       );
+      ids.forEach((id) => coveredIds.add(id));
       let unitsSold = 0;
       let revenue = 0;
       ids.forEach((id) => {
@@ -385,12 +441,15 @@ export default function Metricas() {
       const totalCost = totalProductCost + totalFee + totalShipping + totalPackaging + totalTransport + totalTax;
       const grossProfit = revenue - totalCost;
       const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
-      const title = (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || "Anúncio";
-      return {
+      const fallbackId = ids[0] || null;
+      const mlTitle = fallbackId ? mlItems.get(fallbackId)?.title : null;
+      const title =
+        (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || mlTitle || "Anúncio";
+      rows.push({
         adId: a.id,
-        mlItemId: ids[0] || null,
+        mlItemId: fallbackId,
         title,
-        sku: a.products?.sku || null,
+        sku: a.products?.sku || (fallbackId ? mlItems.get(fallbackId)?.sku || null : null),
         unitsSold,
         revenue,
         unitCost,
@@ -399,7 +458,7 @@ export default function Metricas() {
         packagingCost: packaging,
         transportCost: transport,
         tax,
-        finalPrice,
+        finalPrice: finalPrice || (fallbackId ? mlItems.get(fallbackId)?.price || 0 : 0),
         totalProductCost,
         totalFee,
         totalShipping,
@@ -409,9 +468,54 @@ export default function Metricas() {
         totalCost,
         grossProfit,
         margin,
-      };
+      });
     });
-  }, [localAds, unitsByItem]);
+
+    // ML-only items: from ML catalog OR from sold orders not yet covered
+    const extraIds = new Set<string>();
+    mlItems.forEach((_v, id) => {
+      if (!coveredIds.has(id)) extraIds.add(id);
+    });
+    unitsByItem.forEach((_v, id) => {
+      if (!coveredIds.has(id)) extraIds.add(id);
+    });
+
+    extraIds.forEach((id) => {
+      const sold = unitsByItem.get(id);
+      const info = mlItems.get(id);
+      const unitsSold = sold?.units || 0;
+      const revenue = sold?.revenue || 0;
+      const finalPrice = info?.price ?? (unitsSold > 0 ? revenue / unitsSold : 0);
+      const title = info?.title || titlesFromOrders.get(id) || id;
+      rows.push({
+        adId: `ml:${id}`,
+        mlItemId: id,
+        title,
+        sku: info?.sku || null,
+        unitsSold,
+        revenue,
+        unitCost: 0,
+        marketplaceFee: 0,
+        shippingCost: 0,
+        packagingCost: 0,
+        transportCost: 0,
+        tax: 0,
+        finalPrice,
+        totalProductCost: 0,
+        totalFee: 0,
+        totalShipping: 0,
+        totalPackaging: 0,
+        totalTransport: 0,
+        totalTax: 0,
+        totalCost: 0,
+        grossProfit: revenue,
+        margin: revenue > 0 ? 100 : 0,
+      });
+    });
+
+    return rows;
+  }, [localAds, unitsByItem, mlItems, titlesFromOrders]);
+
 
   // Composition aggregates
   const composition = useMemo(() => {
