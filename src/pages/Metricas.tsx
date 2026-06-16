@@ -529,6 +529,48 @@ export default function Metricas() {
       .slice(0, 10);
   }, [yearOrders, monthlySales]);
 
+  // Totals + monthly evolution for Costs view
+  const grossRevenue = useMemo(
+    () => orders.reduce((s, o) => s + Number(o.total_amount || 0), 0),
+    [orders]
+  );
+  const totalCostSum = useMemo(
+    () => adCostRows.reduce((s, r) => s + r.totalCost, 0),
+    [adCostRows]
+  );
+
+  const monthlySeries = useMemo(() => {
+    const map = new Map<string, { month: string; revenue: number }>();
+    orders.forEach((o) => {
+      const d = new Date(o.date_created || (o as any).date_closed || 0);
+      if (!d.getTime()) return;
+      const key = `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+      const cur = map.get(key) || { month: key, revenue: 0 };
+      cur.revenue += Number(o.total_amount || 0);
+      map.set(key, cur);
+    });
+    const ratio = grossRevenue > 0 ? totalCostSum / grossRevenue : 0;
+    return Array.from(map.values())
+      .sort((a, b) => {
+        const [am, ay] = a.month.split("/").map(Number);
+        const [bm, by] = b.month.split("/").map(Number);
+        return ay !== by ? ay - by : am - bm;
+      })
+      .map((v) => ({
+        month: v.month,
+        faturamento: v.revenue,
+        custos: v.revenue * ratio,
+        lucro: v.revenue * (1 - ratio),
+      }));
+  }, [orders, grossRevenue, totalCostSum]);
+
+  const selectedAdRow = useMemo(
+    () => (selectedAdId ? adCostRows.find((r) => r.adId === selectedAdId) || null : null),
+    [selectedAdId, adCostRows]
+  );
+
+
+
 
   if (tokenLoading) {
     return (
