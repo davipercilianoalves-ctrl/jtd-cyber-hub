@@ -132,6 +132,18 @@ export function AdCostBreakdownTable({ rows, onSelect }: Props) {
                         {r.margin.toFixed(1)}%
                       </Badge>
                     </td>
+                    {onSelect && (
+                      <td className="px-2 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => onSelect(r.adId)}
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          title="Ver métricas"
+                        >
+                          Ver métricas <ChevronRight className="size-3.5" />
+                        </button>
+                      </td>
+                    )}
                   </motion.tr>
                 ))}
               </tbody>
