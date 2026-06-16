@@ -24,6 +24,14 @@ import { FunnelHeroCard } from "@/components/metricas/FunnelHeroCard";
 import { InteractiveLineChart, type InteractiveMetric } from "@/components/metricas/InteractiveLineChart";
 import { MultiSeriesChart } from "@/components/metricas/MultiSeriesChart";
 import { ContextStatCard } from "@/components/metricas/ContextStatCard";
+import { AdCostBreakdownTable } from "@/components/metricas/AdCostBreakdownTable";
+import { CostCompositionCard } from "@/components/metricas/CostCompositionCard";
+import { PriceSyncCard } from "@/components/metricas/PriceSyncCard";
+import { YearlySalesChart } from "@/components/metricas/YearlySalesChart";
+import { TopProductsSeasonality } from "@/components/metricas/TopProductsSeasonality";
+import type { AdCostRow, PriceSyncRow, MonthlySalesPoint, TopProductRow } from "@/components/metricas/types";
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 const BRL = (n: number) =>
   (Number.isFinite(n) ? n : 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
