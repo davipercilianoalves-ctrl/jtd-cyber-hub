@@ -167,6 +167,10 @@ export default function ProductImageGallery({ productId }: Props) {
                   alt={img.file_name}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                  }}
                 />
               </button>
               <div className="p-2 text-xs">
