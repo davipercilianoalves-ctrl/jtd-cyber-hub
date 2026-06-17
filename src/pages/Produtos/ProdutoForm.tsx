@@ -127,7 +127,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     unit: "UN",
     condition: "novo",
     pricing: defaultPricing() as PricingState,
-    images: [] as ProductImage[],
+    images: [] as any[],
   });
 
 
