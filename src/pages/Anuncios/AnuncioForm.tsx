@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AdImageSelector from "@/components/anuncios/AdImageSelector";
+import KeywordFloatingBoxes, { type FieldDef } from "@/components/anuncios/KeywordFloatingBoxes";
+
 
 interface Product {
   id: string;
@@ -44,6 +47,7 @@ export default function AnuncioForm() {
     marketplace: "mercado_livre",
     titles: [""] as string[],
     brief_description: "",
+    full_description: "",
     full_description_template: "",
     video_name: "",
     video_script: "",
@@ -59,8 +63,10 @@ export default function AnuncioForm() {
     final_price: 0,
     fake_price: 0,
     is_active: true,
-    keywords: [] as string[]
+    keywords: [] as string[],
+    selected_image_ids: [] as string[],
   });
+
 
   const textareaStyle: React.CSSProperties = { 
     minHeight: '80px', 
@@ -407,6 +413,20 @@ export default function AnuncioForm() {
         </div>
 
         <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
+          <label className="text-xs font-medium text-muted-foreground">Descrição Completa</label>
+          <textarea 
+            value={formData.full_description || ""}
+            onChange={e => {
+              setFormData({ ...formData, full_description: e.target.value });
+              autoResize(e.target);
+            }}
+            style={textareaStyle}
+            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+            placeholder="Cole aqui a descrição completa gerada pela IA externa..."
+          />
+        </div>
+
+        <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
           <label className="text-xs font-medium text-muted-foreground">Template para IA Externa</label>
           <div className="flex gap-2">
             <button 
@@ -430,6 +450,14 @@ export default function AnuncioForm() {
           </div>
         </div>
       </section>
+
+      {/* BLOCO 5 — Imagens do Anúncio */}
+      <AdImageSelector
+        productId={formData.product_id || undefined}
+        selectedIds={formData.selected_image_ids}
+        onChange={(ids) => setFormData({ ...formData, selected_image_ids: ids })}
+      />
+
 
       {/* Precificação foi movida para o cadastro do Produto */}
 
@@ -555,6 +583,20 @@ export default function AnuncioForm() {
           </div>
         </div>
       )}
+
+      <KeywordFloatingBoxes
+        keywords={formData.keywords}
+        fields={[
+          ...formData.titles.map<FieldDef>((t, i) => ({
+            id: `t${i + 1}`,
+            label: `T${i + 1}`,
+            text: t,
+          })),
+          { id: "bd", label: "BD", text: formData.brief_description || "" },
+          { id: "dc", label: "DC", text: formData.full_description || "" },
+        ]}
+      />
     </div>
+
   );
 }
