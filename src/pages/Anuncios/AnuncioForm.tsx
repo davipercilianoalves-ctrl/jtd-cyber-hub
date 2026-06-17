@@ -413,6 +413,20 @@ export default function AnuncioForm() {
         </div>
 
         <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
+          <label className="text-xs font-medium text-muted-foreground">Descrição Completa</label>
+          <textarea 
+            value={formData.full_description || ""}
+            onChange={e => {
+              setFormData({ ...formData, full_description: e.target.value });
+              autoResize(e.target);
+            }}
+            style={textareaStyle}
+            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+            placeholder="Cole aqui a descrição completa gerada pela IA externa..."
+          />
+        </div>
+
+        <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
           <label className="text-xs font-medium text-muted-foreground">Template para IA Externa</label>
           <div className="flex gap-2">
             <button 
@@ -436,6 +450,14 @@ export default function AnuncioForm() {
           </div>
         </div>
       </section>
+
+      {/* BLOCO 5 — Imagens do Anúncio */}
+      <AdImageSelector
+        productId={formData.product_id || undefined}
+        selectedIds={formData.selected_image_ids}
+        onChange={(ids) => setFormData({ ...formData, selected_image_ids: ids })}
+      />
+
 
       {/* Precificação foi movida para o cadastro do Produto */}
 
