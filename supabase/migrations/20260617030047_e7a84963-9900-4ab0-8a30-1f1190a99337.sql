@@ -1,0 +1,1 @@
+ALTER TABLE public.ads ADD COLUMN IF NOT EXISTS selected_image_ids UUID[] NOT NULL DEFAULT '{}'::uuid[]; ALTER TABLE public.ads ADD COLUMN IF NOT EXISTS full_description TEXT;

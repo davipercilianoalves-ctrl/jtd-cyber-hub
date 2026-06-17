@@ -22,6 +22,7 @@ export type Database = {
           fake_discount: number | null
           fake_price: number | null
           final_price: number | null
+          full_description: string | null
           full_description_template: string | null
           id: string
           is_active: boolean
@@ -33,6 +34,7 @@ export type Database = {
           packaging_cost: number | null
           product_id: string
           profit_margin: number | null
+          selected_image_ids: string[]
           shipping_cost: number | null
           tax: number | null
           titles: string[] | null
@@ -49,6 +51,7 @@ export type Database = {
           fake_discount?: number | null
           fake_price?: number | null
           final_price?: number | null
+          full_description?: string | null
           full_description_template?: string | null
           id?: string
           is_active?: boolean
@@ -60,6 +63,7 @@ export type Database = {
           packaging_cost?: number | null
           product_id: string
           profit_margin?: number | null
+          selected_image_ids?: string[]
           shipping_cost?: number | null
           tax?: number | null
           titles?: string[] | null
@@ -76,6 +80,7 @@ export type Database = {
           fake_discount?: number | null
           fake_price?: number | null
           final_price?: number | null
+          full_description?: string | null
           full_description_template?: string | null
           id?: string
           is_active?: boolean
@@ -87,6 +92,7 @@ export type Database = {
           packaging_cost?: number | null
           product_id?: string
           profit_margin?: number | null
+          selected_image_ids?: string[]
           shipping_cost?: number | null
           tax?: number | null
           titles?: string[] | null
