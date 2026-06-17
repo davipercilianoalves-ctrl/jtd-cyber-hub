@@ -47,6 +47,7 @@ export default function AnuncioForm() {
     marketplace: "mercado_livre",
     titles: [""] as string[],
     brief_description: "",
+    full_description: "",
     full_description_template: "",
     video_name: "",
     video_script: "",
@@ -62,8 +63,10 @@ export default function AnuncioForm() {
     final_price: 0,
     fake_price: 0,
     is_active: true,
-    keywords: [] as string[]
+    keywords: [] as string[],
+    selected_image_ids: [] as string[],
   });
+
 
   const textareaStyle: React.CSSProperties = { 
     minHeight: '80px', 
