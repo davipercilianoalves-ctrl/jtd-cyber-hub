@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
 import PricingModule from "@/components/pricing/PricingModule";
 import ProductImages, { ProductImage } from "@/components/ProductImages";
+import ProductImageGallery from "@/components/products/ProductImageGallery";
+import { Separator } from "@/components/ui/separator";
 import {
   PricingState,
   defaultPricing,
@@ -1172,6 +1174,29 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         onChange={(imgs) => setFormData({ ...formData, images: imgs })}
         productId={productId}
       />
+
+      {/* ============================================================ */}
+      {/* GALERIA DE IMAGENS (product_images table)                    */}
+      {/* ============================================================ */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center gap-3">
+          <Separator className="flex-1" />
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+            Imagens
+          </span>
+          <Separator className="flex-1" />
+        </div>
+        <h3 className="text-sm font-semibold">Imagens do Produto</h3>
+        {productId ? (
+          <ProductImageGallery productId={productId} />
+        ) : (
+          <p className="text-sm text-muted-foreground border border-dashed border-sidebar-border rounded-lg p-4 text-center bg-internal-20">
+            Salve o produto primeiro para adicionar imagens.
+          </p>
+        )}
+      </div>
+
+
 
 
       {/* ============================================================ */}
