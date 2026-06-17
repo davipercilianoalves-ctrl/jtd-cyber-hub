@@ -149,7 +149,15 @@ function FloatingBox({
 }
 
 export default function KeywordFloatingBoxes({ keywords, fields }: Props) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   return (
     <>
@@ -160,7 +168,7 @@ export default function KeywordFloatingBoxes({ keywords, fields }: Props) {
             <button
               key={f.id}
               type="button"
-              onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+              onClick={() => toggle(f.id)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm border-2 border-primary/60 shadow-lg text-xs font-bold hover:border-primary transition-all"
             >
               <Key size={12} className="text-primary" />
@@ -177,10 +185,11 @@ export default function KeywordFloatingBoxes({ keywords, fields }: Props) {
           key={f.id}
           field={f}
           keywords={keywords}
-          expandedId={expandedId}
-          setExpanded={setExpandedId}
+          isOpen={openIds.has(f.id)}
+          onClose={() => toggle(f.id)}
         />
       ))}
     </>
   );
 }
+
