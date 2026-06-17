@@ -121,7 +121,7 @@ function FloatingBox({
           </button>
           <button
             type="button"
-            onClick={() => setExpanded(null)}
+            onClick={onClose}
             className="p-1 text-muted-foreground hover:text-foreground"
           >
             <Minus size={12} />
