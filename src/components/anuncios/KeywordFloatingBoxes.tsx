@@ -26,18 +26,19 @@ function countUsed(text: string, keywords: string[]) {
 function FloatingBox({
   field,
   keywords,
-  expandedId,
-  setExpanded,
+  isOpen,
+  onClose,
 }: {
   field: FieldDef;
   keywords: string[];
-  expandedId: string | null;
-  setExpanded: (id: string | null) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }) {
-  const expanded = expandedId === field.id;
+  const expanded = isOpen;
   const used = countUsed(field.text, keywords);
   const usedSet = new Set(used.map((k) => k.toLowerCase()));
   const storageKey = `kwbox-pos-${field.id}`;
+
 
   const [pos, setPos] = useState<Pos | null>(null);
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
