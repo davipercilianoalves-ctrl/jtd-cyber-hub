@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Key, Minus, Copy, Check, Sparkles, Eraser } from "lucide-react";
+import { Tag, X, Copy, Check, Sparkles, Eraser } from "lucide-react";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 
 export interface FieldDef {
   id: string;
@@ -53,7 +54,7 @@ function FloatingBox({
       try {
         const saved = localStorage.getItem(storageKey);
         if (saved) setPos(JSON.parse(saved));
-        else setPos({ x: window.innerWidth / 2 - 140, y: window.innerHeight / 2 - 180 });
+        else setPos({ x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 180 });
       } catch {
         setPos({ x: 200, y: 200 });
       }
@@ -106,16 +107,16 @@ function FloatingBox({
 
   return (
     <div
-      className="fixed z-[9999] w-[280px] max-h-[360px] rounded-lg border-2 border-primary/70 bg-background/90 backdrop-blur-md shadow-2xl flex flex-col"
-      style={{ left: pos.x, top: pos.y }}
+      className="fixed z-[9999] w-[300px] max-h-[420px] rounded-lg border-2 border-primary/70 bg-background/90 backdrop-blur-md shadow-2xl flex flex-col animate-scale-in origin-bottom-right"
+      style={{ left: pos.x, top: pos.y, animationDuration: "150ms" }}
     >
       <div
         onMouseDown={onMouseDown}
         className="flex items-center justify-between px-3 py-2 border-b border-sidebar-border cursor-grab active:cursor-grabbing bg-primary/10 rounded-t-lg select-none"
       >
-        <div className="flex flex-col text-xs">
-          <div className="flex items-center gap-2 font-bold text-foreground">
-            <Key size={12} className="text-primary" />
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2 font-bold text-foreground text-sm">
+            <Tag size={14} className="text-primary" />
             <span>{field.expandedLabel || field.label}</span>
           </div>
           <span className="text-[10px] text-muted-foreground mt-0.5">
@@ -125,14 +126,14 @@ function FloatingBox({
         <button
           type="button"
           onClick={onClose}
-          title="Minimizar"
-          className="p-1 text-muted-foreground hover:text-foreground"
+          title="Fechar"
+          className="p-1 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <Minus size={14} />
+          <X size={16} />
         </button>
       </div>
 
-      <div className="overflow-y-auto p-2 flex flex-wrap gap-1.5">
+      <div className="overflow-y-auto p-3 flex flex-wrap gap-2">
         {keywords.length === 0 && (
           <p className="text-xs text-muted-foreground italic px-1 py-2">
             Adicione palavras-chave acima
@@ -145,7 +146,7 @@ function FloatingBox({
           let cls =
             "border-sidebar-border bg-transparent text-muted-foreground hover:text-foreground hover:border-foreground/40";
           if (manual) {
-            cls = "border-lime-500 bg-lime-500/90 text-background font-bold";
+            cls = "border-lime-500 bg-lime-500/90 text-background";
           } else if (auto) {
             cls = "border-lime-400/60 bg-lime-400/20 text-lime-400";
           }
@@ -155,30 +156,31 @@ function FloatingBox({
               type="button"
               key={k}
               onClick={() => toggleManual(k)}
-              className={`relative inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] transition-all ${cls}`}
+              className={`relative inline-flex items-center gap-1 px-3 py-1 rounded-full border text-sm font-semibold tracking-wide transition-all ${cls}`}
             >
-              {manual && <Check size={10} />}
-              {!manual && auto && <Sparkles size={10} />}
-              <span className="truncate max-w-[180px]">{k}</span>
+              {manual && <Check size={12} />}
+              {!manual && auto && <Sparkles size={12} />}
+              <span className="truncate max-w-[200px]">{k}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="flex items-center gap-2 px-3 py-2 border-t border-sidebar-border">
+      <Separator />
+      <div className="flex items-center gap-2 px-3 pt-2 pb-2">
         <button
           type="button"
           onClick={copyFree}
-          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary"
+          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors"
         >
-          <Copy size={10} /> Copiar livres
+          <Copy size={11} /> Copiar livres
         </button>
         <button
           type="button"
           onClick={clearManual}
-          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive ml-auto"
+          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive ml-auto transition-colors"
         >
-          <Eraser size={10} /> Limpar manual
+          <Eraser size={11} /> Limpar manual
         </button>
       </div>
     </div>
@@ -186,17 +188,12 @@ function FloatingBox({
 }
 
 export default function KeywordFloatingBoxes({ keywords, fields }: Props) {
-  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [openId, setOpenId] = useState<string | null>(null);
   // manual selections per field id -> Set of lowercased keywords
   const [manual, setManual] = useState<Record<string, Set<string>>>({});
 
-  const toggleOpen = (id: string) =>
-    setOpenIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const openField = (id: string) => setOpenId(id);
+  const closeField = () => setOpenId(null);
 
   const toggleManual = (fieldId: string, keyword: string) => {
     const k = keyword.toLowerCase();
@@ -215,6 +212,7 @@ export default function KeywordFloatingBoxes({ keywords, fields }: Props) {
     <>
       <div className="fixed bottom-4 right-4 z-[9998] flex flex-col gap-2 items-end">
         {fields.map((f) => {
+          if (openId === f.id) return null;
           const manualSet = manual[f.id] || new Set<string>();
           const usedCount = keywords.filter(
             (k) => isAutoUsed(f.text, k) || manualSet.has(k.toLowerCase())
@@ -223,10 +221,10 @@ export default function KeywordFloatingBoxes({ keywords, fields }: Props) {
             <button
               key={f.id}
               type="button"
-              onClick={() => toggleOpen(f.id)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm border-2 border-primary/60 shadow-lg text-xs font-bold hover:border-primary transition-all"
+              onClick={() => openField(f.id)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm border-2 border-primary/60 shadow-lg text-xs font-bold transition-all hover:border-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.6)] animate-fade-in"
             >
-              <Key size={12} className="text-primary" />
+              <Tag size={12} className="text-primary" />
               <span className="text-foreground">{f.label}</span>
               <span className="text-muted-foreground">
                 {usedCount}/{keywords.length}
@@ -240,8 +238,8 @@ export default function KeywordFloatingBoxes({ keywords, fields }: Props) {
           key={f.id}
           field={f}
           keywords={keywords}
-          isOpen={openIds.has(f.id)}
-          onClose={() => toggleOpen(f.id)}
+          isOpen={openId === f.id}
+          onClose={closeField}
           manualSet={manual[f.id] || new Set()}
           toggleManual={(k) => toggleManual(f.id, k)}
           clearManual={() => clearManual(f.id)}
