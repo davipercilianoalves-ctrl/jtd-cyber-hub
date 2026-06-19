@@ -82,15 +82,19 @@ export default function AnuncioForm() {
     if (id) fetchAd();
   }, [id]);
 
+  // Resize textareas once after the form has finished loading (handles prefilled
+  // values when editing). The onChange handlers handle resizing while typing.
   useEffect(() => {
-    if (!loading) {
-      setTimeout(() => {
-        document.querySelectorAll('textarea').forEach(textarea => {
-          autoResize(textarea);
-        });
-      }, 100);
-    }
-  }, [loading, formData.titles]);
+    if (loading) return;
+    const t = setTimeout(() => {
+      document.querySelectorAll('textarea').forEach((textarea) => {
+        // skip the currently focused textarea so we don't disrupt the caret
+        if (document.activeElement === textarea) return;
+        autoResize(textarea);
+      });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   async function fetchProducts() {
     const { data } = await supabase.from("products").select("id, name, sku, cost_price, keywords").eq("is_active", true);
