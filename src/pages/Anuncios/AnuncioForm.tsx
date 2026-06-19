@@ -602,10 +602,11 @@ export default function AnuncioForm() {
           ...formData.titles.map<FieldDef>((t, i) => ({
             id: `t${i + 1}`,
             label: `T${i + 1}`,
+            expandedLabel: `Título ${i + 1}`,
             text: t,
           })),
-          { id: "bd", label: "BD", text: formData.brief_description || "" },
-          { id: "dc", label: "DC", text: formData.full_description || "" },
+          { id: "bd", label: "BD", expandedLabel: "Breve Desc", text: formData.brief_description || "" },
+          { id: "dc", label: "DC", expandedLabel: "Desc Completa", text: formData.full_description || "" },
         ]}
       />
     </div>
