@@ -277,6 +277,7 @@ export type Database = {
           data: Json
           expires_at: string
           id: string
+          user_id: string | null
         }
         Insert: {
           cache_key: string
@@ -284,6 +285,7 @@ export type Database = {
           data?: Json
           expires_at: string
           id?: string
+          user_id?: string | null
         }
         Update: {
           cache_key?: string
@@ -291,6 +293,7 @@ export type Database = {
           data?: Json
           expires_at?: string
           id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -553,6 +556,7 @@ export type Database = {
           notes: string | null
           unit_costs: number[] | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -563,6 +567,7 @@ export type Database = {
           notes?: string | null
           unit_costs?: number[] | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -573,6 +578,7 @@ export type Database = {
           notes?: string | null
           unit_costs?: number[] | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
