@@ -20,7 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AdImageSelector from "@/components/anuncios/AdImageSelector";
-import KeywordFloatingBoxes from "@/components/anuncios/KeywordFloatingBoxes";
+import KeywordFloatingBoxes, { type FieldDef } from "@/components/anuncios/KeywordFloatingBoxes";
 
 
 interface Product {
@@ -598,13 +598,16 @@ export default function AnuncioForm() {
 
       <KeywordFloatingBoxes
         keywords={formData.keywords}
-        titles={formData.titles.map((t, i) => ({
-          id: `t${i + 1}`,
-          label: `T${i + 1}`,
-          text: t,
-        }))}
-        briefText={formData.brief_description || ""}
-        fullText={formData.full_description || ""}
+        fields={[
+          ...formData.titles.map<FieldDef>((t, i) => ({
+            id: `t${i + 1}`,
+            label: `T${i + 1}`,
+            expandedLabel: `Título ${i + 1}`,
+            text: t,
+          })),
+          { id: "bd", label: "BD", expandedLabel: "Breve Desc", text: formData.brief_description || "" },
+          { id: "dc", label: "DC", expandedLabel: "Desc Completa", text: formData.full_description || "" },
+        ]}
       />
     </div>
 
