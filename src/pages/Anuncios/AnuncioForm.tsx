@@ -20,6 +20,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AdImageSelector from "@/components/anuncios/AdImageSelector";
+import AdDirectImages from "@/components/anuncios/AdDirectImages";
+import AdVideoSection from "@/components/anuncios/AdVideoSection";
+import KeywordRefStrip from "@/components/anuncios/KeywordRefStrip";
 import KeywordFloatingBoxes, { type FieldDef } from "@/components/anuncios/KeywordFloatingBoxes";
 
 
