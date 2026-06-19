@@ -439,7 +439,7 @@ export default function AnuncioForm() {
             <button 
               type="button"
               onClick={() => {
-                const template = `Use as seguintes palavras-chave: ${formData.keywords.join(", ")}\nCrie uma descrição completa para marketplace com:\n- Título principal: ${formData.titles[0] || "—"}\n- Palavras-chave obrigatórias: ${formData.keywords.join(", ")}\n- Breve descrição base: ${formData.brief_description}\n- Tom: profissional e persuasivo`;
+                const template = formData.full_description_template || `Use as seguintes palavras-chave: ${formData.keywords.join(", ")}\nCrie uma descrição completa para marketplace com:\n- Título principal: ${formData.titles[0] || "—"}\n- Palavras-chave obrigatórias: ${formData.keywords.join(", ")}\n- Breve descrição base: ${formData.brief_description}\n- Tom: profissional e persuasivo`;
                 navigator.clipboard.writeText(template);
                 toast.success("Template copiado!");
               }}
