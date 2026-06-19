@@ -55,6 +55,31 @@ function CopyBtn({ value }: { value: any }) {
   );
 }
 
+const fieldLabelCls =
+  "text-[10px] font-bold uppercase tracking-wider text-muted-foreground";
+
+function Field({
+  label,
+  value,
+  children,
+  span = 1,
+}: {
+  label: string;
+  value: any;
+  children: React.ReactNode;
+  span?: number;
+}) {
+  return (
+    <div className={`space-y-1.5 ${span === 2 ? "col-span-2" : span === 3 ? "col-span-3" : ""}`}>
+      <label className={fieldLabelCls}>{label}</label>
+      <div className="flex gap-2 items-start">
+        <div className="flex-1 min-w-0">{children}</div>
+        <CopyBtn value={value} />
+      </div>
+    </div>
+  );
+}
+
 
 
 
@@ -158,6 +183,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     if (!loading) {
       setTimeout(() => {
         document.querySelectorAll('textarea').forEach(textarea => {
+          if (document.activeElement === textarea) return;
           autoResize(textarea);
         });
       }, 100);
@@ -434,31 +460,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   // helpers de classes reutilizáveis
   const inputCls =
     "w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none transition-all break-all";
-  const labelCls =
-    "text-[10px] font-bold uppercase tracking-wider text-muted-foreground";
+  const labelCls = fieldLabelCls;
   const sectionTitleCls =
     "text-[10px] font-black uppercase tracking-wider text-primary/70";
-
-  // Field wrapper — adiciona botão copiar à direita
-  const Field = ({
-    label,
-    value,
-    children,
-    span = 1,
-  }: {
-    label: string;
-    value: any;
-    children: React.ReactNode;
-    span?: number;
-  }) => (
-    <div className={`space-y-1.5 ${span === 2 ? "col-span-2" : span === 3 ? "col-span-3" : ""}`}>
-      <label className={labelCls}>{label}</label>
-      <div className="flex gap-2 items-start">
-        <div className="flex-1 min-w-0">{children}</div>
-        <CopyBtn value={value} />
-      </div>
-    </div>
-  );
 
   const allSelected =
     formData.keywords.length > 0 && selectedKeywords.length === formData.keywords.length;
