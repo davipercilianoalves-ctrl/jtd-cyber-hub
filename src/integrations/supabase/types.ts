@@ -330,6 +330,7 @@ export type Database = {
           file_name: string
           file_size: number
           id: string
+          position: number
           product_id: string
           storage_path: string
           user_id: string
@@ -339,6 +340,7 @@ export type Database = {
           file_name: string
           file_size?: number
           id?: string
+          position?: number
           product_id: string
           storage_path: string
           user_id: string
@@ -348,6 +350,7 @@ export type Database = {
           file_name?: string
           file_size?: number
           id?: string
+          position?: number
           product_id?: string
           storage_path?: string
           user_id?: string

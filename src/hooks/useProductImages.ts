@@ -10,6 +10,7 @@ export interface ProductImageRecord {
   storage_path: string;
   file_name: string;
   file_size: number;
+  position: number;
   created_at: string;
   url: string;
 }
@@ -27,6 +28,7 @@ async function signRows(rows: any[]): Promise<ProductImageRecord[]> {
     storage_path: r.storage_path,
     file_name: r.file_name,
     file_size: r.file_size ?? 0,
+    position: r.position ?? 0,
     created_at: r.created_at,
     url: signed?.[i]?.signedUrl ?? "",
   }));
@@ -37,7 +39,8 @@ export async function getImages(productId: string): Promise<ProductImageRecord[]
     .from("product_images")
     .select("*")
     .eq("product_id", productId)
-    .order("created_at", { ascending: false });
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: true });
   if (error) throw error;
   return signRows(data ?? []);
 }
