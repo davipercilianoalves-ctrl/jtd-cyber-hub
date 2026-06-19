@@ -5,15 +5,8 @@ import {
   Save, 
   ArrowLeft, 
   Trash2, 
-  Megaphone, 
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
-  DollarSign,
   Plus,
   Tag,
-  Video,
-  Play,
   Copy,
   X
 } from "lucide-react";
