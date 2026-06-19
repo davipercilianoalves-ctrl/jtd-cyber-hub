@@ -77,6 +77,16 @@ export function useProductImages(productId?: string) {
         if (userErr || !userData.user) throw userErr || new Error("Não autenticado");
         const userId = userData.user.id;
 
+        // figure out next position
+        const { data: maxRow } = await (supabase as any)
+          .from("product_images")
+          .select("position")
+          .eq("product_id", pid)
+          .order("position", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        let nextPos = (maxRow?.position ?? -1) + 1;
+
         for (const file of list) {
           const safeName = file.name.replace(/[^\w.\-]+/g, "_");
           const path = `${userId}/${pid}/${Date.now()}-${safeName}`;
@@ -93,6 +103,7 @@ export function useProductImages(productId?: string) {
               storage_path: path,
               file_name: file.name,
               file_size: file.size,
+              position: nextPos++,
             });
           if (insErr) {
             await supabase.storage.from(BUCKET).remove([path]);
@@ -120,5 +131,29 @@ export function useProductImages(productId?: string) {
     [refresh],
   );
 
-  return { images, loading, uploading, uploadImages, deleteImage, refresh };
+  const reorderImages = useCallback(
+    async (orderedIds: string[]) => {
+      // optimistic
+      setImages((prev) => {
+        const map = new Map(prev.map((i) => [i.id, i]));
+        return orderedIds
+          .map((id, idx) => {
+            const it = map.get(id);
+            return it ? { ...it, position: idx } : null;
+          })
+          .filter(Boolean) as ProductImageRecord[];
+      });
+      await Promise.all(
+        orderedIds.map((id, idx) =>
+          (supabase as any)
+            .from("product_images")
+            .update({ position: idx })
+            .eq("id", id),
+        ),
+      );
+    },
+    [],
+  );
+
+  return { images, loading, uploading, uploadImages, deleteImage, reorderImages, refresh };
 }
