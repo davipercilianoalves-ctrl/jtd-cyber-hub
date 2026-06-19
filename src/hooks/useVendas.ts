@@ -86,7 +86,7 @@ export function useVendas() {
           custom_cost_price: avg,
           unit_costs: unitCosts,
         } as any,
-        { onConflict: "ml_order_id,ml_item_id" },
+        { onConflict: "user_id,ml_order_id,ml_item_id" },
       );
     if (error) throw error;
   }
