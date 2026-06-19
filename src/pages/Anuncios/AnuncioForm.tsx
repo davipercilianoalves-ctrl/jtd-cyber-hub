@@ -5,21 +5,17 @@ import {
   Save, 
   ArrowLeft, 
   Trash2, 
-  Megaphone, 
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
-  DollarSign,
   Plus,
   Tag,
-  Video,
-  Play,
   Copy,
   X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AdImageSelector from "@/components/anuncios/AdImageSelector";
+import AdDirectImages from "@/components/anuncios/AdDirectImages";
+import AdVideoSection from "@/components/anuncios/AdVideoSection";
+import KeywordRefStrip from "@/components/anuncios/KeywordRefStrip";
 import KeywordFloatingBoxes, { type FieldDef } from "@/components/anuncios/KeywordFloatingBoxes";
 
 
@@ -52,6 +48,7 @@ export default function AnuncioForm() {
     video_name: "",
     video_script: "",
     video_youtube_url: "",
+    video_path: null as string | null,
     cost_price: 0,
     marketplace_fee: 0,
     shipping_cost: 0,
@@ -410,6 +407,7 @@ export default function AnuncioForm() {
             className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
             placeholder="Crie uma breve descrição com as palavras-chave..."
           />
+          <KeywordRefStrip keywords={formData.keywords} text={formData.brief_description || ""} />
         </div>
 
         <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
@@ -424,6 +422,7 @@ export default function AnuncioForm() {
             className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
             placeholder="Cole aqui a descrição completa gerada pela IA externa..."
           />
+          <KeywordRefStrip keywords={formData.keywords} text={formData.full_description || ""} />
         </div>
 
         <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
@@ -451,72 +450,26 @@ export default function AnuncioForm() {
         </div>
       </section>
 
-      {/* BLOCO 5 — Imagens do Anúncio */}
+      {/* BLOCO 5 — Imagens do Produto Vinculado */}
       <AdImageSelector
         productId={formData.product_id || undefined}
         selectedIds={formData.selected_image_ids}
         onChange={(ids) => setFormData({ ...formData, selected_image_ids: ids })}
       />
 
-
-      {/* Precificação foi movida para o cadastro do Produto */}
+      {/* BLOCO 5b — Imagens próprias do anúncio */}
+      <AdDirectImages adId={id} />
 
 
       {/* BLOCO 6 — Vídeo */}
-      <section className="jtd-glass p-6 space-y-6">
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
-          <Video size={20} className="text-primary" />
-          Vídeo do Anúncio
-        </h3>
-
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Nome do Vídeo</label>
-            <input 
-              value={formData.video_name || ""}
-              onChange={e => setFormData({ ...formData, video_name: e.target.value })}
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary"
-              placeholder="Ex: Vídeo Unboxing Teclado"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Roteiro/Falas</label>
-            <textarea 
-              value={formData.video_script || ""}
-              onChange={e => {
-                setFormData({ ...formData, video_script: e.target.value });
-                autoResize(e.target);
-              }}
-              style={textareaStyle}
-              className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary"
-              placeholder="Digite o roteiro para o vídeo..."
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Link YouTube</label>
-            <div className="flex gap-2">
-              <input 
-                value={formData.video_youtube_url || ""}
-                onChange={e => setFormData({ ...formData, video_youtube_url: e.target.value })}
-                className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary"
-                placeholder="https://youtube.com/watch?v=..."
-              />
-              {formData.video_youtube_url && (
-                <a 
-                  href={formData.video_youtube_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="px-4 bg-primary text-black flex items-center justify-center rounded hover:brightness-110"
-                >
-                  <Play size={16} fill="black" />
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+      <AdVideoSection
+        adId={id}
+        videoName={formData.video_name || ""}
+        videoScript={formData.video_script || ""}
+        videoYoutubeUrl={formData.video_youtube_url || ""}
+        videoPath={formData.video_path}
+        onChange={(patch) => setFormData({ ...formData, ...patch })}
+      />
 
       {/* Ações Finais */}
       <div className="flex justify-end gap-4 pt-6">

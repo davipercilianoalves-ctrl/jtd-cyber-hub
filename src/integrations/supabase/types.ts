@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_images: {
+        Row: {
+          ad_id: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          id: string
+          sort_order: number
+          source: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          ad_id?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          sort_order?: number
+          source?: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          ad_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          sort_order?: number
+          source?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_images_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ads: {
         Row: {
           brief_description: string | null
@@ -41,6 +85,7 @@ export type Database = {
           transport_cost: number | null
           user_id: string
           video_name: string | null
+          video_path: string | null
           video_script: string | null
           video_youtube_url: string | null
         }
@@ -70,6 +115,7 @@ export type Database = {
           transport_cost?: number | null
           user_id?: string
           video_name?: string | null
+          video_path?: string | null
           video_script?: string | null
           video_youtube_url?: string | null
         }
@@ -99,6 +145,7 @@ export type Database = {
           transport_cost?: number | null
           user_id?: string
           video_name?: string | null
+          video_path?: string | null
           video_script?: string | null
           video_youtube_url?: string | null
         }
