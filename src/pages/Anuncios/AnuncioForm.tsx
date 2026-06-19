@@ -549,23 +549,24 @@ export default function AnuncioForm() {
               <X size={24} />
             </button>
             
-            <h2 className="text-xl font-bold text-primary mb-6">Template para IA Externa</h2>
-            
-            <div className="bg-internal-50 border border-sidebar-border rounded p-6 font-mono text-sm leading-relaxed text-muted-foreground h-[400px] overflow-y-auto">
-              <p>Use as seguintes palavras-chave: <span className="text-lime-500">{formData.keywords.join(", ")}</span></p>
-              <p className="mt-4">Crie uma descrição completa para marketplace com:</p>
-              <ul className="list-disc ml-6 mt-2 space-y-1">
-                <li>Título principal: <span className="text-foreground">{formData.titles[0] || "—"}</span></li>
-                <li>Palavras-chave obrigatórias: <span className="text-lime-500">{formData.keywords.join(", ")}</span></li>
-                <li>Breve descrição base: <span className="text-foreground">{formData.brief_description || "—"}</span></li>
-                <li>Tom: profissional e persuasivo</li>
-              </ul>
-            </div>
+            <h2 className="text-xl font-bold text-primary mb-2">Template para IA Externa</h2>
+            <p className="text-xs text-muted-foreground mb-4">Edite o template livremente. Use como base para colar na sua IA externa.</p>
+
+            <textarea
+              value={
+                formData.full_description_template ||
+                `Use as seguintes palavras-chave: ${formData.keywords.join(", ")}\nCrie uma descrição completa para marketplace com:\n- Título principal: ${formData.titles[0] || "—"}\n- Palavras-chave obrigatórias: ${formData.keywords.join(", ")}\n- Breve descrição base: ${formData.brief_description || "—"}\n- Tom: profissional e persuasivo`
+              }
+              onChange={(e) => setFormData({ ...formData, full_description_template: e.target.value })}
+              className="w-full bg-internal-50 border border-sidebar-border rounded p-6 font-mono text-sm leading-relaxed text-foreground h-[400px] focus:border-primary outline-none resize-none"
+              placeholder="Edite o template aqui..."
+            />
 
             <div className="mt-6 flex gap-4">
-              <button 
+              <button
+                type="button"
                 onClick={() => {
-                  const template = `Use as seguintes palavras-chave: ${formData.keywords.join(", ")}\nCrie uma descrição completa para marketplace com:\n- Título principal: ${formData.titles[0] || "—"}\n- Palavras-chave obrigatórias: ${formData.keywords.join(", ")}\n- Breve descrição base: ${formData.brief_description}\n- Tom: profissional e persuasivo`;
+                  const template = formData.full_description_template || `Use as seguintes palavras-chave: ${formData.keywords.join(", ")}\nCrie uma descrição completa para marketplace com:\n- Título principal: ${formData.titles[0] || "—"}\n- Palavras-chave obrigatórias: ${formData.keywords.join(", ")}\n- Breve descrição base: ${formData.brief_description}\n- Tom: profissional e persuasivo`;
                   navigator.clipboard.writeText(template);
                   toast.success("Template copiado!");
                 }}
@@ -573,7 +574,18 @@ export default function AnuncioForm() {
               >
                 COPIAR TEMPLATE
               </button>
-              <button 
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ ...formData, full_description_template: "" });
+                  toast.success("Template restaurado ao padrão!");
+                }}
+                className="px-6 border border-sidebar-border text-muted-foreground font-bold py-3 rounded hover:bg-internal-w5"
+              >
+                RESTAURAR
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowTemplateModal(false)}
                 className="flex-1 border border-sidebar-border text-muted-foreground font-bold py-3 rounded hover:bg-internal-w5"
               >
