@@ -414,6 +414,7 @@ export default function AnuncioForm() {
             className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
             placeholder="Crie uma breve descrição com as palavras-chave..."
           />
+          <KeywordRefStrip keywords={formData.keywords} text={formData.brief_description || ""} />
         </div>
 
         <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
@@ -428,6 +429,7 @@ export default function AnuncioForm() {
             className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
             placeholder="Cole aqui a descrição completa gerada pela IA externa..."
           />
+          <KeywordRefStrip keywords={formData.keywords} text={formData.full_description || ""} />
         </div>
 
         <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
