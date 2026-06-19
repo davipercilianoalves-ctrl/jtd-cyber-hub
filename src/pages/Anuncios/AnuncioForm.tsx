@@ -55,6 +55,7 @@ export default function AnuncioForm() {
     video_name: "",
     video_script: "",
     video_youtube_url: "",
+    video_path: null as string | null,
     cost_price: 0,
     marketplace_fee: 0,
     shipping_cost: 0,
