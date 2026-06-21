@@ -216,12 +216,18 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
   async function handleSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
+
+    if (!formData.name?.trim()) {
+      toast.error("Preencha o nome do produto para continuar");
+      return;
+    }
+
     setSaving(true);
-    
+
     const sku = formData.sku || `PRD-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
     // Sincroniza cost_price/sale_price a partir do módulo de precificação
     const pricingResult = computePricing(formData.pricing as PricingState);
-    const payload = {
+    const payload: any = {
       ...formData,
       sku,
       cost_price: pricingResult.costFixedTotal || formData.cost_price || 0,
@@ -229,6 +235,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         ? formData.sale_price || 0
         : pricingResult.idealPrice,
     };
+    // Sanitiza colunas tipadas — strings vazias em UUID/date quebram o INSERT (22P02)
+    if (!payload.supplier_id) payload.supplier_id = null;
+    if (!payload.expiration_date) payload.expiration_date = null;
 
     try {
       let savedProductId = productId;
