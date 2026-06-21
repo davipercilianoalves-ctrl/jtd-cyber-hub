@@ -101,8 +101,9 @@ export default function KitForm() {
   }, [calcs.venda, calcs.riscado]);
 
   async function handleSubmit() {
-    if (!formData.name) return toast.error("Nome é obrigatório.");
-    if (kitProducts.length === 0) return toast.error("Adicione ao menos um produto.");
+    if (!formData.name?.trim()) {
+      return toast.error("Preencha o nome do kit para continuar");
+    }
 
     setSaving(true);
     try {
@@ -118,15 +119,19 @@ export default function KitForm() {
         kitId = data.id;
       }
 
-      if (kitId) {
+      if (kitId && kitProducts.length > 0) {
         const { error: insErr } = await supabase.from("kit_products").insert(
           kitProducts.map(kp => ({ kit_id: kitId, product_id: kp.product_id, quantity: kp.quantity }))
         );
         if (insErr) throw insErr;
       }
-      
-      toast.success("Kit salvo com sucesso!");
-      navigate({ to: "/kits" });
+
+      toast.success(id ? "Kit atualizado!" : "Kit criado com sucesso!");
+      if (!id && kitId) {
+        navigate({ to: "/kits/$id/editar", params: { id: kitId } });
+      } else {
+        navigate({ to: "/kits" });
+      }
     } catch (e) {
       console.error(e);
       const { formatSupabaseError } = await import("@/lib/supabaseError");
