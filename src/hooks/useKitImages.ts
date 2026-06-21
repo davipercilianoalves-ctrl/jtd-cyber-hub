@@ -38,7 +38,7 @@ export async function getKitImages(kitId: string): Promise<KitImageRecord[]> {
   const { data, error } = await (supabase as any)
     .from("kit_images")
     .select("*")
-    .eq("kit_id", productId)
+    .eq("kit_id", kitId)
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
   if (error) throw error;
@@ -51,17 +51,17 @@ export function useKitImages(kitId?: string) {
   const [uploading, setUploading] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!productId) {
+    if (!kitId) {
       setImages([]);
       return;
     }
     setLoading(true);
     try {
-      setImages(await getImages(kitId));
+      setImages(await getKitImages(kitId));
     } finally {
       setLoading(false);
     }
-  }, [productId]);
+  }, [kitId]);
 
   useEffect(() => {
     refresh();
