@@ -273,12 +273,18 @@ export default function KitForm({ kitId }: KitFormProps) {
     setSaving(true);
 
     const sku = formData.sku || `KIT-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    // Custo total = soma da composição (qty × cost_price)
+    const compositionCost = kitItems.reduce(
+      (sum, it) => sum + (Number(it.cost_price) || 0) * (Number(it.quantity) || 0),
+      0,
+    );
     // Sincroniza cost_price/sale_price a partir do módulo de precificação
     const pricingResult = computePricing(formData.pricing as PricingState);
     const payload: any = {
       ...formData,
       sku,
-      cost_price: pricingResult.costFixedTotal || formData.cost_price || 0,
+      titles: (formData.titles || []).map((t: string) => (t || "").trim()).filter(Boolean),
+      cost_price: pricingResult.costFixedTotal || compositionCost || formData.cost_price || 0,
       sale_price: pricingResult.invalid
         ? formData.sale_price || 0
         : pricingResult.idealPrice,
