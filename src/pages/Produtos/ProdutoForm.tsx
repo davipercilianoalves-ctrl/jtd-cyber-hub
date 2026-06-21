@@ -117,6 +117,9 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [selectionMenu, setSelectionMenu] = useState<{ x: number, y: number, text: string, start: number, end: number, competitorIdx: number, isExisting: boolean } | null>(null);
   const descriptionRefs = useRef<{ [key: number]: HTMLTextAreaElement | null }>({});
+  const { uploadImages } = useProductImages(undefined);
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const pendingFileRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<any>({
     name: "",
