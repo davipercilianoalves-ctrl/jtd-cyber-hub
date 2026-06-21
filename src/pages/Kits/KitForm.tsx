@@ -225,10 +225,18 @@ export default function KitForm({ kitId }: KitFormProps) {
 
   async function fetchKit() {
     if (!kitId) return;
-    const { data, error } = await supabase.from("kits").select("*, kit_competitors(*)").eq("id", kitId).single();
+    const { data, error } = await supabase
+      .from("kits")
+      .select("*, kit_competitors(*), kit_products(quantity, products(id, name, sku, cost_price, keywords))")
+      .eq("id", kitId)
+      .single();
     if (data) {
-      const { kit_competitors, ...rest } = data as any;
-      setFormData({ ...rest, pricing: mergePricing(rest.pricing) });
+      const { kit_competitors, kit_products, ...rest } = data as any;
+      setFormData({
+        ...rest,
+        titles: Array.isArray(rest.titles) && rest.titles.length ? rest.titles : [""],
+        pricing: mergePricing(rest.pricing),
+      });
       setCompetitors((kit_competitors || []).map((c: any) => ({
         id: c.id,
         title: c.title || "",
@@ -238,6 +246,18 @@ export default function KitForm({ kitId }: KitFormProps) {
         price: Number(c.price) || 0,
         url: c.url || ""
       })));
+      setKitItems(
+        (kit_products || [])
+          .filter((kp: any) => kp.products)
+          .map((kp: any) => ({
+            product_id: kp.products.id,
+            name: kp.products.name,
+            sku: kp.products.sku,
+            cost_price: Number(kp.products.cost_price) || 0,
+            keywords: kp.products.keywords || [],
+            quantity: Number(kp.quantity) || 1,
+          })),
+      );
     }
     setLoading(false);
   }
