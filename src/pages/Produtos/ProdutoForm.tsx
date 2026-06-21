@@ -1223,9 +1223,80 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         {productId ? (
           <ProductImageGallery productId={productId} />
         ) : (
-          <p className="text-sm text-muted-foreground border border-dashed border-sidebar-border rounded-lg p-4 text-center bg-internal-20">
-            Salve o produto primeiro para adicionar imagens.
-          </p>
+          <div className="space-y-3">
+            <input
+              ref={pendingFileRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                if (files.length) setPendingImages((prev) => [...prev, ...files]);
+                if (pendingFileRef.current) pendingFileRef.current.value = "";
+              }}
+            />
+            <div className="border-2 border-dashed border-sidebar-border rounded-lg p-6 text-center bg-internal-20">
+              <div className="flex flex-col items-center gap-2">
+                <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Selecione as imagens agora — elas serão enviadas automaticamente após salvar o produto.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => pendingFileRef.current?.click()}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition"
+                >
+                  <Upload className="w-4 h-4" />
+                  Adicionar imagens
+                </button>
+                <p className="text-xs text-muted-foreground">JPG, PNG ou WEBP</p>
+              </div>
+            </div>
+            {pendingImages.length > 0 && (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  {pendingImages.length} imagem(ns) na fila — serão enviadas ao salvar.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {pendingImages.map((file, idx) => {
+                    const url = URL.createObjectURL(file);
+                    return (
+                      <div
+                        key={`${file.name}-${idx}`}
+                        className="group relative border border-sidebar-border rounded-lg overflow-hidden bg-internal-20"
+                      >
+                        <div className="aspect-square overflow-hidden">
+                          <img
+                            src={url}
+                            alt={file.name}
+                            className="w-full h-full object-cover"
+                            onLoad={() => URL.revokeObjectURL(url)}
+                          />
+                        </div>
+                        <div className="p-2 text-xs">
+                          <div className="truncate" title={file.name}>{file.name}</div>
+                          <div className="text-muted-foreground">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          title="Remover"
+                          onClick={() =>
+                            setPendingImages((prev) => prev.filter((_, i) => i !== idx))
+                          }
+                          className="absolute top-1 right-1 p-1.5 rounded bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 
