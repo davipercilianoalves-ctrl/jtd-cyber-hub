@@ -273,13 +273,13 @@ export default function KitForm({ kitId }: KitFormProps) {
         }
       }
 
-      // Sobe imagens pendentes (modo "novo produto") agora que temos o ID
+      // Sobe imagens pendentes (modo "novo kit") agora que temos o ID
       if (!kitId && savedKitId && pendingImages.length > 0) {
         try {
           await uploadImages(savedKitId, pendingImages);
           setPendingImages([]);
         } catch (e: any) {
-          toast.error("Produto criado, mas falhou o upload de imagens", {
+          toast.error("Kit criado, mas falhou o upload de imagens", {
             description: e?.message ?? String(e),
           });
         }
@@ -445,13 +445,13 @@ export default function KitForm({ kitId }: KitFormProps) {
       comp.keywords_found.push(trimmed);
     }
 
-    // Adiciona AUTOMATICAMENTE à lista principal do produto (sem duplicados)
+    // Adiciona AUTOMATICAMENTE à lista principal do kit (sem duplicados)
     if (trimmed && !formData.keywords.includes(trimmed)) {
       setFormData((prev: any) => ({
         ...prev,
         keywords: [...prev.keywords, trimmed]
       }));
-      toast.success(`"${trimmed}" adicionada às keywords do produto!`);
+      toast.success(`"${trimmed}" adicionada às keywords do kit!`);
     } else {
       toast.success(`"${trimmed}" marcada!`);
     }
@@ -1325,7 +1325,7 @@ export default function KitForm({ kitId }: KitFormProps) {
                 }}
                 style={textareaStyle}
                 className={`${inputCls} !min-h-0 py-1`}
-                placeholder="Digite a descrição interna completa do produto..."
+                placeholder="Digite a descrição interna completa do kit..."
               />
               <CopyBtn value={formData.description} />
             </div>
@@ -1532,7 +1532,7 @@ export default function KitForm({ kitId }: KitFormProps) {
             const kws = competitors[openCompetitorIndex].keywords_found;
             const uniqueKeywords = Array.from(new Set([...(formData.keywords as string[]), ...kws]));
             setFormData({ ...formData, keywords: uniqueKeywords });
-            toast.success("Keywords enviadas para o produto!");
+            toast.success("Keywords enviadas para o kit!");
           }}
           initialX={120}
           initialY={140}
