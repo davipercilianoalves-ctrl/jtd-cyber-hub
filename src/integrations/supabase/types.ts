@@ -159,6 +159,94 @@ export type Database = {
           },
         ]
       }
+      kit_competitors: {
+        Row: {
+          created_at: string
+          description: string | null
+          highlights: Json
+          id: string
+          keywords_found: string[] | null
+          kit_id: string
+          price: number | null
+          title: string | null
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          highlights?: Json
+          id?: string
+          keywords_found?: string[] | null
+          kit_id: string
+          price?: number | null
+          title?: string | null
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          highlights?: Json
+          id?: string
+          keywords_found?: string[] | null
+          kit_id?: string
+          price?: number | null
+          title?: string | null
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kit_competitors_kit_id_fkey"
+            columns: ["kit_id"]
+            isOneToOne: false
+            referencedRelation: "kits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kit_images: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          id: string
+          kit_id: string
+          position: number
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number
+          id?: string
+          kit_id: string
+          position?: number
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          kit_id?: string
+          position?: number
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kit_images_kit_id_fkey"
+            columns: ["kit_id"]
+            isOneToOne: false
+            referencedRelation: "kits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kit_products: {
         Row: {
           id: string
@@ -200,75 +288,182 @@ export type Database = {
       }
       kits: {
         Row: {
+          brand: string | null
           brief_description: string | null
+          category: string | null
+          common_questions: string | null
+          condition: string | null
+          cost_price: number | null
           created_at: string
+          depth: number | null
+          description: string | null
+          dimensions: string | null
+          expiration_date: string | null
           fake_discount: number | null
           fake_price: number | null
           final_price: number | null
+          format: string | null
+          free_shipping: boolean
+          full_description: string | null
+          gross_weight_g: number | null
+          gtin: string | null
+          gtin_tax: string | null
+          height: number | null
           id: string
+          images: Json
           is_active: boolean
+          items_per_box: number | null
           keywords: string[] | null
           marketplace_fee: number | null
+          measurement_unit: string | null
           name: string
+          net_weight_g: number | null
+          notes: string | null
           packaging_cost: number | null
+          price_lists: Json | null
+          pricing: Json
+          production_type: string | null
           profit_margin: number | null
+          sale_price: number | null
           shipping_cost: number | null
           sku: string | null
+          status: string | null
+          supplier_id: string | null
           tax: number | null
           titles: string[] | null
           transport_cost: number | null
+          type: string | null
+          unit: string | null
           user_id: string
           video_name: string | null
+          video_path: string | null
           video_script: string | null
           video_youtube_url: string | null
+          volumes: number | null
+          weight_g: number | null
+          width: number | null
         }
         Insert: {
+          brand?: string | null
           brief_description?: string | null
+          category?: string | null
+          common_questions?: string | null
+          condition?: string | null
+          cost_price?: number | null
           created_at?: string
+          depth?: number | null
+          description?: string | null
+          dimensions?: string | null
+          expiration_date?: string | null
           fake_discount?: number | null
           fake_price?: number | null
           final_price?: number | null
+          format?: string | null
+          free_shipping?: boolean
+          full_description?: string | null
+          gross_weight_g?: number | null
+          gtin?: string | null
+          gtin_tax?: string | null
+          height?: number | null
           id?: string
+          images?: Json
           is_active?: boolean
+          items_per_box?: number | null
           keywords?: string[] | null
           marketplace_fee?: number | null
+          measurement_unit?: string | null
           name: string
+          net_weight_g?: number | null
+          notes?: string | null
           packaging_cost?: number | null
+          price_lists?: Json | null
+          pricing?: Json
+          production_type?: string | null
           profit_margin?: number | null
+          sale_price?: number | null
           shipping_cost?: number | null
           sku?: string | null
+          status?: string | null
+          supplier_id?: string | null
           tax?: number | null
           titles?: string[] | null
           transport_cost?: number | null
+          type?: string | null
+          unit?: string | null
           user_id?: string
           video_name?: string | null
+          video_path?: string | null
           video_script?: string | null
           video_youtube_url?: string | null
+          volumes?: number | null
+          weight_g?: number | null
+          width?: number | null
         }
         Update: {
+          brand?: string | null
           brief_description?: string | null
+          category?: string | null
+          common_questions?: string | null
+          condition?: string | null
+          cost_price?: number | null
           created_at?: string
+          depth?: number | null
+          description?: string | null
+          dimensions?: string | null
+          expiration_date?: string | null
           fake_discount?: number | null
           fake_price?: number | null
           final_price?: number | null
+          format?: string | null
+          free_shipping?: boolean
+          full_description?: string | null
+          gross_weight_g?: number | null
+          gtin?: string | null
+          gtin_tax?: string | null
+          height?: number | null
           id?: string
+          images?: Json
           is_active?: boolean
+          items_per_box?: number | null
           keywords?: string[] | null
           marketplace_fee?: number | null
+          measurement_unit?: string | null
           name?: string
+          net_weight_g?: number | null
+          notes?: string | null
           packaging_cost?: number | null
+          price_lists?: Json | null
+          pricing?: Json
+          production_type?: string | null
           profit_margin?: number | null
+          sale_price?: number | null
           shipping_cost?: number | null
           sku?: string | null
+          status?: string | null
+          supplier_id?: string | null
           tax?: number | null
           titles?: string[] | null
           transport_cost?: number | null
+          type?: string | null
+          unit?: string | null
           user_id?: string
           video_name?: string | null
+          video_path?: string | null
           video_script?: string | null
           video_youtube_url?: string | null
+          volumes?: number | null
+          weight_g?: number | null
+          width?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "kits_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       metrics_cache: {
         Row: {
