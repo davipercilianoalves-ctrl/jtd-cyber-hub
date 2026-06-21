@@ -1708,7 +1708,19 @@ export default function KitForm({ kitId }: KitFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 6. ANÁLISE GERAL DO PRODUTO                                  */}
+      {/* BLOCO 10 — VÍDEO DO KIT                                      */}
+      {/* ============================================================ */}
+      <KitVideoSection
+        kitId={kitId}
+        videoName={formData.video_name || ""}
+        videoScript={formData.video_script || ""}
+        videoYoutubeUrl={formData.video_youtube_url || ""}
+        videoPath={formData.video_path}
+        onChange={(patch) => setFormData({ ...formData, ...patch })}
+      />
+
+      {/* ============================================================ */}
+      {/* BLOCO 11 — ANÁLISE GERAL DO KIT                              */}
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-5">
 
