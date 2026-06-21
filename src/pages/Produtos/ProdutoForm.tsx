@@ -273,6 +273,18 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         }
       }
 
+      // Sobe imagens pendentes (modo "novo produto") agora que temos o ID
+      if (!productId && savedProductId && pendingImages.length > 0) {
+        try {
+          await uploadImages(savedProductId, pendingImages);
+          setPendingImages([]);
+        } catch (e: any) {
+          toast.error("Produto criado, mas falhou o upload de imagens", {
+            description: e?.message ?? String(e),
+          });
+        }
+      }
+
       toast.success(productId ? "Produto atualizado!" : "Produto criado com sucesso!");
       if (!productId && savedProductId) {
         navigate({ to: "/produtos/$id/editar", params: { id: savedProductId } });
