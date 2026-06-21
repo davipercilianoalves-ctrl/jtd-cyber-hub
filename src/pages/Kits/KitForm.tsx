@@ -268,12 +268,18 @@ export default function KitForm({ kitId }: KitFormProps) {
     if (!payload.expiration_date) payload.expiration_date = null;
 
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("Usuário não autenticado");
+
+      const kitPayload: any = { ...payload, user_id: userId };
+
       let savedKitId = kitId;
       if (kitId) {
-        const { error } = await supabase.from("kits").update(payload).eq("id", kitId);
+        const { error } = await supabase.from("kits").update(kitPayload).eq("id", kitId);
         if (error) throw error;
       } else {
-        const { data, error } = await supabase.from("kits").insert([payload]).select().single();
+        const { data, error } = await supabase.from("kits").insert([kitPayload]).select().single();
         if (error) throw error;
         savedKitId = data.id;
       }
@@ -287,12 +293,27 @@ export default function KitForm({ kitId }: KitFormProps) {
             description: c.description,
             keywords_found: c.keywords_found,
             highlights: c.highlights as any,
-            kit_id: savedKitId,
+            kit_id: savedKitId!,
+            user_id: userId,
             price: c.price,
             url: c.url
           }));
           const { error: insErr } = await supabase.from("kit_competitors").insert(competitorsToSave);
           if (insErr) throw insErr;
+        }
+
+        // Persiste a composição do kit (kit_products)
+        const { error: delKpErr } = await supabase.from("kit_products").delete().eq("kit_id", savedKitId);
+        if (delKpErr) throw delKpErr;
+        if (kitItems.length > 0) {
+          const kpRows = kitItems.map((it) => ({
+            kit_id: savedKitId!,
+            product_id: it.product_id,
+            quantity: it.quantity,
+            user_id: userId,
+          }));
+          const { error: insKpErr } = await supabase.from("kit_products").insert(kpRows);
+          if (insKpErr) throw insKpErr;
         }
       }
 
