@@ -24,7 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
 import PricingModule from "@/components/pricing/PricingModule";
-import KitImageGallery from "@/components/products/KitImageGallery";
+import KitImageGallery from "@/components/kits/KitImageGallery";
 import { useKitImages } from "@/hooks/useKitImages";
 import { ImagePlus, Upload, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
