@@ -171,9 +171,11 @@ export default function AnuncioForm() {
     setSaving(true);
     try {
       if (id) {
-        await supabase.from("ads").update(formData as any).eq("id", id);
+        const { error } = await supabase.from("ads").update(formData as any).eq("id", id);
+        if (error) throw error;
       } else {
-        await supabase.from("ads").insert([formData] as any);
+        const { error } = await supabase.from("ads").insert([formData] as any);
+        if (error) throw error;
       }
 
 
@@ -181,7 +183,10 @@ export default function AnuncioForm() {
       navigate({ to: "/anuncios" });
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar anúncio.");
+      const { formatSupabaseError } = await import("@/lib/supabaseError");
+      toast.error("Não foi possível salvar o anúncio", {
+        description: formatSupabaseError(error, "Erro ao salvar anúncio."),
+      });
     } finally {
       setSaving(false);
     }
