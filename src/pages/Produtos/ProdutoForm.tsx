@@ -233,7 +233,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     try {
       let savedProductId = productId;
       if (productId) {
-        await supabase.from("products").update(payload).eq("id", productId);
+        const { error } = await supabase.from("products").update(payload).eq("id", productId);
+        if (error) throw error;
       } else {
         const { data, error } = await supabase.from("products").insert([payload]).select().single();
         if (error) throw error;
@@ -241,7 +242,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       }
 
       if (savedProductId) {
-        await supabase.from("product_competitors").delete().eq("product_id", savedProductId);
+        const { error: delErr } = await supabase.from("product_competitors").delete().eq("product_id", savedProductId);
+        if (delErr) throw delErr;
         if (competitors.length > 0) {
           const competitorsToSave = competitors.map(c => ({
             title: c.title,
@@ -252,7 +254,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
             price: c.price,
             url: c.url
           }));
-          await supabase.from("product_competitors").insert(competitorsToSave);
+          const { error: insErr } = await supabase.from("product_competitors").insert(competitorsToSave);
+          if (insErr) throw insErr;
         }
       }
 
@@ -260,7 +263,10 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       navigate({ to: "/produtos" });
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar produto.");
+      const { formatSupabaseError } = await import("@/lib/supabaseError");
+      toast.error("Não foi possível salvar o produto", {
+        description: formatSupabaseError(error, "Erro ao salvar produto."),
+      });
     } finally {
       setSaving(false);
     }

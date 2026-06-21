@@ -108,8 +108,10 @@ export default function KitForm() {
     try {
       let kitId = id;
       if (id) {
-        await supabase.from("kits").update(formData).eq("id", id);
-        await supabase.from("kit_products").delete().eq("kit_id", id);
+        const { error: upErr } = await supabase.from("kits").update(formData).eq("id", id);
+        if (upErr) throw upErr;
+        const { error: delErr } = await supabase.from("kit_products").delete().eq("kit_id", id);
+        if (delErr) throw delErr;
       } else {
         const { data, error } = await supabase.from("kits").insert([formData]).select().single();
         if (error) throw error;
@@ -117,16 +119,20 @@ export default function KitForm() {
       }
 
       if (kitId) {
-        await supabase.from("kit_products").insert(
+        const { error: insErr } = await supabase.from("kit_products").insert(
           kitProducts.map(kp => ({ kit_id: kitId, product_id: kp.product_id, quantity: kp.quantity }))
         );
+        if (insErr) throw insErr;
       }
       
       toast.success("Kit salvo com sucesso!");
       navigate({ to: "/kits" });
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao salvar o kit.");
+      const { formatSupabaseError } = await import("@/lib/supabaseError");
+      toast.error("Não foi possível salvar o kit", {
+        description: formatSupabaseError(e, "Erro ao salvar o kit."),
+      });
     } finally {
       setSaving(false);
     }
