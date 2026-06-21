@@ -955,7 +955,177 @@ export default function KitForm({ kitId }: KitFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 2. PALAVRAS-CHAVE DO PRODUTO                                 */}
+      {/* BLOCO 2 — COMPOSIÇÃO DO KIT                                  */}
+      {/* ============================================================ */}
+      <section className="jtd-glass p-6 space-y-5">
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+            <Package size={20} className="text-primary" />
+            Composição do Kit
+            <span className="bg-primary/20 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/40">
+              {kitItems.length}
+            </span>
+          </h3>
+          <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+            Custo total:&nbsp;
+            <span className="text-primary font-mono text-base">
+              R$ {kitItems.reduce((s, it) => s + it.cost_price * it.quantity, 0).toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        {/* BUSCA */}
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={productSearch}
+            onChange={async (e) => {
+              const q = e.target.value;
+              setProductSearch(q);
+              if (!q.trim()) {
+                setProductResults([]);
+                return;
+              }
+              const { data } = await supabase
+                .from("products")
+                .select("id, name, sku, cost_price, keywords")
+                .eq("is_active", true)
+                .or(`name.ilike.%${q}%,sku.ilike.%${q}%`)
+                .limit(20);
+              setProductResults(data || []);
+            }}
+            placeholder="Buscar produto por nome ou SKU..."
+            className={inputCls}
+          />
+          {productResults.length > 0 && (
+            <div className="border border-sidebar-border rounded-md bg-internal-20 max-h-72 overflow-auto divide-y divide-sidebar-border/30">
+              {productResults.map((p) => {
+                const already = kitItems.find((it) => it.product_id === p.id);
+                const initial = (p.name || "?").charAt(0).toUpperCase();
+                return (
+                  <button
+                    type="button"
+                    key={p.id}
+                    onClick={() => {
+                      if (already) {
+                        setKitItems((prev) =>
+                          prev.map((it) =>
+                            it.product_id === p.id ? { ...it, quantity: it.quantity + 1 } : it,
+                          ),
+                        );
+                      } else {
+                        setKitItems((prev) => [
+                          ...prev,
+                          {
+                            product_id: p.id,
+                            name: p.name,
+                            sku: p.sku,
+                            cost_price: Number(p.cost_price) || 0,
+                            keywords: p.keywords || [],
+                            quantity: 1,
+                          },
+                        ]);
+                      }
+                      setProductSearch("");
+                      setProductResults([]);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-primary/10 transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded bg-primary/15 text-primary font-black flex items-center justify-center shrink-0">
+                      {initial}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-foreground truncate">{p.name}</div>
+                      <div className="text-[10px] font-mono text-muted-foreground">
+                        SKU: {p.sku || "—"} · R$ {Number(p.cost_price || 0).toFixed(2)}
+                      </div>
+                    </div>
+                    {already && (
+                      <span className="text-[10px] font-black uppercase text-primary">
+                        +1
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* SELECIONADOS */}
+        {kitItems.length === 0 ? (
+          <p className="text-xs italic text-muted-foreground/60 py-4 text-center border border-dashed border-sidebar-border rounded-lg">
+            Nenhum produto adicionado ao kit ainda. Use a busca acima.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {kitItems.map((it, idx) => {
+              const subtotal = it.cost_price * it.quantity;
+              const initial = (it.name || "?").charAt(0).toUpperCase();
+              return (
+                <div
+                  key={it.product_id}
+                  className="flex items-center gap-3 p-3 border border-sidebar-border rounded-md bg-internal-20"
+                >
+                  <div className="w-10 h-10 rounded bg-primary/15 text-primary font-black flex items-center justify-center shrink-0">
+                    {initial}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-foreground truncate">{it.name}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      SKU: {it.sku || "—"} · Unit: R$ {it.cost_price.toFixed(2)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setKitItems((prev) =>
+                          prev.map((p, i) =>
+                            i === idx ? { ...p, quantity: Math.max(1, p.quantity - 1) } : p,
+                          ),
+                        )
+                      }
+                      className="w-7 h-7 rounded border border-sidebar-border bg-internal-w5 text-foreground hover:border-primary hover:text-primary"
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center font-mono font-bold">{it.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setKitItems((prev) =>
+                          prev.map((p, i) => (i === idx ? { ...p, quantity: p.quantity + 1 } : p)),
+                        )
+                      }
+                      className="w-7 h-7 rounded border border-sidebar-border bg-internal-w5 text-foreground hover:border-primary hover:text-primary"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="w-24 text-right font-mono font-bold text-primary shrink-0">
+                    R$ {subtotal.toFixed(2)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setKitItems((prev) => prev.filter((_, i) => i !== idx))}
+                    className="text-muted-foreground hover:text-destructive p-1 shrink-0"
+                    title="Remover"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
+            <div className="text-[11px] text-muted-foreground italic pt-2">
+              {kitItems.map((it) => `${it.quantity}× ${it.name}`).join("  +  ")}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ============================================================ */}
+      {/* BLOCO 3 — PALAVRAS-CHAVE DO KIT                              */}
       {/* ============================================================ */}
 
       <section className="jtd-glass p-6 space-y-5">
