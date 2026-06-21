@@ -1437,7 +1437,104 @@ export default function KitForm({ kitId }: KitFormProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 4. PRECIFICAÇÃO INTELIGENTE                                 */}
+      {/* BLOCO 5 — TÍTULOS DO KIT                                     */}
+      {/* ============================================================ */}
+      <section className="jtd-glass p-6 space-y-6">
+        <h3 className="font-bold text-lg text-foreground">Títulos do Kit</h3>
+        <div className="space-y-4">
+          {(formData.titles as string[]).map((title: string, idx: number) => (
+            <div key={idx} className="space-y-2">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <span>Título #{idx + 1}</span>
+                <span className={title.length > 150 ? "text-red-500" : ""}>{title.length}/150</span>
+              </div>
+              <div className="flex gap-3">
+                <textarea
+                  value={title}
+                  onChange={(e) => {
+                    const next = [...(formData.titles as string[])];
+                    next[idx] = e.target.value;
+                    setFormData({ ...formData, titles: next });
+                    autoResize(e.target);
+                  }}
+                  style={textareaStyle}
+                  className={`${inputCls} flex-1`}
+                  placeholder="Digite o título do anúncio do kit..."
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      titles: (formData.titles as string[]).filter((_: string, i: number) => i !== idx),
+                    })
+                  }
+                  className="text-muted-foreground hover:text-red-500 p-2 h-fit"
+                >
+                  <Trash size={20} />
+                </button>
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, titles: [...(formData.titles as string[]), ""] })}
+            className="w-full border-2 border-dashed border-sidebar-border rounded-lg py-4 text-muted-foreground hover:border-primary/50 hover:text-primary flex items-center justify-center gap-2 transition-all"
+          >
+            <Plus size={20} />
+            <span className="font-bold text-xs uppercase tracking-widest">ADICIONAR TÍTULO</span>
+          </button>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* BLOCO 6 — DESCRIÇÕES                                         */}
+      {/* ============================================================ */}
+      <section className="jtd-glass p-6 space-y-6">
+        <div className="space-y-1.5">
+          <label className={labelCls}>Breve Descrição</label>
+          <textarea
+            value={formData.brief_description || ""}
+            onChange={(e) => {
+              setFormData({ ...formData, brief_description: e.target.value });
+              autoResize(e.target);
+            }}
+            style={textareaStyle}
+            className={inputCls}
+            placeholder="Crie uma breve descrição com as palavras-chave..."
+          />
+          <KeywordRefStrip keywords={formData.keywords} text={formData.brief_description || ""} />
+        </div>
+
+        <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
+          <label className={labelCls}>Descrição Completa</label>
+          <textarea
+            value={formData.full_description || ""}
+            onChange={(e) => {
+              setFormData({ ...formData, full_description: e.target.value });
+              autoResize(e.target);
+            }}
+            style={textareaStyle}
+            className={inputCls}
+            placeholder="Cole aqui a descrição completa gerada pela IA externa..."
+          />
+          <KeywordRefStrip keywords={formData.keywords} text={formData.full_description || ""} />
+        </div>
+
+        <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
+          <label className={labelCls}>Template para IA Externa</label>
+          <button
+            type="button"
+            onClick={() => setShowTemplateModal(true)}
+            className="w-full bg-internal-w5 border border-sidebar-border rounded py-3 text-xs font-bold text-foreground hover:bg-muted/15 transition-all"
+          >
+            VER TEMPLATE
+          </button>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* BLOCO 7 — PRECIFICAÇÃO INTELIGENTE                           */}
       {/* ============================================================ */}
       <PricingModule
         value={formData.pricing as PricingState}
