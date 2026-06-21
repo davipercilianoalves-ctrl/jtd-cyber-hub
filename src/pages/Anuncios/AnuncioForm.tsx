@@ -166,21 +166,37 @@ export default function AnuncioForm() {
 
   async function handleSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    if (!formData.product_id) return toast.error("Selecione um produto.");
-    
+    if (!formData.titles.some(t => t.trim())) {
+      return toast.error("Adicione pelo menos um título para continuar");
+    }
+    if (!formData.product_id) {
+      return toast.error("Selecione um produto para continuar");
+    }
+
     setSaving(true);
     try {
+      // Limpa títulos vazios antes de salvar
+      const payload: any = {
+        ...formData,
+        titles: formData.titles.map(t => t.trim()).filter(Boolean),
+      };
+
+      let savedId = id;
       if (id) {
-        const { error } = await supabase.from("ads").update(formData as any).eq("id", id);
+        const { error } = await supabase.from("ads").update(payload).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("ads").insert([formData] as any);
+        const { data, error } = await supabase.from("ads").insert([payload]).select().single();
         if (error) throw error;
+        savedId = data.id;
       }
 
-
-      toast.success(id ? "Anúncio atualizado!" : "Anúncio criado!");
-      navigate({ to: "/anuncios" });
+      toast.success(id ? "Anúncio atualizado!" : "Anúncio criado com sucesso!");
+      if (!id && savedId) {
+        navigate({ to: "/anuncios/$id/editar", params: { id: savedId } });
+      } else {
+        navigate({ to: "/anuncios" });
+      }
     } catch (error) {
       console.error(error);
       const { formatSupabaseError } = await import("@/lib/supabaseError");
