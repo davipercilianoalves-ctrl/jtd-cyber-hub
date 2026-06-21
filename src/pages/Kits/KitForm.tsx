@@ -1890,6 +1890,70 @@ export default function KitForm({ kitId }: KitFormProps) {
           initialY={140}
         />
       )}
+
+      {/* Boxes flutuantes de keywords cobrindo Títulos/Descrições */}
+      <KeywordFloatingBoxes
+        keywords={formData.keywords}
+        fields={[
+          ...(formData.titles as string[]).map<FieldDef>((t: string, i: number) => ({
+            id: `t${i + 1}`,
+            label: `T${i + 1}`,
+            expandedLabel: `Título ${i + 1}`,
+            text: t,
+          })),
+          { id: "bd", label: "BD", expandedLabel: "Breve Desc", text: formData.brief_description || "" },
+          { id: "dc", label: "DC", expandedLabel: "Desc Completa", text: formData.full_description || "" },
+        ]}
+      />
+
+      {/* Modal Template IA */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-internal-80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="jtd-glass max-w-2xl w-full p-8 relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowTemplateModal(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-xl font-bold text-primary mb-2">Template para IA Externa</h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              Edite o template livremente. Use como base para colar na sua IA externa.
+            </p>
+            <textarea
+              value={
+                formData.full_description_template ||
+                `Use as seguintes palavras-chave: ${formData.keywords.join(", ")}\nCrie uma descrição completa para marketplace com:\n- Título principal: ${(formData.titles as string[])[0] || "—"}\n- Palavras-chave obrigatórias: ${formData.keywords.join(", ")}\n- Breve descrição base: ${formData.brief_description || "—"}\n- Tom: profissional e persuasivo`
+              }
+              onChange={(e) => setFormData({ ...formData, full_description_template: e.target.value })}
+              className="w-full bg-internal-50 border border-sidebar-border rounded p-6 font-mono text-sm leading-relaxed text-foreground h-[400px] focus:border-primary outline-none resize-none"
+              placeholder="Edite o template aqui..."
+            />
+            <div className="mt-6 flex gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  const template =
+                    formData.full_description_template ||
+                    `Use as seguintes palavras-chave: ${formData.keywords.join(", ")}\nCrie uma descrição completa para marketplace com:\n- Título principal: ${(formData.titles as string[])[0] || "—"}\n- Palavras-chave obrigatórias: ${formData.keywords.join(", ")}\n- Breve descrição base: ${formData.brief_description}\n- Tom: profissional e persuasivo`;
+                  navigator.clipboard.writeText(template);
+                  toast.success("Template copiado!");
+                }}
+                className="flex-1 bg-primary text-primary-foreground font-bold py-3 rounded hover:brightness-110"
+              >
+                COPIAR TEMPLATE
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="flex-1 border border-sidebar-border text-muted-foreground font-bold py-3 rounded hover:bg-internal-w5"
+              >
+                FECHAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
