@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import FloatingKeywordPanel from "@/components/FloatingKeywordPanel";
 import PricingModule from "@/components/pricing/PricingModule";
 import ProductImageGallery from "@/components/products/ProductImageGallery";
+import { useProductImages } from "@/hooks/useProductImages";
+import { ImagePlus, Upload, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   PricingState,
