@@ -268,8 +268,12 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
         }
       }
 
-      toast.success(productId ? "Produto atualizado!" : "Produto criado!");
-      navigate({ to: "/produtos" });
+      toast.success(productId ? "Produto atualizado!" : "Produto criado com sucesso!");
+      if (!productId && savedProductId) {
+        navigate({ to: "/produtos/$id/editar", params: { id: savedProductId } });
+      } else {
+        navigate({ to: "/produtos" });
+      }
     } catch (error) {
       console.error(error);
       const { formatSupabaseError } = await import("@/lib/supabaseError");
