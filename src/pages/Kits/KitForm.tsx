@@ -1183,6 +1183,51 @@ export default function KitForm({ kitId }: KitFormProps) {
           </button>
         </div>
 
+        {/* Keywords automáticas (vindas dos produtos do kit) */}
+        {(() => {
+          const auto = Array.from(
+            new Set(kitItems.flatMap((it) => it.keywords || [])),
+          ).filter((kw) => !(formData.keywords as string[]).includes(kw));
+          if (auto.length === 0) return null;
+          return (
+            <div className="space-y-2 border border-cyan-500/30 bg-cyan-500/5 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-cyan-500">
+                  Keywords dos produtos do kit ({auto.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      keywords: Array.from(new Set([...(formData.keywords as string[]), ...auto])),
+                    })
+                  }
+                  className="text-[10px] font-black uppercase tracking-wider text-cyan-500 hover:underline"
+                >
+                  + Adicionar todas
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {auto.map((kw, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => addKeyword(kw)}
+                    className="px-2 py-1 rounded text-[11px] font-bold border border-cyan-500/40 bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20"
+                    title="Adicionar às keywords do kit"
+                  >
+                    + {kw}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                Keywords manuais do kit ↓
+              </p>
+            </div>
+          );
+        })()}
+
         {/* Lista de chips */}
         <div className="flex flex-wrap gap-2 min-h-[60px]">
           {formData.keywords.map((kw: string, i: number) => {
