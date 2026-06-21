@@ -158,7 +158,30 @@ export default function KitForm({ kitId }: KitFormProps) {
     condition: "novo",
     pricing: defaultPricing() as PricingState,
     images: [] as any[],
+    // anúncio
+    titles: [""] as string[],
+    brief_description: "",
+    full_description: "",
+    full_description_template: "",
+    video_name: "",
+    video_script: "",
+    video_youtube_url: "",
+    video_path: null as string | null,
   });
+
+  // ===== Composição do Kit (produtos vinculados) =====
+  type KitItem = {
+    product_id: string;
+    name: string;
+    sku: string | null;
+    cost_price: number;
+    keywords: string[];
+    quantity: number;
+  };
+  const [kitItems, setKitItems] = useState<KitItem[]>([]);
+  const [productSearch, setProductSearch] = useState("");
+  const [productResults, setProductResults] = useState<any[]>([]);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
 
   function autoResize(target: HTMLElement | null) {
