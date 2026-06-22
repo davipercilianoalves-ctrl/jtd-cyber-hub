@@ -80,8 +80,15 @@ export default function AdVideoSection({
   };
 
   const upload = async (file: File) => {
-    if (!adId) return toast.error("Salve o anúncio antes de enviar vídeo.");
     if (file.size > MAX_SIZE) return toast.error("Arquivo maior que 500MB.");
+    if (!adId) {
+      if (onPendingFileChange) {
+        onPendingFileChange(file);
+        toast.success("Vídeo na fila — será enviado ao salvar.");
+        return;
+      }
+      return toast.error("Salve o anúncio antes de enviar vídeo.");
+    }
     setUploading(true);
     try {
       const { data: u } = await supabase.auth.getUser();
@@ -111,6 +118,11 @@ export default function AdVideoSection({
   };
 
   const removeVideo = async () => {
+    if (pendingFile && onPendingFileChange) {
+      if (!confirm("Remover vídeo?")) return;
+      onPendingFileChange(null);
+      return;
+    }
     if (!videoPath) return;
     if (!confirm("Remover vídeo?")) return;
     await supabase.storage.from(BUCKET).remove([videoPath]);
