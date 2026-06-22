@@ -1,4 +1,4 @@
-import { useRef, useState, DragEvent } from "react";
+import { useRef, useState, DragEvent, useEffect } from "react";
 import {
   ImageIcon,
   Loader2,
@@ -7,32 +7,60 @@ import {
   ArrowLeft,
   ArrowRight,
   Star,
-  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdImages } from "@/hooks/useAdImages";
 
 interface Props {
   adId?: string;
+  pendingFiles?: File[];
+  onPendingFilesChange?: (files: File[]) => void;
 }
 
 const ACCEPT = "image/jpeg,image/jpg,image/png,image/webp";
 
-export default function AdDirectImages({ adId }: Props) {
+export default function AdDirectImages({
+  adId,
+  pendingFiles,
+  onPendingFilesChange,
+}: Props) {
   const { images, loading, uploading, uploadImages, deleteImage, reorder } =
     useAdImages(adId);
   const fileRef = useRef<HTMLInputElement>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [pendingPreviews, setPendingPreviews] = useState<string[]>([]);
 
-  const handleFiles = async (files: FileList | File[]) => {
-    if (!adId) {
-      toast.error("Salve o anúncio antes de enviar imagens próprias.");
+  // Keep object URLs in sync with the pending file list.
+  useEffect(() => {
+    if (!pendingFiles?.length) {
+      setPendingPreviews([]);
       return;
     }
+    const urls = pendingFiles.map((f) => URL.createObjectURL(f));
+    setPendingPreviews(urls);
+    return () => {
+      urls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [pendingFiles]);
+
+  const handleFiles = async (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) =>
       ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(f.type),
     );
     if (!arr.length) return toast.error("Selecione JPG, PNG ou WEBP");
+
+    if (!adId) {
+      if (onPendingFilesChange) {
+        onPendingFilesChange([...(pendingFiles ?? []), ...arr]);
+        toast.success(
+          `${arr.length} imagem(ns) na fila — serão enviadas ao salvar.`,
+        );
+        return;
+      }
+      toast.error("Salve o anúncio antes de enviar imagens próprias.");
+      return;
+    }
+
     try {
       await uploadImages(arr);
       toast.success(`${arr.length} imagem(ns) enviada(s)`);
@@ -73,6 +101,14 @@ export default function AdDirectImages({ adId }: Props) {
     setDraggingId(null);
   };
 
+  const removePending = (idx: number) => {
+    if (!onPendingFilesChange || !pendingFiles) return;
+    onPendingFilesChange(pendingFiles.filter((_, i) => i !== idx));
+  };
+
+  const showUploader = adId || onPendingFilesChange;
+  const hasPending = !adId && pendingFiles && pendingFiles.length > 0;
+
   return (
     <section className="jtd-glass p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -81,18 +117,15 @@ export default function AdDirectImages({ adId }: Props) {
           Imagens próprias do Anúncio
         </h3>
         <span className="text-xs text-muted-foreground">
-          Arraste para reordenar · 1ª imagem é a capa
+          {adId
+            ? "Arraste para reordenar · 1ª imagem é a capa"
+            : hasPending
+              ? "Imagens em fila — serão enviadas ao salvar"
+              : ""}
         </span>
       </div>
 
-      {!adId && (
-        <div className="flex items-center gap-2 text-xs rounded-md border border-amber-500/40 bg-amber-500/5 text-amber-500 px-3 py-2">
-          <AlertTriangle className="w-4 h-4" />
-          Salve o anúncio uma vez antes de enviar imagens próprias.
-        </div>
-      )}
-
-      {adId && (
+      {showUploader && (
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={onFileDrop}
@@ -122,6 +155,37 @@ export default function AdDirectImages({ adId }: Props) {
           <p className="text-xs text-muted-foreground mt-2">
             JPG, PNG ou WEBP. Solte arquivos aqui também.
           </p>
+        </div>
+      )}
+
+      {hasPending && (
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+          {pendingFiles!.map((file, idx) => (
+            <div
+              key={`${file.name}-${idx}`}
+              className="group relative aspect-square rounded overflow-hidden border-2 border-amber-500/40"
+            >
+              <div className="absolute top-1 left-1 z-10 text-[9px] font-bold bg-amber-500 text-black px-1.5 py-0.5 rounded">
+                FILA
+              </div>
+              {pendingPreviews[idx] && (
+                <img
+                  src={pendingPreviews[idx]}
+                  alt={file.name}
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/70 to-transparent">
+                <button
+                  type="button"
+                  onClick={() => removePending(idx)}
+                  className="p-1 rounded bg-black/60 text-white hover:bg-red-500"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -202,3 +266,4 @@ export default function AdDirectImages({ adId }: Props) {
     </section>
   );
 }
+
