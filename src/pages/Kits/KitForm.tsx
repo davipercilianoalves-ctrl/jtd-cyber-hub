@@ -359,6 +359,28 @@ export default function KitForm({ kitId }: KitFormProps) {
         }
       }
 
+      // Sobe vídeo pendente (modo "novo kit") agora que temos o ID
+      if (!kitId && savedKitId && pendingVideo) {
+        try {
+          const safe = pendingVideo.name.replace(/[^\w.\-]+/g, "_");
+          const path = `${userId}/${savedKitId}/${Date.now()}-${safe}`;
+          const { error: vErr } = await supabase.storage
+            .from("kit-videos")
+            .upload(path, pendingVideo, { contentType: pendingVideo.type });
+          if (vErr) throw vErr;
+          const { error: updErr } = await supabase
+            .from("kits")
+            .update({ video_path: path })
+            .eq("id", savedKitId);
+          if (updErr) throw updErr;
+          setPendingVideo(null);
+        } catch (e: any) {
+          toast.error("Kit criado, mas falhou o upload do vídeo", {
+            description: e?.message ?? String(e),
+          });
+        }
+      }
+
       toast.success(kitId ? "Kit atualizado!" : "Kit criado com sucesso!");
       if (!kitId && savedKitId) {
         navigate({ to: "/kits/$id/editar", params: { id: savedKitId } });
