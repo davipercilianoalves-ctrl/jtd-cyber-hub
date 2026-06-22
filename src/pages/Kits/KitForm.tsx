@@ -122,6 +122,7 @@ export default function KitForm({ kitId }: KitFormProps) {
   const descriptionRefs = useRef<{ [key: number]: HTMLTextAreaElement | null }>({});
   const { uploadImages } = useKitImages(undefined);
   const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [pendingVideo, setPendingVideo] = useState<File | null>(null);
   const pendingFileRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<any>({
@@ -353,6 +354,28 @@ export default function KitForm({ kitId }: KitFormProps) {
           setPendingImages([]);
         } catch (e: any) {
           toast.error("Kit criado, mas falhou o upload de imagens", {
+            description: e?.message ?? String(e),
+          });
+        }
+      }
+
+      // Sobe vídeo pendente (modo "novo kit") agora que temos o ID
+      if (!kitId && savedKitId && pendingVideo) {
+        try {
+          const safe = pendingVideo.name.replace(/[^\w.\-]+/g, "_");
+          const path = `${userId}/${savedKitId}/${Date.now()}-${safe}`;
+          const { error: vErr } = await supabase.storage
+            .from("kit-videos")
+            .upload(path, pendingVideo, { contentType: pendingVideo.type });
+          if (vErr) throw vErr;
+          const { error: updErr } = await supabase
+            .from("kits")
+            .update({ video_path: path })
+            .eq("id", savedKitId);
+          if (updErr) throw updErr;
+          setPendingVideo(null);
+        } catch (e: any) {
+          toast.error("Kit criado, mas falhou o upload do vídeo", {
             description: e?.message ?? String(e),
           });
         }
@@ -1761,6 +1784,8 @@ export default function KitForm({ kitId }: KitFormProps) {
         videoScript={formData.video_script || ""}
         videoYoutubeUrl={formData.video_youtube_url || ""}
         videoPath={formData.video_path}
+        pendingFile={pendingVideo}
+        onPendingFileChange={setPendingVideo}
         onChange={(patch) => setFormData({ ...formData, ...patch })}
       />
 

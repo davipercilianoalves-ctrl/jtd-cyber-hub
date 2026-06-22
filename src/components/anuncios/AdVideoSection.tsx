@@ -13,6 +13,8 @@ interface Props {
   videoScript: string;
   videoYoutubeUrl: string;
   videoPath: string | null;
+  pendingFile?: File | null;
+  onPendingFileChange?: (f: File | null) => void;
   onChange: (patch: {
     video_name?: string;
     video_script?: string;
@@ -35,11 +37,24 @@ export default function AdVideoSection({
   videoScript,
   videoYoutubeUrl,
   videoPath,
+  pendingFile,
+  onPendingFileChange,
   onChange,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pendingFile) {
+      setPendingPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(pendingFile);
+    setPendingPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingFile]);
 
   useEffect(() => {
     let cancel = false;
@@ -65,8 +80,15 @@ export default function AdVideoSection({
   };
 
   const upload = async (file: File) => {
-    if (!adId) return toast.error("Salve o anúncio antes de enviar vídeo.");
     if (file.size > MAX_SIZE) return toast.error("Arquivo maior que 500MB.");
+    if (!adId) {
+      if (onPendingFileChange) {
+        onPendingFileChange(file);
+        toast.success("Vídeo na fila — será enviado ao salvar.");
+        return;
+      }
+      return toast.error("Salve o anúncio antes de enviar vídeo.");
+    }
     setUploading(true);
     try {
       const { data: u } = await supabase.auth.getUser();
@@ -96,6 +118,11 @@ export default function AdVideoSection({
   };
 
   const removeVideo = async () => {
+    if (pendingFile && onPendingFileChange) {
+      if (!confirm("Remover vídeo?")) return;
+      onPendingFileChange(null);
+      return;
+    }
     if (!videoPath) return;
     if (!confirm("Remover vídeo?")) return;
     await supabase.storage.from(BUCKET).remove([videoPath]);
@@ -140,7 +167,7 @@ export default function AdVideoSection({
         <label className="text-xs font-medium text-muted-foreground">
           Upload do vídeo de demonstração
         </label>
-        {!videoPath && (
+        {!videoPath && !pendingFile && (
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={onDrop}
@@ -155,7 +182,7 @@ export default function AdVideoSection({
             />
             <button
               type="button"
-              disabled={uploading || !adId}
+              disabled={uploading}
               onClick={() => fileRef.current?.click()}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50"
             >
@@ -166,11 +193,30 @@ export default function AdVideoSection({
               )}
               {uploading ? "Enviando…" : "Enviar vídeo (MP4, MOV, AVI — máx 500MB)"}
             </button>
-            {!adId && (
+            {!adId && !onPendingFileChange && (
               <p className="text-[11px] text-amber-500 mt-2">
                 Salve o anúncio primeiro para habilitar o upload.
               </p>
             )}
+          </div>
+        )}
+        {pendingFile && pendingPreview && (
+          <div className="space-y-2">
+            <video
+              src={pendingPreview}
+              controls
+              className="w-full max-h-[300px] rounded border border-amber-500/40 bg-black"
+            />
+            <p className="text-[11px] text-amber-500">
+              Vídeo na fila — será enviado ao salvar o anúncio.
+            </p>
+            <button
+              type="button"
+              onClick={removeVideo}
+              className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-red-500"
+            >
+              <Trash2 className="w-3 h-3" /> Remover vídeo
+            </button>
           </div>
         )}
         {videoPath && signedUrl && (
