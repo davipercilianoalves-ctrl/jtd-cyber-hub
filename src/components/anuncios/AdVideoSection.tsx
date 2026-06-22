@@ -167,7 +167,7 @@ export default function AdVideoSection({
         <label className="text-xs font-medium text-muted-foreground">
           Upload do vídeo de demonstração
         </label>
-        {!videoPath && (
+        {!videoPath && !pendingFile && (
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={onDrop}
@@ -182,7 +182,7 @@ export default function AdVideoSection({
             />
             <button
               type="button"
-              disabled={uploading || !adId}
+              disabled={uploading}
               onClick={() => fileRef.current?.click()}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50"
             >
@@ -193,11 +193,30 @@ export default function AdVideoSection({
               )}
               {uploading ? "Enviando…" : "Enviar vídeo (MP4, MOV, AVI — máx 500MB)"}
             </button>
-            {!adId && (
+            {!adId && !onPendingFileChange && (
               <p className="text-[11px] text-amber-500 mt-2">
                 Salve o anúncio primeiro para habilitar o upload.
               </p>
             )}
+          </div>
+        )}
+        {pendingFile && pendingPreview && (
+          <div className="space-y-2">
+            <video
+              src={pendingPreview}
+              controls
+              className="w-full max-h-[300px] rounded border border-amber-500/40 bg-black"
+            />
+            <p className="text-[11px] text-amber-500">
+              Vídeo na fila — será enviado ao salvar o anúncio.
+            </p>
+            <button
+              type="button"
+              onClick={removeVideo}
+              className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-red-500"
+            >
+              <Trash2 className="w-3 h-3" /> Remover vídeo
+            </button>
           </div>
         )}
         {videoPath && signedUrl && (
