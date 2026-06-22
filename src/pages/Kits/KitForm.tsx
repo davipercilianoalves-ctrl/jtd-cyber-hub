@@ -122,6 +122,7 @@ export default function KitForm({ kitId }: KitFormProps) {
   const descriptionRefs = useRef<{ [key: number]: HTMLTextAreaElement | null }>({});
   const { uploadImages } = useKitImages(undefined);
   const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [pendingVideo, setPendingVideo] = useState<File | null>(null);
   const pendingFileRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<any>({
