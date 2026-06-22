@@ -24,17 +24,20 @@ function CallbackComponent() {
       }
 
       try {
-        const savedState = localStorage.getItem('ml_oauth_state') || state || '';
+        const savedState = sessionStorage.getItem('ml_oauth_state');
+        if (!savedState || !state || savedState !== state) {
+          throw new Error('Estado OAuth inválido. Tente conectar novamente.');
+        }
 
         const { data, error: invokeError } = await supabase.functions.invoke(
           'ml-auth-callback',
-          { body: { code, state: savedState } }
+          { body: { code } }
         );
 
         if (invokeError) throw invokeError;
         if (data?.error) throw new Error(data.error);
 
-        localStorage.removeItem('ml_oauth_state');
+        sessionStorage.removeItem('ml_oauth_state');
         navigate({ to: '/api' });
       } catch (err: any) {
         console.error('Callback error:', err);

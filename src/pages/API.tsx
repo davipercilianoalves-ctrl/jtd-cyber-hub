@@ -17,13 +17,18 @@ export default function API() {
 
   async function handleConnect() {
     const { data: { session } } = await supabase.auth.getSession();
-    const state = session?.access_token || '';
-    localStorage.setItem('ml_oauth_state', state);
+    if (!session) {
+      toast.error("Você precisa estar autenticado para conectar.");
+      return;
+    }
+    // Use an opaque random nonce as state (CSRF protection) — never the access token.
+    const nonce = crypto.randomUUID();
+    sessionStorage.setItem('ml_oauth_state', nonce);
     const url = `https://auth.mercadolivre.com.br/authorization?` +
       `response_type=code&` +
       `client_id=${clientId}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `state=${encodeURIComponent(state)}`;
+      `state=${encodeURIComponent(nonce)}`;
     window.location.href = url;
   }
 
