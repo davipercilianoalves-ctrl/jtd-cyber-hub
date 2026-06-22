@@ -13,6 +13,8 @@ interface Props {
   videoScript: string;
   videoYoutubeUrl: string;
   videoPath: string | null;
+  pendingFile?: File | null;
+  onPendingFileChange?: (f: File | null) => void;
   onChange: (patch: {
     video_name?: string;
     video_script?: string;
@@ -35,11 +37,24 @@ export default function AdVideoSection({
   videoScript,
   videoYoutubeUrl,
   videoPath,
+  pendingFile,
+  onPendingFileChange,
   onChange,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pendingFile) {
+      setPendingPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(pendingFile);
+    setPendingPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingFile]);
 
   useEffect(() => {
     let cancel = false;
