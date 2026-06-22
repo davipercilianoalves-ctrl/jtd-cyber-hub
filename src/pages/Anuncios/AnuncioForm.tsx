@@ -193,6 +193,63 @@ export default function AnuncioForm() {
         savedId = data.id;
       }
 
+      // Upload pending images and video now that we have an ID
+      if (!id && savedId && (pendingImages.length > 0 || pendingVideo)) {
+        try {
+          const { data: u } = await supabase.auth.getUser();
+          const userId = u.user?.id;
+          if (!userId) throw new Error("Não autenticado");
+
+          // Images
+          let pos = 0;
+          for (const file of pendingImages) {
+            const safe = file.name.replace(/[^\w.\-]+/g, "_");
+            const path = `${userId}/${savedId}/${Date.now()}-${safe}`;
+            const { error: upErr } = await supabase.storage
+              .from("ad-images")
+              .upload(path, file, { contentType: file.type });
+            if (upErr) throw upErr;
+            const { error: insErr } = await (supabase as any)
+              .from("ad_images")
+              .insert({
+                ad_id: savedId,
+                user_id: userId,
+                storage_path: path,
+                file_name: file.name,
+                file_size: file.size,
+                sort_order: pos++,
+                source: "upload",
+              });
+            if (insErr) {
+              await supabase.storage.from("ad-images").remove([path]);
+              throw insErr;
+            }
+          }
+
+          // Video
+          if (pendingVideo) {
+            const safe = pendingVideo.name.replace(/[^\w.\-]+/g, "_");
+            const path = `${userId}/${savedId}/${Date.now()}-${safe}`;
+            const { error: vErr } = await supabase.storage
+              .from("ad-videos")
+              .upload(path, pendingVideo, { contentType: pendingVideo.type });
+            if (vErr) throw vErr;
+            const { error: updErr } = await supabase
+              .from("ads")
+              .update({ video_path: path })
+              .eq("id", savedId);
+            if (updErr) throw updErr;
+          }
+
+          setPendingImages([]);
+          setPendingVideo(null);
+        } catch (e: any) {
+          toast.error("Anúncio criado, mas falhou o upload de mídia", {
+            description: e?.message ?? String(e),
+          });
+        }
+      }
+
       toast.success(id ? "Anúncio atualizado!" : "Anúncio criado com sucesso!");
       if (!id && savedId) {
         navigate({ to: "/anuncios/$id/editar", params: { id: savedId } });
