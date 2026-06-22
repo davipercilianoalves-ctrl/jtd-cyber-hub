@@ -37,6 +37,8 @@ export default function AnuncioForm() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [newKeywordInput, setNewKeywordInput] = useState("");
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [pendingVideo, setPendingVideo] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
     product_id: "",
