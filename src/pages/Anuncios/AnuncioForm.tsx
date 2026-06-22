@@ -542,7 +542,11 @@ export default function AnuncioForm() {
       />
 
       {/* BLOCO 5b — Imagens próprias do anúncio */}
-      <AdDirectImages adId={id} />
+      <AdDirectImages
+        adId={id}
+        pendingFiles={pendingImages}
+        onPendingFilesChange={setPendingImages}
+      />
 
 
       {/* BLOCO 6 — Vídeo */}
@@ -552,6 +556,8 @@ export default function AnuncioForm() {
         videoScript={formData.video_script || ""}
         videoYoutubeUrl={formData.video_youtube_url || ""}
         videoPath={formData.video_path}
+        pendingFile={pendingVideo}
+        onPendingFileChange={setPendingVideo}
         onChange={(patch) => setFormData({ ...formData, ...patch })}
       />
 
