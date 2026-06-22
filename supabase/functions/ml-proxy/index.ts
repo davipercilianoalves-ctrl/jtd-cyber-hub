@@ -76,7 +76,7 @@ serve(async (req) => {
         }
     }
 
-    const res = await fetch(`https://api.mercadolibre.com${endpoint}`, {
+    const res = await fetch(targetUrl.toString(), {
       method,
       headers: { 
           Authorization: `Bearer ${accessToken}`,
