@@ -1784,6 +1784,8 @@ export default function KitForm({ kitId }: KitFormProps) {
         videoScript={formData.video_script || ""}
         videoYoutubeUrl={formData.video_youtube_url || ""}
         videoPath={formData.video_path}
+        pendingFile={pendingVideo}
+        onPendingFileChange={setPendingVideo}
         onChange={(patch) => setFormData({ ...formData, ...patch })}
       />
 
