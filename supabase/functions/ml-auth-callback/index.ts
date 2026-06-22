@@ -20,7 +20,29 @@ serve(async (req) => {
   }
 
   try {
-    const { code, state } = await req.json()
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+
+    // Require authenticated caller
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const ownerId = user.id
+
+    const { code } = await req.json()
 
     if (!code) {
       return new Response(
@@ -62,28 +84,10 @@ serve(async (req) => {
       )
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
-
-    let ownerId: string | null = null
-    if (state) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser(state)
-        ownerId = user?.id ?? null
-      } catch (e) {
-        console.warn('Could not get user from state:', e)
-      }
-    }
-
     const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000)
 
-    if (ownerId) {
-      await supabase.from('ml_tokens').delete().eq('owner_id', ownerId)
-    } else {
-      await supabase.from('ml_tokens').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    }
+    // Only delete the authenticated user's own token — never mass-delete.
+    await supabase.from('ml_tokens').delete().eq('owner_id', ownerId)
 
     const { error: insertError } = await supabase.from('ml_tokens').insert({
       access_token: tokenData.access_token,
