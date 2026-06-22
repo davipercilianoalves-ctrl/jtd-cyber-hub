@@ -13,6 +13,22 @@ serve(async (req) => {
 
   try {
     const { endpoint, method = 'GET', body = null } = await req.json()
+
+    // Validate endpoint to prevent SSRF — must resolve to api.mercadolibre.com
+    let targetUrl: URL
+    try {
+      targetUrl = new URL(endpoint, 'https://api.mercadolibre.com')
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+    if (targetUrl.hostname !== 'api.mercadolibre.com' || targetUrl.protocol !== 'https:') {
+      return new Response(JSON.stringify({ error: 'Forbidden endpoint' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
