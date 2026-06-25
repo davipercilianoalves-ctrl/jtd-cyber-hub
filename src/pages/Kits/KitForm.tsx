@@ -1656,9 +1656,12 @@ export default function KitForm({ kitId }: KitFormProps) {
       {/* BLOCO 7 — PRECIFICAÇÃO INTELIGENTE                           */}
       {/* ============================================================ */}
       <PricingModule
-        value={formData.pricing as PricingState}
+        value={effectivePricing}
         onChange={(next) => setFormData({ ...formData, pricing: next })}
         competitorPrices={prices}
+        kitItems={kitPricingItems}
+        productCosts={formData.product_costs}
+        onProductCostsChange={(next) => setFormData({ ...formData, product_costs: next })}
       />
 
 
