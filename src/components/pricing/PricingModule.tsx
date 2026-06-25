@@ -88,9 +88,10 @@ const btnGhost =
 const chipBtn =
   "px-3 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider border transition-all";
 
-export default function PricingModule({ value, onChange, competitorPrices = [] }: Props) {
+export default function PricingModule({ value, onChange, competitorPrices = [], kitItems, productCosts, onProductCostsChange }: Props) {
   const [tab, setTab] = useState<TabKey>("summary");
   const result = useMemo(() => computePricing(value), [value]);
+
 
   const competitorStats = useMemo(() => {
     const valid = competitorPrices.filter((p) => p > 0).sort((a, b) => a - b);
