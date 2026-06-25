@@ -850,6 +850,8 @@ export default function Metricas() {
           ["OVERVIEW", "Visão Geral"],
           ["BY_AD", "Por Anúncio"],
           ["COSTS", "Custos & Receita"],
+          ["FORECAST", "Previsão"],
+          ["INVENTORY", "Estoque"],
         ] as Array<[Tab, string]>).map(([t, label]) => (
           <button
             key={t}
