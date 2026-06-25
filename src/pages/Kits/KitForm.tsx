@@ -161,6 +161,7 @@ export default function KitForm({ kitId }: KitFormProps) {
     unit: "UN",
     condition: "novo",
     pricing: defaultPricing() as PricingState,
+    product_costs: {} as Record<string, { frete?: number; embalagem?: number }>,
     images: [] as any[],
     // anúncio
     titles: [""] as string[],
