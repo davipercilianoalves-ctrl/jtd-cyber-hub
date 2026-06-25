@@ -47,10 +47,22 @@ import {
   uid,
 } from "./engine";
 
+export interface KitPricingItem {
+  product_id: string;
+  name: string;
+  cost_price: number;
+  quantity: number;
+}
+
+export type ProductCostsMap = Record<string, { frete?: number; embalagem?: number }>;
+
 interface Props {
   value: PricingState;
   onChange: (next: PricingState) => void;
   competitorPrices?: number[];
+  kitItems?: KitPricingItem[];
+  productCosts?: ProductCostsMap;
+  onProductCostsChange?: (next: ProductCostsMap) => void;
 }
 
 type TabKey = "summary" | "competitors" | "costs" | "feestax" | "promo" | "scenarios" | "report" | "guide";
