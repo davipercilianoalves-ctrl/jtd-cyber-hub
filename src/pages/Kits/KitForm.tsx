@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Loader2,
@@ -161,6 +161,7 @@ export default function KitForm({ kitId }: KitFormProps) {
     unit: "UN",
     condition: "novo",
     pricing: defaultPricing() as PricingState,
+    product_costs: {} as Record<string, { frete?: number; embalagem?: number }>,
     images: [] as any[],
     // anúncio
     titles: [""] as string[],
@@ -186,6 +187,51 @@ export default function KitForm({ kitId }: KitFormProps) {
   const [productSearch, setProductSearch] = useState("");
   const [productResults, setProductResults] = useState<any[]>([]);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+
+  // Itens do kit no formato esperado pelo PricingModule (aba Custos modo kit)
+  const kitPricingItems = useMemo(
+    () =>
+      kitItems.map((it) => ({
+        product_id: it.product_id,
+        name: it.name,
+        cost_price: Number(it.cost_price) || 0,
+        quantity: Number(it.quantity) || 0,
+      })),
+    [kitItems],
+  );
+
+  // Pricing efetivo: sobrescreve "Custo do Produto"/"Frete"/"Embalagem" com totais
+  // calculados a partir da composição do kit + product_costs, para que o motor de
+  // cálculo (Resumo, Relatório, Simulações) reflita o custo total agregado.
+  const effectivePricing = useMemo(() => {
+    const pricing = formData.pricing as PricingState;
+    const pc: Record<string, { frete?: number; embalagem?: number }> =
+      formData.product_costs || {};
+    const productsTotal = kitItems.reduce(
+      (s, it) => s + (Number(it.cost_price) || 0) * (Number(it.quantity) || 0),
+      0,
+    );
+    const freteTotal = kitItems.reduce(
+      (s, it) => s + (Number(pc[it.product_id]?.frete) || 0),
+      0,
+    );
+    const embTotal = kitItems.reduce(
+      (s, it) => s + (Number(pc[it.product_id]?.embalagem) || 0),
+      0,
+    );
+    return {
+      ...pricing,
+      costs: pricing.costs.map((c) => {
+        const n = (c.name || "").toLowerCase().trim();
+        if (n === "custo do produto") return { ...c, kind: "fixed" as const, value: productsTotal };
+        if (n === "frete") return { ...c, kind: "fixed" as const, value: freteTotal };
+        if (n === "embalagem") return { ...c, kind: "fixed" as const, value: embTotal };
+        return c;
+      }),
+    };
+  }, [formData.pricing, formData.product_costs, kitItems]);
+
+
 
 
   function autoResize(target: HTMLElement | null) {
@@ -240,6 +286,8 @@ export default function KitForm({ kitId }: KitFormProps) {
         ...rest,
         titles: Array.isArray(rest.titles) && rest.titles.length ? rest.titles : [""],
         pricing: mergePricing(rest.pricing),
+        product_costs:
+          rest.product_costs && typeof rest.product_costs === "object" ? rest.product_costs : {},
       });
       setCompetitors((kit_competitors || []).map((c: any) => ({
         id: c.id,
@@ -283,7 +331,7 @@ export default function KitForm({ kitId }: KitFormProps) {
       0,
     );
     // Sincroniza cost_price/sale_price a partir do módulo de precificação
-    const pricingResult = computePricing(formData.pricing as PricingState);
+    const pricingResult = computePricing(effectivePricing);
     const payload: any = {
       ...formData,
       sku,
@@ -1608,9 +1656,12 @@ export default function KitForm({ kitId }: KitFormProps) {
       {/* BLOCO 7 — PRECIFICAÇÃO INTELIGENTE                           */}
       {/* ============================================================ */}
       <PricingModule
-        value={formData.pricing as PricingState}
+        value={effectivePricing}
         onChange={(next) => setFormData({ ...formData, pricing: next })}
         competitorPrices={prices}
+        kitItems={kitPricingItems}
+        productCosts={formData.product_costs}
+        onProductCostsChange={(next) => setFormData({ ...formData, product_costs: next })}
       />
 
 
