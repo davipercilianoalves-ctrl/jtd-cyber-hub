@@ -241,6 +241,8 @@ export default function KitForm({ kitId }: KitFormProps) {
         ...rest,
         titles: Array.isArray(rest.titles) && rest.titles.length ? rest.titles : [""],
         pricing: mergePricing(rest.pricing),
+        product_costs:
+          rest.product_costs && typeof rest.product_costs === "object" ? rest.product_costs : {},
       });
       setCompetitors((kit_competitors || []).map((c: any) => ({
         id: c.id,
