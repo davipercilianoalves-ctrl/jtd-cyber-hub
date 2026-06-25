@@ -675,6 +675,127 @@ export default function Metricas() {
     [selectedAdId, adCostRows]
   );
 
+  // Resolve ml_item_ids covered by the selected ad
+  const selectedAdMlIds = useMemo(() => {
+    if (!selectedAdId) return new Set<string>();
+    if (selectedAdId.startsWith("ml:")) return new Set([selectedAdId.slice(3)]);
+    const ad = localAds.find((a: any) => a.id === selectedAdId);
+    if (!ad) return new Set<string>();
+    return new Set<string>(
+      [ad.ml_item_id, ...(Array.isArray(ad.ml_item_ids) ? ad.ml_item_ids : [])].filter(Boolean) as string[]
+    );
+  }, [selectedAdId, localAds]);
+
+  const adSales: AdSaleRow[] = useMemo(() => {
+    if (selectedAdMlIds.size === 0) return [];
+    const out: AdSaleRow[] = [];
+    orders.forEach((o) => {
+      (o.order_items || []).forEach((it) => {
+        if (!selectedAdMlIds.has(it.item?.id)) return;
+        const qty = Number(it.quantity || 0);
+        const unit = Number(it.unit_price || 0);
+        out.push({
+          orderId: String(o.id),
+          date: o.date_created || (o as any).date_closed || "",
+          quantity: qty,
+          unitPrice: unit,
+          total: qty * unit,
+        });
+      });
+    });
+    return out.sort((a, b) => (a.date < b.date ? 1 : -1));
+  }, [orders, selectedAdMlIds]);
+
+  const adEvolution: AdEvolutionPoint[] = useMemo(() => {
+    if (!selectedAdRow || selectedAdMlIds.size === 0) return [];
+    const days = daysFor(period);
+    const map = new Map<string, { receita: number; qty: number }>();
+    orders.forEach((o) => {
+      const day = (o.date_created || (o as any).date_closed || "").slice(0, 10);
+      if (!day) return;
+      (o.order_items || []).forEach((it) => {
+        if (!selectedAdMlIds.has(it.item?.id)) return;
+        const qty = Number(it.quantity || 0);
+        const rev = qty * Number(it.unit_price || 0);
+        const cur = map.get(day) || { receita: 0, qty: 0 };
+        cur.receita += rev;
+        cur.qty += qty;
+        map.set(day, cur);
+      });
+    });
+    const marginRatio = selectedAdRow.revenue > 0 ? selectedAdRow.grossProfit / selectedAdRow.revenue : 0;
+    const out: AdEvolutionPoint[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const iso = d.toISOString().slice(0, 10);
+      const v = map.get(iso) || { receita: 0, qty: 0 };
+      out.push({
+        date: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`,
+        receita: v.receita,
+        lucro: v.receita * marginRatio,
+      });
+    }
+    return out;
+  }, [orders, selectedAdRow, selectedAdMlIds, period]);
+
+  // Forecast inputs: daily history (last 90 days from yearOrders.current)
+  const dailyHistory = useMemo(() => {
+    const map = new Map<string, { revenue: number; units: number }>();
+    yearOrders.current.forEach((o: any) => {
+      const d = (o.date_created || o.date_closed || "").slice(0, 10);
+      if (!d) return;
+      const cur = map.get(d) || { revenue: 0, units: 0 };
+      cur.revenue += Number(o.total_amount || 0);
+      cur.units += (o.order_items || []).reduce((s: number, it: any) => s + Number(it.quantity || 0), 0);
+      map.set(d, cur);
+    });
+    const out: Array<{ date: string; revenue: number; units: number }> = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let i = 89; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const iso = d.toISOString().slice(0, 10);
+      const v = map.get(iso) || { revenue: 0, units: 0 };
+      out.push({ date: iso, revenue: v.revenue, units: v.units });
+    }
+    return out;
+  }, [yearOrders]);
+
+  const forecastMarginPct = useMemo(() => {
+    return grossRevenue > 0 ? ((grossRevenue - totalCostSum) / grossRevenue) * 100 : 0;
+  }, [grossRevenue, totalCostSum]);
+
+  // Inventory: sales/30d per product_id (via local ads → ml_item_ids → orders)
+  const salesByProduct = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const unitsByMl = new Map<string, number>();
+    yearOrders.current.forEach((o: any) => {
+      const d = new Date(o.date_created || o.date_closed || 0);
+      if (!d.getTime() || d < cutoff) return;
+      (o.order_items || []).forEach((it: any) => {
+        const id = it.item?.id;
+        if (!id) return;
+        unitsByMl.set(id, (unitsByMl.get(id) || 0) + Number(it.quantity || 0));
+      });
+    });
+    const byProduct = new Map<string, { monthlyUnits: number }>();
+    localAds.forEach((a: any) => {
+      if (!a.product_id) return;
+      const ids = [a.ml_item_id, ...(Array.isArray(a.ml_item_ids) ? a.ml_item_ids : [])].filter(Boolean) as string[];
+      const sum = ids.reduce((s, id) => s + (unitsByMl.get(id) || 0), 0);
+      if (sum === 0) return;
+      const cur = byProduct.get(a.product_id) || { monthlyUnits: 0 };
+      cur.monthlyUnits += sum;
+      byProduct.set(a.product_id, cur);
+    });
+    return byProduct;
+  }, [yearOrders, localAds]);
+
 
 
 
