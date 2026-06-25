@@ -184,7 +184,19 @@ export default function PricingModule({ value, onChange, competitorPrices = [], 
       {tab === "competitors" && (
         <CompetitorsTab result={result} competitorStats={competitorStats} positioning={positioning} />
       )}
-      {tab === "costs" && <CostsTab value={value} patch={patch} />}
+      {tab === "costs" && (
+        kitItems !== undefined ? (
+          <KitCostsTab
+            value={value}
+            patch={patch}
+            kitItems={kitItems}
+            productCosts={productCosts ?? {}}
+            onProductCostsChange={onProductCostsChange ?? (() => {})}
+          />
+        ) : (
+          <CostsTab value={value} patch={patch} />
+        )
+      )}
       {tab === "feestax" && <FeesTaxesTab value={value} patch={patch} />}
       {tab === "promo" && <PromoTab value={value} patch={patch} result={result} competitorStats={competitorStats} />}
       {tab === "scenarios" && <ScenariosTab value={value} patch={patch} result={result} competitorStats={competitorStats} />}
