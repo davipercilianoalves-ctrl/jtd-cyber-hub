@@ -121,6 +121,15 @@ export function CostsRevenueView({ rows, grossRevenue, ordersCount, monthly, onS
 
   return (
     <div className="space-y-6">
+      {totals.product === 0 && (
+        <div className="flex items-start gap-2 text-sm text-amber-500 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <div>
+            Cadastre os custos nos produtos para ver lucro real.{" "}
+            <Link to="/produtos" className="underline font-medium">Abrir Produtos</Link>
+          </div>
+        </div>
+      )}
       {/* SEÇÃO 1 */}
       <div className="grid gap-4 md:grid-cols-3">
         <SummaryCard label="Faturamento Bruto" value={BRL(totals.revenue)} />
