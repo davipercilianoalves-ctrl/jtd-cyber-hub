@@ -145,7 +145,7 @@ function buildSeries(
   return out;
 }
 
-type Tab = "OVERVIEW" | "BY_AD" | "COSTS";
+type Tab = "OVERVIEW" | "BY_AD" | "COSTS" | "FORECAST" | "INVENTORY";
 
 export default function Metricas() {
   const m = useMetricas();
