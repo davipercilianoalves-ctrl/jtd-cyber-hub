@@ -980,11 +980,16 @@ export default function Metricas() {
         </>
       ) : tab === "BY_AD" ? (
         selectedAdRow ? (
-          <AdDetailView row={selectedAdRow} onBack={() => setSelectedAdId(null)} />
+          <AdDetailView
+            row={selectedAdRow}
+            evolution={adEvolution}
+            sales={adSales}
+            onBack={() => setSelectedAdId(null)}
+          />
         ) : (
           <AdCostBreakdownTable rows={adCostRows} onSelect={(id) => setSelectedAdId(id)} />
         )
-      ) : (
+      ) : tab === "COSTS" ? (
         <CostsRevenueView
           rows={adCostRows}
           grossRevenue={grossRevenue}
@@ -995,6 +1000,19 @@ export default function Metricas() {
             setTab("BY_AD");
           }}
         />
+      ) : tab === "FORECAST" ? (
+        yearLoading && yearOrders.current.length === 0 ? (
+          <Skeleton className="h-96 w-full" />
+        ) : (
+          <ForecastView
+            daily={dailyHistory}
+            monthly={monthlySales.map((m) => ({ month: m.month, current: m.current }))}
+            topProducts={topProducts}
+            marginPct={forecastMarginPct}
+          />
+        )
+      ) : (
+        <InventoryView salesByProduct={salesByProduct} />
       )}
 
     </div>
