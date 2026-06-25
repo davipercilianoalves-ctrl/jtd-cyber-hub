@@ -593,6 +593,203 @@ function CostsTab({ value, patch }: { value: PricingState; patch: (p: Partial<Pr
 }
 
 // =============================================================
+// CUSTOS — modo KIT (card por produto + compartilhados)
+// =============================================================
+const KIT_PRODUCT_BUILTIN_NAMES = new Set(["custo do produto", "frete", "embalagem"]);
+
+function KitCostsTab({
+  value,
+  patch,
+  kitItems,
+  productCosts,
+  onProductCostsChange,
+}: {
+  value: PricingState;
+  patch: (p: Partial<PricingState>) => void;
+  kitItems: KitPricingItem[];
+  productCosts: ProductCostsMap;
+  onProductCostsChange: (next: ProductCostsMap) => void;
+}) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const sharedCosts = value.costs.filter(
+    (c) => !KIT_PRODUCT_BUILTIN_NAMES.has((c.name || "").toLowerCase().trim()),
+  );
+
+  const updateRow = (id: string, change: Partial<CostItem>) =>
+    patch({ costs: value.costs.map((c) => (c.id === id ? { ...c, ...change } : c)) });
+  const removeRow = (id: string) => patch({ costs: value.costs.filter((c) => c.id !== id) });
+  const addRow = () =>
+    patch({
+      costs: [
+        ...value.costs,
+        { id: uid(), name: "", kind: "fixed", value: 0, active: true },
+      ],
+    });
+
+  const setProductCost = (pid: string, key: "frete" | "embalagem", v: number) => {
+    onProductCostsChange({
+      ...productCosts,
+      [pid]: { ...(productCosts[pid] || {}), [key]: v },
+    });
+  };
+
+  const subtotalsByProduct = kitItems.map((it) => {
+    const pc = productCosts[it.product_id] || {};
+    const unit = Number(it.cost_price) || 0;
+    const qty = Number(it.quantity) || 0;
+    const frete = Number(pc.frete) || 0;
+    const emb = Number(pc.embalagem) || 0;
+    return { it, unit, qty, frete, emb, subtotal: unit * qty + frete + emb };
+  });
+
+  const productsTotal = subtotalsByProduct.reduce((s, r) => s + r.subtotal, 0);
+  const sharedFixedTotal = sharedCosts
+    .filter((c) => c.active && c.kind === "fixed")
+    .reduce((s, c) => s + (Number(c.value) || 0), 0);
+  const grandTotal = productsTotal + sharedFixedTotal;
+
+  return (
+    <div className="space-y-5">
+      {/* CARDS POR PRODUTO */}
+      {kitItems.length === 0 ? (
+        <div className="rounded border border-dashed border-sidebar-border bg-internal-w04 p-6 text-center text-xs text-muted-foreground">
+          Adicione produtos na composição do kit para ver os custos detalhados por item.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {subtotalsByProduct.map(({ it, unit, qty, frete, emb, subtotal }) => {
+            const open = !collapsed[it.product_id];
+            return (
+              <div
+                key={it.product_id}
+                className="rounded border border-sidebar-border bg-internal-w04 overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCollapsed((c) => ({ ...c, [it.product_id]: open }))
+                  }
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-internal-20 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {open ? (
+                      <ChevronDown size={14} className="text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                    )}
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      {it.name}
+                    </span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground shrink-0">
+                      {qty}×
+                    </span>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-primary shrink-0">
+                    Subtotal: {fmtBRL(subtotal)}
+                  </div>
+                </button>
+
+                {open && (
+                  <div className="px-3 pb-3 pt-1 space-y-2 border-t border-sidebar-border/40">
+                    <div className="text-[11px] text-muted-foreground font-mono">
+                      Custo unitário: {fmtBRL(unit)} × {qty} ={" "}
+                      <span className="text-foreground font-bold">{fmtBRL(unit * qty)}</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div>
+                        <FieldLabel help="Custo logístico atribuído a este produto dentro do kit.">
+                          Frete (R$)
+                        </FieldLabel>
+                        <div className="relative mt-1">
+                          <DollarSign
+                            size={11}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                          />
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={frete || ""}
+                            onChange={(e) =>
+                              setProductCost(it.product_id, "frete", parseFloat(e.target.value) || 0)
+                            }
+                            className={`${cellNumCls} pl-7`}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <FieldLabel help="Caixa, plástico-bolha, etiqueta — embalagem deste produto no kit.">
+                          Embalagem (R$)
+                        </FieldLabel>
+                        <div className="relative mt-1">
+                          <DollarSign
+                            size={11}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                          />
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={emb || ""}
+                            onChange={(e) =>
+                              setProductCost(it.product_id, "embalagem", parseFloat(e.target.value) || 0)
+                            }
+                            className={`${cellNumCls} pl-7`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* CUSTOS COMPARTILHADOS */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground inline-flex items-center gap-2">
+            Custos compartilhados do kit
+            <Help
+              title="Custos compartilhados"
+              text="Custos que se aplicam ao kit inteiro (transporte, armazenagem, operacional). Não são rateados por produto."
+            />
+          </h4>
+          <button type="button" onClick={addRow} className={btnGhost}>
+            <Plus size={14} /> Novo Custo
+          </button>
+        </div>
+        <CostTable
+          rows={sharedCosts}
+          onChange={updateRow}
+          onRemove={removeRow}
+          allowKind
+          emptyMsg="Nenhum custo compartilhado cadastrado."
+        />
+      </div>
+
+      {/* RODAPÉ — TOTAL */}
+      <div className="rounded border border-primary/40 bg-primary/5 p-4 space-y-1.5">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Subtotal produtos</span>
+          <span className="font-mono">{fmtBRL(productsTotal)}</span>
+        </div>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Custos compartilhados</span>
+          <span className="font-mono">{fmtBRL(sharedFixedTotal)}</span>
+        </div>
+        <div className="border-t border-primary/30 pt-2 mt-1 flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-widest text-foreground">
+            Custo total do kit
+          </span>
+          <span className="text-lg font-mono font-bold text-lime-400">{fmtBRL(grandTotal)}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+// =============================================================
 // TAXAS / IMPOSTOS
 // =============================================================
 function FeesTaxesTab({ value, patch }: { value: PricingState; patch: (p: Partial<PricingState>) => void }) {
