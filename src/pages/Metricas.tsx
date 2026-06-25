@@ -29,8 +29,10 @@ import { CostCompositionCard } from "@/components/metricas/CostCompositionCard";
 import { PriceSyncCard } from "@/components/metricas/PriceSyncCard";
 import { YearlySalesChart } from "@/components/metricas/YearlySalesChart";
 import { TopProductsSeasonality } from "@/components/metricas/TopProductsSeasonality";
-import { AdDetailView } from "@/components/metricas/AdDetailView";
+import { AdDetailView, type AdEvolutionPoint, type AdSaleRow } from "@/components/metricas/AdDetailView";
 import { CostsRevenueView } from "@/components/metricas/CostsRevenueView";
+import { ForecastView } from "@/components/metricas/ForecastView";
+import { InventoryView } from "@/components/metricas/InventoryView";
 import { cn } from "@/lib/utils";
 import type { AdCostRow, PriceSyncRow, MonthlySalesPoint, TopProductRow } from "@/components/metricas/types";
 
