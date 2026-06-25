@@ -322,6 +322,7 @@ export type Database = {
           packaging_cost: number | null
           price_lists: Json | null
           pricing: Json
+          product_costs: Json
           production_type: string | null
           profit_margin: number | null
           sale_price: number | null
@@ -378,6 +379,7 @@ export type Database = {
           packaging_cost?: number | null
           price_lists?: Json | null
           pricing?: Json
+          product_costs?: Json
           production_type?: string | null
           profit_margin?: number | null
           sale_price?: number | null
@@ -434,6 +436,7 @@ export type Database = {
           packaging_cost?: number | null
           price_lists?: Json | null
           pricing?: Json
+          product_costs?: Json
           production_type?: string | null
           profit_margin?: number | null
           sale_price?: number | null

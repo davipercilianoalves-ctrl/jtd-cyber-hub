@@ -1,0 +1,1 @@
+ALTER TABLE public.kits ADD COLUMN IF NOT EXISTS product_costs JSONB NOT NULL DEFAULT '{}'::jsonb;
