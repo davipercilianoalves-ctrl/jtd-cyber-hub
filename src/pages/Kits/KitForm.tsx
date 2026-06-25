@@ -331,7 +331,7 @@ export default function KitForm({ kitId }: KitFormProps) {
       0,
     );
     // Sincroniza cost_price/sale_price a partir do módulo de precificação
-    const pricingResult = computePricing(formData.pricing as PricingState);
+    const pricingResult = computePricing(effectivePricing);
     const payload: any = {
       ...formData,
       sku,
