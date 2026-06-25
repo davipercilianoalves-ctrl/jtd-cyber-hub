@@ -1,84 +1,92 @@
+## Goal
+Substituir o input único "Custo do Produto" na aba **Custos** da Precificação Inteligente do Kit por uma visão multi-produto: um card por produto do kit (com frete e embalagem individuais) + custos compartilhados do kit. O custo total resultante alimenta todas as outras abas (Resumo, Relatório, Simulações, etc.) sem mudar nenhuma lógica de cálculo.
 
-# Plano: Redesign da Página Métricas
+## Escopo
 
-Reformular `/_authenticated/metricas` aplicando os 7 componentes de referência coletados, conectados aos dados reais da conta Mercado Livre (vendas, anúncios, visitas, perguntas).
+Mudanças apenas em:
+- `src/pages/Kits/KitForm.tsx` (estado + passagem de props ao `PricingModule`)
+- `src/components/pricing/PricingModule.tsx` (nova variação da `CostsTab` para kits)
+- Migration: nova coluna `product_costs JSONB` em `kits`
 
-## Estrutura final da página (top → bottom)
+Nenhuma alteração em Produtos, Anúncios ou outras abas do app. Lógica de cálculo do `engine.ts` (preço ideal, mínimo, lucro, margem, etc.) permanece intacta — o motor continua recebendo `costs` como uma lista plana de itens fixos; nós apenas mudamos COMO essa lista é montada quando estamos num kit.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│ Header: título + seletor de período (7/30/90 dias)      │
-├─────────────────────────────────────────────────────────┤
-│ [1] Hero KPI Card (ref #6 - Incident Report)            │
-│     ┌──── Funil grande (vertical) ────┐ ┌─ 2 KPIs ─┐    │
-│     │ Visitas → Perguntas → Carrinho │ │ CountUp  │    │
-│     │ → Compradores → Vendas         │ │ + pills  │    │
-│     └────────────────────────────────┘ └──────────┘    │
-│     Lista de métricas secundárias com divisores         │
-├─────────────────────────────────────────────────────────┤
-│ [2] Grid 4 KPIs clicáveis (ref #7 - Line Chart 6)       │
-│     Vendas | Faturamento | Ticket Médio | Visitas       │
-│     Cada um com badge ↑/↓ % vs período anterior         │
-│     ↓ clicar troca a linha do gráfico abaixo            │
-│     Line chart com glow colorido + dot grid pattern     │
-├─────────────────────────────────────────────────────────┤
-│ [3] Grid 2 colunas:                                     │
-│   ┌─ Line Graph Stats (ref #4) ─┐ ┌─ Stat Cards ──┐    │
-│   │ Linha multi-série            │ │ ref #3        │    │
-│   │ Peak / Average / Growth      │ │ ícone tonal   │    │
-│   └──────────────────────────────┘ └───────────────┘    │
-└─────────────────────────────────────────────────────────┘
+## Modelo de dados
+
+Migration:
+```sql
+ALTER TABLE public.kits
+  ADD COLUMN IF NOT EXISTS product_costs JSONB NOT NULL DEFAULT '{}'::jsonb;
 ```
 
-## Mapeamento ref → seção
+Forma persistida em `kits.product_costs`:
+```
+{
+  "<product_id>": { "frete": number, "embalagem": number }
+}
+```
 
-| Ref | Componente | Onde entra |
-|---|---|---|
-| #5 Funnel animado (vertical) | Funil de conversão ML | Hero card, lado esquerdo |
-| #6 Incident Report (CountUp + métricas) | Wrapper do hero | Card grande no topo |
-| #7 Line Chart 6 (4 KPIs clicáveis) | Bloco principal de tendência | Meio da página |
-| #4 Line Graph (Peak/Avg/Growth) | Comparativo período | Grid inferior, esquerda |
-| #3 Statistic Card 12 (badge contexto) | Mini KPIs de apoio | Grid inferior, direita |
-| #1 Stats Cards / #2 Live Dashboard | Padrão visual de KPI | Reaproveitado nos cards |
+Custos compartilhados (Transporte, Armazenagem, Custo Operacional, extras) continuam vivendo em `kits.pricing.costs` como hoje.
 
-## Componentes a criar em `src/components/metricas/`
+## UI — Aba Custos (modo Kit)
 
-- `MetricsHeader.tsx` — título + Select de período (7/30/90 dias)
-- `FunnelHeroCard.tsx` — ref #6: funil vertical animado (Framer Motion) + 2 KPIs com CountUp + lista de métricas secundárias com divisores
-- `ConversionFunnel.tsx` — funil vertical com glow (SVG + Framer Motion), 5 etapas
-- `InteractiveLineChart.tsx` — ref #7: 4 KPI buttons trocam dataKey + Recharts LineChart com `feDropShadow` colorido e pattern `dotGrid`
-- `MultiSeriesChart.tsx` — ref #4: linha multi-série + cards Peak/Average/Growth calculados
-- `ContextStatCard.tsx` — ref #3: ícone tonal + badge "vs período anterior"
-- `CountUp.tsx` — hook/componente de animação numérica (raf-based, sem libs novas)
+A `CostsTab` ganha um modo "kit" controlado por uma nova prop opcional no `PricingModule`:
 
-## Dados
+```
+<PricingModule
+  ...
+  kitItems={kitItems}            // [{ product_id, name, cost_price, quantity }]
+  productCosts={formData.product_costs}
+  onProductCostsChange={(next) => setFormData({ ...formData, product_costs: next })}
+/>
+```
 
-Reutilizar os hooks/queries já existentes em `src/pages/Metricas.tsx` (vendas, visitas, perguntas, anúncios). Adicionar agregadores client-side:
-- série diária por métrica (orders, revenue, ticket, visits)
-- totais período atual vs anterior → variação %
-- etapas do funil: `visitas → visitantes_unicos → perguntas+carrinho → compradores → vendas_concluidas`
+Se `kitItems` for fornecido, a aba renderiza a versão kit; senão, a versão atual de produto único (mantém compatibilidade com `ProdutoForm`).
 
-Sem alterações de schema/edge functions. Apenas leitura.
+Layout da aba (modo kit):
 
-## Design tokens
+1. **Um card por produto** (accordion, aberto por padrão):
+   - Cabeçalho: `▼ Nome — Nx   Subtotal: R$ X`
+   - Linha read-only: `Custo unitário: R$ X × N = R$ X` (vem de `kitItems[i].cost_price` × `quantity`)
+   - Inputs editáveis: `Frete (R$)`, `Embalagem (R$)` — gravados em `product_costs[product_id]`
+   - Subtotal do card = `cost_price × qty + frete + embalagem`
 
-Tudo via `src/styles.css` (já tem semantic tokens). Cores das linhas/funil: usar variáveis Tailwind existentes (`--color-teal-500`, `--color-violet-500`, `--color-lime-500`, `--color-sky-500`). Glow via `feDropShadow` SVG na cor da métrica selecionada. Sem hard-coded hex em componentes.
+2. **Bloco "Custos compartilhados do kit"** abaixo:
+   - Renderiza apenas itens de `value.costs` cujo `name` ∈ {Transporte, Armazenagem, Custo Operacional} + qualquer custo extra adicionado.
+   - Itens com nome `Custo do Produto`, `Frete`, `Embalagem` ficam escondidos (gerenciados pelos cards de produto).
+   - Botão `+ Novo Custo` mantém comportamento atual.
 
-## Dependências
+3. **Rodapé**:
+   ```
+   Subtotal produtos:       R$ X
+   Custos compartilhados:   R$ X
+   ──────────────────────────────
+   CUSTO TOTAL DO KIT:      R$ X   (verde, bold)
+   ```
 
-Já instaladas: `recharts`, `framer-motion`, `lucide-react`, `class-variance-authority`, shadcn `card`/`badge`/`button`/`select`. **Nada novo a instalar.**
+4. **Sem produtos no kit**: mensagem orientativa — "Adicione produtos na composição do kit para ver os custos detalhados". Bloco de compartilhados continua disponível.
 
-## Arquivos modificados
+## Integração com o motor de cálculo
 
-- **Criar:** 7 arquivos em `src/components/metricas/`
-- **Reescrever:** `src/pages/Metricas.tsx` (composição nova, mantendo data fetching atual)
-- **Não tocar:** rotas, layout, schema, edge functions
+Para evitar duplicar lógica, o `KitForm` sincroniza `pricing.costs` toda vez que `kitItems` ou `product_costs` mudam:
 
-## Fora de escopo
+- Mantém os custos compartilhados como estão.
+- Substitui o item builtin `Custo do Produto` por um único item agregado `Produtos do Kit` cujo `value` = soma de (`cost_price × qty`) de todos os produtos.
+- Substitui os builtins `Frete` e `Embalagem` por agregados cujo `value` = soma dos respectivos campos em `product_costs`.
 
-- Dashboard, Vendas e outras páginas ficam como estão (só Métricas)
-- Sem novos endpoints ou tabelas
-- Sem mudanças de auth/permissões
-- Sem refactor dos componentes de UI base do shadcn
+Resultado: `computePricing()` continua vendo uma lista de custos fixos somando o mesmo total, então Resumo/Relatório/Simulações funcionam sem nenhuma mudança.
 
-Pronto pra implementar quando você aprovar.
+## Persistência
+
+- `handleSubmit` já salva todo `formData` em `kits`; basta incluir `product_costs` no payload (nada a fazer além da migration).
+- Ao carregar (`fetchKit`), `product_costs` vem do banco; default `{}` cobre kits antigos.
+- Quando um produto é removido da composição, sua entrada em `product_costs` é limpa.
+
+## Checklist final
+
+- [ ] Migration `product_costs JSONB` aplicada em `kits`
+- [ ] Card por produto com frete/embalagem editáveis e subtotal correto
+- [ ] Bloco de custos compartilhados separado, com botão +Novo Custo
+- [ ] Rodapé com Custo Total destacado
+- [ ] Resumo/Relatório/Simulações refletem o novo total automaticamente
+- [ ] Mensagem orientativa quando não há produtos
+- [ ] `ProdutoForm` continua usando a aba Custos no modo antigo
