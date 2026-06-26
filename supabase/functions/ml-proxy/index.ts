@@ -76,14 +76,22 @@ serve(async (req) => {
         }
     }
 
+    // Endpoints públicos de leitura (item de qualquer vendedor, descrição, categorias)
+    // não devem enviar o Bearer do nosso vendedor — ML retorna 403 nesse caso.
+    const isPublicGet =
+      method === 'GET' &&
+      /^\/(items|categories|sites|products|users)\b/.test(targetUrl.pathname) &&
+      !targetUrl.pathname.includes('/users/me')
+
+    const fetchHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (!isPublicGet) fetchHeaders.Authorization = `Bearer ${accessToken}`
+
     const res = await fetch(targetUrl.toString(), {
       method,
-      headers: { 
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-      },
+      headers: fetchHeaders,
       body: body ? JSON.stringify(body) : null
     })
+
 
     const text = await res.text()
     let data
