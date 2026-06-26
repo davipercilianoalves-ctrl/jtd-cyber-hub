@@ -545,13 +545,12 @@ export default function Metricas() {
   // Price sync rows
   const priceSyncRows: PriceSyncRow[] = useMemo(() => {
     const out: PriceSyncRow[] = [];
-    localAds.forEach((a: any) => {
+    linkedItems.forEach((item: any) => {
       const ids: string[] = Array.from(
-        new Set([a.ml_item_id, ...(Array.isArray(a.ml_item_ids) ? a.ml_item_ids : [])].filter(Boolean))
+        new Set([item.ml_item_id, ...(item.ml_item_ids || [])].filter(Boolean))
       );
       if (ids.length === 0) return;
-      const title = (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || "Anúncio";
-      const appPrice = Number(a.final_price || 0);
+      const appPrice = Number(item.sale_price || 0);
       ids.forEach((id) => {
         const ml = mlPrices.get(id);
         const mlPrice = ml?.price ?? null;
@@ -562,11 +561,20 @@ export default function Metricas() {
           const abs = Math.abs(diffPct);
           status = abs < 1 ? "ok" : abs <= 5 ? "warn" : "alert";
         }
-        out.push({ adId: `${a.id}:${id}`, mlItemId: id, title, appPrice, mlPrice, diff, diffPct, status });
+        out.push({
+          adId: `${item.kind}:${item.id}:${id}`,
+          mlItemId: id,
+          title: item.label,
+          appPrice,
+          mlPrice,
+          diff,
+          diffPct,
+          status,
+        });
       });
     });
     return out;
-  }, [localAds, mlPrices]);
+  }, [linkedItems, mlPrices]);
 
   // Monthly sales (last 12 months current vs previous year)
   const monthlySales: MonthlySalesPoint[] = useMemo(() => {
