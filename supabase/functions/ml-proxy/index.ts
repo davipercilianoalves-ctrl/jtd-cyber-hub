@@ -77,12 +77,16 @@ serve(async (req) => {
         }
     }
 
-    // Endpoints públicos de leitura (item de qualquer vendedor, descrição, categorias)
-    // não devem enviar o Bearer do nosso vendedor — ML retorna 403 nesse caso.
+    // Leituras públicas pontuais não devem enviar o Bearer do nosso vendedor —
+    // ML pode retornar 403 quando o token é de outro seller. Endpoints de lote,
+    // visitas e busca de itens do seller continuam autenticados.
     const isPublicGet =
       method === 'GET' &&
-      /^\/(items|categories|sites|products|users)\b/.test(targetUrl.pathname) &&
-      !targetUrl.pathname.includes('/users/me')
+      (
+        /^\/items\/MLB\d+(?:\/description)?$/i.test(targetUrl.pathname) ||
+        /^\/(categories|sites|products)\b/i.test(targetUrl.pathname) ||
+        /^\/users\/(?!me\b)[^/]+$/i.test(targetUrl.pathname)
+      )
 
     const fetchHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
     if (!isPublicGet) fetchHeaders.Authorization = `Bearer ${accessToken}`
