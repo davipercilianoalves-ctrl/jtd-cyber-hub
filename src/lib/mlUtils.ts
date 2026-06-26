@@ -4,19 +4,28 @@ export function extractMlbId(url: string): string | null {
   if (!url) return null;
   const s = url.trim();
 
-  // ID puro: MLB1234567890 ou MLB-1234567890
+  // PRIORIDADE 1: parâmetro wid=MLB
+  const widMatch = s.match(/[?&#]wid=(MLB\d+)/i);
+  if (widMatch) return widMatch[1].toUpperCase();
+
+  // PRIORIDADE 2: ID puro
   if (/^MLB-?\d+$/i.test(s)) return "MLB" + s.replace(/\D/g, "");
 
-  // /p/MLB1234567890 (catálogo)
-  const pMatch = s.match(/\/p\/MLB-?(\d+)/i);
-  if (pMatch) return "MLB" + pMatch[1];
+  // PRIORIDADE 3: /p/MLB (catálogo)
+  const pMatch = s.match(/\/p\/(MLB-?\d+)/i);
+  if (pMatch) return "MLB" + pMatch[1].replace(/\D/g, "");
 
-  // MLB no path (ex: produto-MLB1234567890-_JM)
-  const mlbInPath = s.match(/MLB-?(\d{8,14})/i);
-  if (mlbInPath) return "MLB" + mlbInPath[1];
+  // PRIORIDADE 4: MLB no path
+  const pathMatch = s.match(/\/(MLB)-?(\d{8,12})/i);
+  if (pathMatch) return "MLB" + pathMatch[2];
+
+  // PRIORIDADE 5: MLB com 8+ dígitos (ignora MLBU/MLBA)
+  const anyMatch = s.match(/\bMLB(\d{8,12})\b/i);
+  if (anyMatch) return "MLB" + anyMatch[1];
 
   return null;
 }
+
 
 export interface MlFetchedData {
   title: string;
