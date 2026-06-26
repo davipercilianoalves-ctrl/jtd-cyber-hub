@@ -219,14 +219,19 @@ export default function Metricas() {
     if (!token) return;
     let cancelled = false;
     (async () => {
-      const ads = await m.getLocalAds().catch(() => []);
+      const [ads, linked] = await Promise.all([
+        m.getLocalAds().catch(() => []),
+        m.getLinkedItems().catch(() => []),
+      ]);
       if (cancelled) return;
       setLocalAds(ads);
+      setLinkedItems(linked);
 
-      // 1) IDs known from local ads
-      const localIds = ads
-        .flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || []))
-        .filter(Boolean) as string[];
+      // 1) IDs known from local ads + linked products
+      const localIds = [
+        ...ads.flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || [])),
+        ...linked.flatMap((it: any) => [it.ml_item_id, ...(it.ml_item_ids || [])]),
+      ].filter(Boolean) as string[];
 
       // 2) IDs from seller's ML catalog
       let sellerIds: string[] = [];
