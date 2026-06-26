@@ -402,24 +402,24 @@ export default function Vendas() {
       ) : orders.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="jtd-glass p-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Total vendido</div>
-                <div className="text-2xl font-mono font-bold text-cyan-400">{BRL(summary.revenue)}</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4">
+              <div className="min-w-0 flex flex-col">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-1 truncate">Total vendido</div>
+                <div className="text-[20px] font-extrabold tabular-nums tracking-tight text-cyan-400 truncate">{BRL(summary.revenue)}</div>
               </div>
-              <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Nº de vendas</div>
-                <div className="text-2xl font-mono font-bold text-foreground">{summary.count}</div>
+              <div className="min-w-0 flex flex-col">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-1 truncate">Nº de vendas</div>
+                <div className="text-[20px] font-extrabold tabular-nums tracking-tight text-foreground truncate">{summary.count}</div>
               </div>
-              <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Lucro líquido</div>
-                <div className={`text-2xl font-mono font-bold ${summary.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
+              <div className="min-w-0 flex flex-col">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-1 truncate">Lucro líquido</div>
+                <div className={`text-[20px] font-extrabold tabular-nums tracking-tight truncate ${summary.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
                   {BRL(summary.profit)}
                 </div>
               </div>
-              <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Ticket médio</div>
-                <div className="text-2xl font-mono font-bold text-pink-400">
+              <div className="min-w-0 flex flex-col">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-1 truncate">Ticket médio</div>
+                <div className="text-[20px] font-extrabold tabular-nums tracking-tight text-pink-400 truncate">
                   {BRL(summary.count > 0 ? summary.revenue / summary.count : 0)}
                 </div>
               </div>
