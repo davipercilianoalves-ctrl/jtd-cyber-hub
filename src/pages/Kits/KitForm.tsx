@@ -1436,10 +1436,12 @@ export default function KitForm({ kitId }: KitFormProps) {
                     <span className="text-[10px] font-bold text-muted-foreground">R$</span>
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
+                      min="0"
+                      inputMode="decimal"
                       value={comp.price || ""}
-                      onChange={(e) => updateCompetitor(idx, "price", parseFloat(e.target.value) || 0)}
-                      className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-24 text-right focus:ring-0 focus:outline-none font-mono"
+                      onChange={(e) => updateCompetitor(idx, "price", e.target.value === "" ? 0 : Number(e.target.value))}
+                      className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-32 text-right focus:ring-0 focus:outline-none font-mono tabular-nums"
                     />
                   </div>
                   <button
