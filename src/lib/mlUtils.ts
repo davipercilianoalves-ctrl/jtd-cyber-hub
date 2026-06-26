@@ -44,8 +44,26 @@ async function callMl(endpoint: string) {
 
 export async function fetchMlItemData(mlbId: string): Promise<MlFetchedData | null> {
   try {
-    const item = await callMl(`/items/${mlbId}`);
+    // SEMPRE usar /items?ids= (endpoint multi-get com auth)
+    // em vez de /items/{id} que é bloqueado publicamente pelo ML
+    const itemData = await callMl(`/items?ids=${mlbId}`);
+
+    let item: any = null;
+    if (Array.isArray(itemData)) {
+      const first = itemData[0];
+      if (first?.code === 200 && first?.body) {
+        item = first.body;
+      } else if (first?.body) {
+        item = first.body;
+      } else if (first?.id) {
+        item = first;
+      }
+    } else if (itemData?.id) {
+      item = itemData;
+    }
+
     if (!item) return null;
+
     let description = "";
     try {
       const desc = await callMl(`/items/${mlbId}/description`);
@@ -53,6 +71,7 @@ export async function fetchMlItemData(mlbId: string): Promise<MlFetchedData | nu
     } catch {
       // descrição é opcional
     }
+
     return {
       title: item.title || "",
       price: Number(item.price || 0),

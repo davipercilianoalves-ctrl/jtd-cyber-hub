@@ -26,7 +26,10 @@ export function MlFetchButton({ linkValue, onDataFetched, disabled }: Props) {
     const data = await fetchMlItemData(id);
     setLoading(false);
     if (!data) {
-      toast.error("Não foi possível buscar dados deste anúncio");
+      toast.error(
+        "Não foi possível buscar este anúncio. Verifique se o link é de um produto ativo no ML ou preencha os dados manualmente.",
+        { duration: 5000 }
+      );
       return;
     }
     setFetched(data);
