@@ -38,7 +38,7 @@ async function callMl(endpoint: string) {
     body: { endpoint, method: "GET" },
   });
   if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  if (data?.error) throw new Error(String(data.error));
   return data;
 }
 
@@ -58,7 +58,8 @@ export async function fetchMlItemData(mlbId: string): Promise<MlFetchedData | nu
       price: Number(item.price || 0),
       description,
     };
-  } catch {
+  } catch (error) {
+    console.error("Erro ao buscar dados do ML:", error);
     return null;
   }
 }
