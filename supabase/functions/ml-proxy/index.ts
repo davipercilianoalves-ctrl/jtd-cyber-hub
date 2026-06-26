@@ -149,6 +149,14 @@ serve(async (req) => {
       })
     }
 
+    const descriptionMatch = targetUrl.pathname.match(/^\/items\/(MLB\d+)\/description$/i)
+    if (method === 'GET' && descriptionMatch && res.status === 403) {
+      return new Response(JSON.stringify({ plain_text: '', text: '' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
 
     const text = await res.text()
     let data
