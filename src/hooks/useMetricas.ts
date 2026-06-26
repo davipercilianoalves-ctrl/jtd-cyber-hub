@@ -174,6 +174,46 @@ export function useMetricas() {
     return data || [];
   }
 
+  // Busca itens vinculados ao ML (ads + products) — formato unificado para PriceSync
+  async function getLinkedItems() {
+    const [adsRes, prodRes] = await Promise.all([
+      supabase
+        .from('ads')
+        .select('id, titles, ml_item_id, ml_item_ids, final_price, cost_price, products(name, sku)')
+        .not('ml_item_id', 'is', null),
+      supabase
+        .from('products')
+        .select('id, name, sku, ml_item_id, sale_price, cost_price')
+        .not('ml_item_id', 'is', null),
+    ]);
+
+    const fromAds = ((adsRes.data as any[]) || []).map((a: any) => ({
+      id: a.id,
+      kind: 'ad' as const,
+      label: (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || 'Anúncio',
+      sku: a.products?.sku || '',
+      ml_item_id: a.ml_item_id as string | null,
+      ml_item_ids: Array.isArray(a.ml_item_ids) ? (a.ml_item_ids as string[]) : [],
+      sale_price: Number(a.final_price || 0),
+      cost_price: Number(a.cost_price || 0),
+    }));
+
+    const fromProducts = ((prodRes.data as any[]) || []).map((p: any) => ({
+      id: p.id,
+      kind: 'product' as const,
+      label: p.name || p.sku || 'Produto',
+      sku: p.sku || '',
+      ml_item_id: p.ml_item_id as string | null,
+      ml_item_ids: [] as string[],
+      sale_price: Number(p.sale_price || 0),
+      cost_price: Number(p.cost_price || 0),
+    }));
+
+    return [...fromAds, ...fromProducts];
+  }
+
+
+
   // Cache simples em memória para não refazer chamadas
   const memCache = new Map<string, { data: any; expires: number }>();
   
