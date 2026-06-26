@@ -12,7 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { endpoint, method = 'GET', body = null } = await req.json()
+    const { endpoint, method: rawMethod = 'GET', body = null } = await req.json()
+    const method = String(rawMethod).toUpperCase()
 
     // Validate endpoint to prevent SSRF — must resolve to api.mercadolibre.com
     let targetUrl: URL
@@ -86,11 +87,39 @@ serve(async (req) => {
     const fetchHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
     if (!isPublicGet) fetchHeaders.Authorization = `Bearer ${accessToken}`
 
-    const res = await fetch(targetUrl.toString(), {
+    let res = await fetch(targetUrl.toString(), {
       method,
       headers: fetchHeaders,
       body: body ? JSON.stringify(body) : null
     })
+
+    // Alguns itens públicos do ML retornam 403 em /items/{id} sem Bearer.
+    // Para esses casos, o endpoint em lote aceita token e retorna o body do item.
+    const itemMatch = targetUrl.pathname.match(/^\/items\/(MLB\d+)$/i)
+    if (method === 'GET' && itemMatch && res.status === 403) {
+      const itemId = itemMatch[1].toUpperCase()
+      const batchUrl = new URL('/items', 'https://api.mercadolibre.com')
+      batchUrl.searchParams.set('ids', itemId)
+
+      const batchRes = await fetch(batchUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+
+      if (batchRes.ok) {
+        const batchData = await batchRes.json()
+        const first = Array.isArray(batchData) ? batchData[0] : null
+        if (first?.code === 200 && first?.body) {
+          return new Response(JSON.stringify(first.body), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+      }
+    }
 
 
     const text = await res.text()
