@@ -28,6 +28,7 @@ import ProductImageGallery from "@/components/products/ProductImageGallery";
 import { useProductImages } from "@/hooks/useProductImages";
 import { ImagePlus, Upload, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { MlFetchButton } from "@/components/competitors/MlFetchButton";
 import {
   PricingState,
   defaultPricing,
@@ -1058,6 +1059,19 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                         <ExternalLink size={10} />
                       </a>
                     )}
+                    <MlFetchButton
+                      linkValue={comp.url || ""}
+                      onDataFetched={(data) => {
+                        const newComps = [...competitors];
+                        newComps[idx] = {
+                          ...newComps[idx],
+                          title: data.title,
+                          price: data.price,
+                          description: data.description,
+                        };
+                        setCompetitors(newComps);
+                      }}
+                    />
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[10px] font-bold text-muted-foreground">R$</span>
