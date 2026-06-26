@@ -28,6 +28,7 @@ import KitImageGallery from "@/components/kits/KitImageGallery";
 import KitVideoSection from "@/components/kits/KitVideoSection";
 import KeywordRefStrip from "@/components/anuncios/KeywordRefStrip";
 import KeywordFloatingBoxes, { type FieldDef } from "@/components/anuncios/KeywordFloatingBoxes";
+import { MlFetchButton } from "@/components/competitors/MlFetchButton";
 import { useKitImages } from "@/hooks/useKitImages";
 import { ImagePlus, Upload, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -1417,6 +1418,19 @@ export default function KitForm({ kitId }: KitFormProps) {
                         <ExternalLink size={10} />
                       </a>
                     )}
+                    <MlFetchButton
+                      linkValue={comp.url || ""}
+                      onDataFetched={(data) => {
+                        const newComps = [...competitors];
+                        newComps[idx] = {
+                          ...newComps[idx],
+                          title: data.title,
+                          price: data.price,
+                          description: data.description,
+                        };
+                        setCompetitors(newComps);
+                      }}
+                    />
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[10px] font-bold text-muted-foreground">R$</span>
