@@ -94,7 +94,9 @@ serve(async (req) => {
     })
 
     // Alguns itens públicos do ML retornam 403 em /items/{id} sem Bearer.
-    // Para esses casos, o endpoint em lote aceita token e retorna o body do item.
+    // Para esses casos, tentamos o endpoint em lote com token; se o próprio ML
+    // bloquear por PolicyAgent, devolvemos erro controlado (200) para o front
+    // exibir toast e manter o preenchimento manual, sem derrubar a tela.
     const itemMatch = targetUrl.pathname.match(/^\/items\/(MLB\d+)$/i)
     if (method === 'GET' && itemMatch && res.status === 403) {
       const itemId = itemMatch[1].toUpperCase()
@@ -109,8 +111,15 @@ serve(async (req) => {
         },
       })
 
+      const batchText = await batchRes.text()
+      let batchData
+      try {
+        batchData = batchText ? JSON.parse(batchText) : null
+      } catch (_error) {
+        batchData = { error: batchText || 'Resposta inválida do Mercado Livre' }
+      }
+
       if (batchRes.ok) {
-        const batchData = await batchRes.json()
         const first = Array.isArray(batchData) ? batchData[0] : null
         if (first?.code === 200 && first?.body) {
           return new Response(JSON.stringify(first.body), {
@@ -119,6 +128,21 @@ serve(async (req) => {
           })
         }
       }
+
+      console.error('ML API item fallback blocked', {
+        endpoint,
+        status: batchRes.status,
+        data: batchData,
+      })
+
+      return new Response(JSON.stringify({
+        error: 'Mercado Livre bloqueou o acesso automático a este anúncio. Preencha os dados manualmente.',
+        ml_status: res.status,
+        ml_endpoint: endpoint,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
     }
 
 
