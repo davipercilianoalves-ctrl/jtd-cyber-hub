@@ -239,6 +239,7 @@ export function useMetricas() {
     calcFunil,
     posicaoMercado,
     getLocalAds,
+    getLinkedItems,
     cachedCall
   };
 }
