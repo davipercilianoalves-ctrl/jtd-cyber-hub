@@ -39,8 +39,16 @@ export function MlFetchButton({ linkValue, onDataFetched, disabled }: Props) {
         type="button"
         onClick={handleClick}
         disabled={isDisabled}
-        title={id ? `Buscar ${id} no ML` : "Cole um link válido do Mercado Livre"}
-        className="shrink-0 inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded border border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        title={
+          id
+            ? `Buscar ${id} no ML`
+            : "URL não contém ID de produto MLB válido — use a URL da página do produto"
+        }
+        className={`shrink-0 inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+          !id && linkValue
+            ? "border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+            : "border-primary/40 text-primary hover:bg-primary/10"
+        }`}
       >
         {loading ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
         Buscar ML
