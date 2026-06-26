@@ -637,6 +637,7 @@ export type Database = {
           items_per_box: number | null
           keywords: string[] | null
           measurement_unit: string | null
+          ml_item_id: string | null
           name: string
           net_weight_g: number | null
           notes: string | null
@@ -677,6 +678,7 @@ export type Database = {
           items_per_box?: number | null
           keywords?: string[] | null
           measurement_unit?: string | null
+          ml_item_id?: string | null
           name: string
           net_weight_g?: number | null
           notes?: string | null
@@ -717,6 +719,7 @@ export type Database = {
           items_per_box?: number | null
           keywords?: string[] | null
           measurement_unit?: string | null
+          ml_item_id?: string | null
           name?: string
           net_weight_g?: number | null
           notes?: string | null

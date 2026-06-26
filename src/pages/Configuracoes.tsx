@@ -96,82 +96,73 @@ export default function Configuracoes() {
 
 // ============= Seção: Vinculação ML =============
 
+type LinkTarget = { kind: 'ad' | 'product'; id: string };
+
+function encodeTarget(t: LinkTarget | null): string {
+  return t ? `${t.kind}:${t.id}` : '';
+}
+function decodeTarget(v: string): LinkTarget | null {
+  if (!v) return null;
+  const [kind, id] = v.split(':');
+  if ((kind === 'ad' || kind === 'product') && id) return { kind, id };
+  return null;
+}
+
 function VinculacaoML() {
-  const { fetchMLItems, cruzarItem, vincularItem, desvincularItem } = useMLCruzamento();
+  const { fetchMLItems } = useMLCruzamento();
   const [mlItems, setMLItems] = useState<any[]>([]);
-  const [localAds, setLocalAds] = useState<any[]>([]);
-  const [vinculacoes, setVinculacoes] = useState<Record<string, string>>({});
+  const [ads, setAds] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [vinculacoes, setVinculacoes] = useState<Record<string, LinkTarget | null>>({});
   const [loading, setLoading] = useState(false);
+  const [autoLoading, setAutoLoading] = useState(false);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [token, setToken] = useState<any>(null);
+  const [filter, setFilter] = useState<'all' | 'linked' | 'unlinked'>('all');
+  const [search, setSearch] = useState('');
+
+  async function loadAppData() {
+    const [{ data: adsData }, { data: prodData }] = await Promise.all([
+      supabase.from('ads').select('id, titles, ml_item_id, products(name, sku)').order('created_at', { ascending: false }),
+      supabase.from('products').select('id, name, sku, ml_item_id' as any).order('name', { ascending: true }),
+    ]);
+    const adsArr = (adsData as any[]) || [];
+    const prodArr = (prodData as any[]) || [];
+    setAds(adsArr);
+    setProducts(prodArr);
+    return { adsArr, prodArr };
+  }
+
+  function buildLinks(adsArr: any[], prodArr: any[], mlIds: string[]) {
+    const map: Record<string, LinkTarget | null> = {};
+    mlIds.forEach((id) => {
+      const ad = adsArr.find((a: any) => a.ml_item_id === id);
+      if (ad) { map[id] = { kind: 'ad', id: ad.id }; return; }
+      const prod = prodArr.find((p: any) => p.ml_item_id === id);
+      if (prod) { map[id] = { kind: 'product', id: prod.id }; return; }
+      map[id] = null;
+    });
+    return map;
+  }
 
   useEffect(() => {
     (async () => {
       const { data: tk } = await supabase.from('ml_tokens').select('*').maybeSingle();
       setToken(tk);
-
-      const { data: adsData } = await supabase.from('ads')
-        .select('id, titles, ml_item_id, products(name, sku)')
-        .eq('is_active', true);
-      const ads = (adsData as any[]) || [];
-      setLocalAds(ads);
-      const saved: Record<string, string> = {};
-      ads.forEach((ad: any) => {
-        if (ad.ml_item_id) saved[ad.ml_item_id] = ad.id;
-      });
-      setVinculacoes(saved);
-
-      if (tk) {
-        await handleBuscar(tk, ads, saved);
-      }
+      const { adsArr, prodArr } = await loadAppData();
+      if (tk) await handleBuscar(tk, adsArr, prodArr);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleBuscar(
-    tk: any = token,
-    ads: any[] = localAds,
-    jaVinc: Record<string, string> = vinculacoes,
-  ) {
+  async function handleBuscar(tk: any = token, adsArr: any[] = ads, prodArr: any[] = products) {
     if (!tk) return;
     setLoading(true);
     try {
       const items = await fetchMLItems(tk.user_id);
       setMLItems(items);
-
-      // Auto-cruzar e auto-SALVAR por SKU exato (não toca em vínculos manuais)
-      const autoCruz: Record<string, string> = {};
-      const toPersist: Array<{ adId: string; mlItemId: string }> = [];
-      items.forEach((item: any) => {
-        if (jaVinc[item.id]) return;
-        const match = cruzarItem(item, ads);
-        if (!match) return;
-        autoCruz[item.id] = match.id;
-        const mlSku = (item.seller_sku || item.seller_custom_field || '').toLowerCase().trim();
-        const adSku = (match.products?.sku || '').toLowerCase().trim();
-        if (mlSku && adSku && mlSku === adSku && !match.ml_item_id) {
-          toPersist.push({ adId: match.id, mlItemId: item.id });
-        }
-      });
-      setVinculacoes(prev => ({ ...prev, ...autoCruz }));
-
-      let salvos = 0;
-      for (const v of toPersist) {
-        try {
-          await vincularItem(v.adId, v.mlItemId);
-          salvos++;
-        } catch {}
-      }
-
-      if (salvos > 0) {
-        toast.success(`${salvos} anúncios vinculados automaticamente por SKU!`);
-        const { data } = await supabase.from('ads')
-          .select('id, titles, ml_item_id, products(name, sku)')
-          .eq('is_active', true);
-        setLocalAds((data as any[]) || []);
-      } else if (items.length === 0) {
-        toast.info('Nenhum anúncio ativo encontrado no ML');
-      }
+      setVinculacoes(buildLinks(adsArr, prodArr, items.map((i: any) => i.id)));
+      if (items.length === 0) toast.info('Nenhum anúncio ativo encontrado no ML');
     } catch {
       toast.error('Erro ao buscar anúncios do ML');
     } finally {
@@ -179,22 +170,25 @@ function VinculacaoML() {
     }
   }
 
+  async function persistLink(mlItemId: string, target: LinkTarget | null) {
+    // Limpa vínculo antigo nesse MLB em ads e products
+    await supabase.from('ads').update({ ml_item_id: null } as any).eq('ml_item_id', mlItemId);
+    await supabase.from('products').update({ ml_item_id: null } as any).eq('ml_item_id' as any, mlItemId);
+    if (target?.kind === 'ad') {
+      const { error } = await supabase.from('ads').update({ ml_item_id: mlItemId } as any).eq('id', target.id);
+      if (error) throw error;
+    } else if (target?.kind === 'product') {
+      const { error } = await supabase.from('products').update({ ml_item_id: mlItemId } as any).eq('id', target.id);
+      if (error) throw error;
+    }
+  }
+
   async function handleSalvar(mlItemId: string) {
-    const adId = vinculacoes[mlItemId];
     setSaving(prev => ({ ...prev, [mlItemId]: true }));
     try {
-      if (adId) {
-        await vincularItem(adId, mlItemId);
-        toast.success('Vínculo salvo!');
-      } else {
-        const adComEsse = localAds.find(a => a.ml_item_id === mlItemId);
-        if (adComEsse) await desvincularItem(adComEsse.id);
-        toast.success('Vínculo removido');
-      }
-      const { data } = await supabase.from('ads')
-        .select('id, titles, ml_item_id, products(name, sku)')
-        .eq('is_active', true);
-      setLocalAds((data as any[]) || []);
+      await persistLink(mlItemId, vinculacoes[mlItemId] ?? null);
+      toast.success(vinculacoes[mlItemId] ? 'Vínculo salvo!' : 'Vínculo removido');
+      await loadAppData();
     } catch (e: any) {
       toast.error('Erro ao salvar: ' + (e?.message ?? ''));
     } finally {
@@ -202,40 +196,131 @@ function VinculacaoML() {
     }
   }
 
+  async function handleAutoVincular() {
+    if (!mlItems.length) return;
+    setAutoLoading(true);
+    let count = 0;
+    const novos: Record<string, LinkTarget | null> = { ...vinculacoes };
+    try {
+      for (const item of mlItems) {
+        if (vinculacoes[item.id]) continue; // não sobrescreve manual
+        const mlSku = (item.seller_sku || item.seller_custom_field || '').toLowerCase().trim();
+        const mlTitle = (item.title || '').toLowerCase();
+        let target: LinkTarget | null = null;
+
+        if (mlSku) {
+          const ad = ads.find((a: any) => (a.products?.sku || '').toLowerCase() === mlSku);
+          if (ad) target = { kind: 'ad', id: ad.id };
+          if (!target) {
+            const p = products.find((p: any) => (p.sku || '').toLowerCase() === mlSku);
+            if (p) target = { kind: 'product', id: p.id };
+          }
+        }
+        if (!target) {
+          const p = products.find((p: any) => p.sku && mlTitle.includes(String(p.sku).toLowerCase()));
+          if (p) target = { kind: 'product', id: p.id };
+        }
+        if (target) {
+          try {
+            await persistLink(item.id, target);
+            novos[item.id] = target;
+            count++;
+          } catch {}
+        }
+      }
+      setVinculacoes(novos);
+      await loadAppData();
+      toast.success(`${count} vínculos criados automaticamente`);
+    } finally {
+      setAutoLoading(false);
+    }
+  }
+
+  const totalVinc = Object.values(vinculacoes).filter(Boolean).length;
+  const totalSem = mlItems.length - totalVinc;
+  const pct = mlItems.length ? Math.round((totalVinc / mlItems.length) * 100) : 0;
+
+  const filteredItems = mlItems.filter((item: any) => {
+    const isLinked = !!vinculacoes[item.id];
+    if (filter === 'linked' && !isLinked) return false;
+    if (filter === 'unlinked' && isLinked) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      if (!(item.title || '').toLowerCase().includes(s) && !item.id.toLowerCase().includes(s)) return false;
+    }
+    return true;
+  });
+
   if (!token) {
-    return (
-      <div className="text-sm text-muted-foreground">
-        Conecte o Mercado Livre na aba API primeiro.
-      </div>
-    );
+    return <div className="text-sm text-muted-foreground">Conecte o Mercado Livre na aba API primeiro.</div>;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
-          Vincule seus anúncios do ML com os cadastrados no app
-          para puxar visitas e métricas reais.
-        </p>
-        <button
-          onClick={handleBuscar}
-          disabled={loading}
-          className="flex items-center gap-2 bg-primary text-primary-foreground font-bold px-4 py-2 rounded text-sm hover:brightness-110 disabled:opacity-50 flex-shrink-0"
-        >
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
-          Buscar Anúncios do ML
-        </button>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex-1 min-w-[240px]">
+          <p className="text-sm text-muted-foreground">
+            Vincule seus anúncios do ML aos produtos ou anúncios cadastrados no app.
+          </p>
+          {mlItems.length > 0 && (
+            <div className="mt-2 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                {mlItems.length} no ML · <span className="text-emerald-500 font-bold">{totalVinc}</span> vinculados · <span className="text-amber-500 font-bold">{totalSem}</span> sem vínculo
+              </p>
+              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={handleAutoVincular}
+            disabled={autoLoading || !mlItems.length}
+            className="flex items-center gap-2 border border-primary text-primary font-bold px-3 py-2 rounded text-sm hover:bg-primary/10 disabled:opacity-50"
+          >
+            {autoLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+            Auto-vincular por SKU
+          </button>
+          <button
+            onClick={() => handleBuscar()}
+            disabled={loading}
+            className="flex items-center gap-2 bg-primary text-primary-foreground font-bold px-4 py-2 rounded text-sm hover:brightness-110 disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
+            Buscar Anúncios do ML
+          </button>
+        </div>
       </div>
 
       {mlItems.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">
-            {mlItems.length} anúncios encontrados no ML • {Object.values(vinculacoes).filter(Boolean).length} vinculados
-          </p>
+        <>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-1">
+              {(['all', 'linked', 'unlinked'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                    filter === f ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {f === 'all' ? 'Todos' : f === 'linked' ? 'Vinculados' : 'Sem vínculo'}
+                </button>
+              ))}
+            </div>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por título ou MLB..."
+              className="flex-1 min-w-[200px] text-xs rounded border border-border bg-background text-foreground px-3 py-2"
+            />
+          </div>
+
           <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-            {mlItems.map((item: any) => {
-              const isVinculado = !!vinculacoes[item.id];
-              const adVinculado = localAds.find(a => a.id === vinculacoes[item.id]);
+            {filteredItems.map((item: any) => {
+              const target = vinculacoes[item.id] ?? null;
+              const isVinculado = !!target;
               return (
                 <div key={item.id} className="p-4 bg-card">
                   <div className="flex items-start gap-4">
@@ -249,9 +334,7 @@ function VinculacaoML() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {item.title}
-                          </p>
+                          <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
                           <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
                             <span className="font-mono">{item.id}</span>
                             {item.seller_sku && <span>SKU: {item.seller_sku}</span>}
@@ -260,51 +343,61 @@ function VinculacaoML() {
                             </span>
                           </div>
                         </div>
-                        {isVinculado && (
+                        {isVinculado ? (
                           <span className="text-[10px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full px-2 py-0.5 font-mono uppercase flex-shrink-0">
-                            Vinculado
+                            ✓ Vinculado
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full px-2 py-0.5 font-mono uppercase flex-shrink-0">
+                            ⚠ Sem vínculo
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <select
-                          value={vinculacoes[item.id] || ''}
+                          value={encodeTarget(target)}
                           onChange={e => setVinculacoes(prev => ({
                             ...prev,
-                            [item.id]: e.target.value,
+                            [item.id]: decodeTarget(e.target.value),
                           }))}
                           className="flex-1 text-xs rounded border border-border bg-background text-foreground px-2 py-1.5"
                         >
                           <option value="">— Sem vínculo —</option>
-                          {localAds.map((ad: any) => (
-                            <option key={ad.id} value={ad.id}>
-                              {ad.titles?.[0] || ad.products?.name || 'Sem título'}
-                              {ad.products?.sku ? ` (${ad.products.sku})` : ''}
-                            </option>
-                          ))}
+                          {ads.length > 0 && (
+                            <optgroup label="── Anúncios ──">
+                              {ads.map((ad: any) => (
+                                <option key={`ad-${ad.id}`} value={`ad:${ad.id}`}>
+                                  {(ad.titles?.[0] || ad.products?.name || 'Sem título')}
+                                  {ad.products?.sku ? ` (${ad.products.sku})` : ''}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {products.length > 0 && (
+                            <optgroup label="── Produtos ──">
+                              {products.map((p: any) => (
+                                <option key={`prod-${p.id}`} value={`product:${p.id}`}>
+                                  {p.name}{p.sku ? ` (SKU: ${p.sku})` : ''}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
                         </select>
                         <button
                           onClick={() => handleSalvar(item.id)}
                           disabled={saving[item.id]}
                           className="text-xs bg-primary text-primary-foreground font-bold px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50 flex items-center gap-1"
                         >
-                          {saving[item.id]
-                            ? <Loader2 size={12} className="animate-spin" />
-                            : 'Salvar'}
+                          {saving[item.id] ? <Loader2 size={12} className="animate-spin" /> : 'Salvar'}
                         </button>
                       </div>
-                      {adVinculado && (
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          → {adVinculado.titles?.[0] || adVinculado.products?.name}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
+        </>
       )}
     </div>
   );
