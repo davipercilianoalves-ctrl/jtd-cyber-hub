@@ -166,6 +166,7 @@ export default function Metricas() {
 
   // Novos blocos
   const [localAds, setLocalAds] = useState<any[]>([]);
+  const [linkedItems, setLinkedItems] = useState<any[]>([]);
   const [mlPrices, setMlPrices] = useState<Map<string, { price: number | null }>>(new Map());
   const [mlItems, setMlItems] = useState<Map<string, { title: string; price: number | null; sku: string | null }>>(new Map());
   const [yearOrders, setYearOrders] = useState<{ current: MlOrder[]; previous: MlOrder[] }>({ current: [], previous: [] });
@@ -218,14 +219,19 @@ export default function Metricas() {
     if (!token) return;
     let cancelled = false;
     (async () => {
-      const ads = await m.getLocalAds().catch(() => []);
+      const [ads, linked] = await Promise.all([
+        m.getLocalAds().catch(() => []),
+        m.getLinkedItems().catch(() => []),
+      ]);
       if (cancelled) return;
       setLocalAds(ads);
+      setLinkedItems(linked);
 
-      // 1) IDs known from local ads
-      const localIds = ads
-        .flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || []))
-        .filter(Boolean) as string[];
+      // 1) IDs known from local ads + linked products
+      const localIds = [
+        ...ads.flatMap((a: any) => (Array.isArray(a.ml_item_ids) ? a.ml_item_ids : []).concat(a.ml_item_id || [])),
+        ...linked.flatMap((it: any) => [it.ml_item_id, ...(it.ml_item_ids || [])]),
+      ].filter(Boolean) as string[];
 
       // 2) IDs from seller's ML catalog
       let sellerIds: string[] = [];
@@ -539,13 +545,12 @@ export default function Metricas() {
   // Price sync rows
   const priceSyncRows: PriceSyncRow[] = useMemo(() => {
     const out: PriceSyncRow[] = [];
-    localAds.forEach((a: any) => {
+    linkedItems.forEach((item: any) => {
       const ids: string[] = Array.from(
-        new Set([a.ml_item_id, ...(Array.isArray(a.ml_item_ids) ? a.ml_item_ids : [])].filter(Boolean))
+        new Set([item.ml_item_id, ...(item.ml_item_ids || [])].filter(Boolean))
       );
       if (ids.length === 0) return;
-      const title = (Array.isArray(a.titles) && a.titles[0]) || a.products?.name || "Anúncio";
-      const appPrice = Number(a.final_price || 0);
+      const appPrice = Number(item.sale_price || 0);
       ids.forEach((id) => {
         const ml = mlPrices.get(id);
         const mlPrice = ml?.price ?? null;
@@ -556,11 +561,20 @@ export default function Metricas() {
           const abs = Math.abs(diffPct);
           status = abs < 1 ? "ok" : abs <= 5 ? "warn" : "alert";
         }
-        out.push({ adId: `${a.id}:${id}`, mlItemId: id, title, appPrice, mlPrice, diff, diffPct, status });
+        out.push({
+          adId: `${item.kind}:${item.id}:${id}`,
+          mlItemId: id,
+          title: item.label,
+          appPrice,
+          mlPrice,
+          diff,
+          diffPct,
+          status,
+        });
       });
     });
     return out;
-  }, [localAds, mlPrices]);
+  }, [linkedItems, mlPrices]);
 
   // Monthly sales (last 12 months current vs previous year)
   const monthlySales: MonthlySalesPoint[] = useMemo(() => {
