@@ -191,7 +191,7 @@ export function DataView<T>({
           <div className="hidden md:flex items-center gap-5 shrink-0">
             {visibleCols.slice(0, 4).map((c) => (
               <div key={c.key} className="text-right">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   {c.label}
                 </div>
                 <div className={`text-sm ${c.className || ""}`}>{c.render(item)}</div>
