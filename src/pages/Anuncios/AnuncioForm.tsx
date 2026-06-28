@@ -440,9 +440,9 @@ export default function AnuncioForm() {
         <div className="space-y-4">
           {formData.titles.map((title, idx) => (
             <div key={idx} className="space-y-2">
-              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                <span>Título #{idx + 1}</span>
-                <span className={title.length > 150 ? "text-red-500" : ""}>{title.length}/150</span>
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Título #{idx + 1}</span>
+                <span className={`text-[11px] font-mono tabular-nums ${title.length > 150 ? "text-red-500" : "text-muted-foreground"}`}>{title.length}/150</span>
               </div>
               <div className="flex gap-3">
                 <textarea 
@@ -452,7 +452,7 @@ export default function AnuncioForm() {
                     autoResize(e.target);
                   }}
                   style={textareaStyle}
-                  className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+                  className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm leading-[1.7] focus:border-primary focus:outline-none"
                   placeholder="Digite o título do anúncio..."
                 />
                 <button 
