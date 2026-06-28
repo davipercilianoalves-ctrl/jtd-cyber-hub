@@ -44,14 +44,14 @@ export default function Kits() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Kits e Composições</h1>
-          <p className="text-sm text-muted-foreground">Gerencie seus kits de produtos</p>
+          <h1 className="text-[18px] font-bold tracking-tight text-foreground">Kits e Composições</h1>
+          <p className="text-[13px] text-muted-foreground">Gerencie seus kits de produtos</p>
         </div>
         <Link 
           to="/kits/novo" 
-          className="bg-primary px-4 py-2 text-sm font-bold text-black rounded hover:brightness-110 flex items-center gap-2"
+          className="bg-primary px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] text-black rounded hover:brightness-110 flex items-center gap-2"
         >
-          <Plus size={18}/> NOVO KIT
+          <Plus size={18}/> Novo Kit
         </Link>
       </div>
 
@@ -65,7 +65,7 @@ export default function Kits() {
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">Mostrando {filtered.length} de {kits.length} kits</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Mostrando {filtered.length} de {kits.length} kits</p>
 
       {loading ? (
         <div className="space-y-2">
@@ -94,11 +94,11 @@ export default function Kits() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-internal-w03 border-b border-sidebar-border">
-              <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Nome + SKU</th>
-              <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Produtos</th>
-              <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Preço Venda</th>
-              <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Margem</th>
-              <th className="p-4 text-xs font-bold uppercase text-muted-foreground">Status</th>
+              <th className="p-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Nome + SKU</th>
+              <th className="p-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Produtos</th>
+              <th className="p-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Preço Venda</th>
+              <th className="p-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Margem</th>
+              <th className="p-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Status</th>
               <th className="p-4"></th>
             </tr>
           </thead>
@@ -110,22 +110,22 @@ export default function Kits() {
                 className="border-b border-border/40 hover:bg-internal-w04 transition-colors group cursor-pointer"
               >
                 <td className="p-4">
-                  <div className="font-semibold text-foreground">{k.name}</div>
-                  <div className="font-mono text-[10px] text-muted-foreground">{k.sku || "—"}</div>
+                  <div className="text-sm font-medium text-foreground">{k.name}</div>
+                  <div className="text-[11px] text-muted-foreground">{k.sku || "—"}</div>
                 </td>
                 <td className="p-4">
-                  <span className="bg-muted/15 text-foreground text-[10px] font-bold px-2 py-0.5 rounded border border-white/10">
+                  <span className="bg-muted/15 text-foreground text-[11px] font-bold px-2 py-0.5 rounded border border-white/10">
                     {k.kit_products?.length || 0} produtos
                   </span>
                 </td>
-                <td className="p-4 font-mono font-bold text-cyan-400">
+                <td className="p-4 text-sm font-semibold tabular-nums font-mono text-cyan-400">
                   R$ {k.final_price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </td>
-                <td className="p-4 font-bold text-lime-500">
+                <td className="p-4 text-sm font-semibold tabular-nums text-lime-500">
                   {k.profit_margin?.toFixed(1)}%
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                     k.is_active ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
                   }`}>
                     {k.is_active ? 'ATIVO' : 'INATIVO'}
@@ -133,12 +133,12 @@ export default function Kits() {
                 </td>
                 <td className="p-4 opacity-0 group-hover:opacity-100 transition-opacity text-right">
                   <div className="flex gap-2 justify-end">
-                    <button className="text-primary text-xs font-bold uppercase">EDITAR</button>
+                    <button className="text-primary text-[11px] font-bold uppercase tracking-[0.08em]">Editar</button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); toast.info("Em breve: métricas do kit"); }} 
-                      className="text-muted-foreground text-xs font-bold uppercase"
+                      className="text-muted-foreground text-[11px] font-bold uppercase tracking-[0.08em]"
                     >
-                      VER MÉTRICAS
+                      Ver Métricas
                     </button>
                   </div>
                 </td>

@@ -50,15 +50,15 @@ export default function Anuncios() {
   }, [ads, search, marketplace, sort]);
 
   const columns: DataColumn<any>[] = [
-    { key: "mp", label: "Marketplace", render: (a) => <span className="inline-flex items-center rounded border border-cyan-400/30 bg-cyan-400/10 px-1.5 py-0.5 text-[10px] font-bold text-cyan-400 uppercase">{a.marketplace || "—"}</span> },
+    { key: "mp", label: "Marketplace", render: (a) => <span className="inline-flex items-center rounded border border-cyan-400/30 bg-cyan-400/10 px-1.5 py-0.5 text-[11px] font-bold text-cyan-400 uppercase tracking-[0.08em]">{a.marketplace || "—"}</span> },
     { key: "title", label: "Título", render: (a) => (
       <span className="inline-flex items-center gap-1.5">
-        <span className="text-muted-foreground truncate max-w-[180px] inline-block align-bottom">{a.titles?.[0] || "—"}</span>
-        {a.titles?.length > 1 && <span className="bg-muted/15 text-[10px] px-1.5 py-0.5 rounded">+{a.titles.length - 1}</span>}
+        <span className="text-sm text-muted-foreground truncate max-w-[180px] inline-block align-bottom">{a.titles?.[0] || "—"}</span>
+        {a.titles?.length > 1 && <span className="bg-muted/15 text-[11px] px-1.5 py-0.5 rounded text-muted-foreground">+{a.titles.length - 1}</span>}
       </span>
     ), tableOnly: true },
-    { key: "price", label: "Preço", align: "right", className: "font-mono font-bold text-cyan-400", render: (a) => `R$ ${(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
-    { key: "margin", label: "Margem", align: "right", className: "font-bold text-lime-500", render: (a) => `${a.profit_margin || 0}%` },
+    { key: "price", label: "Preço", align: "right", className: "text-sm font-semibold tabular-nums font-mono text-cyan-400", render: (a) => `R$ ${(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
+    { key: "margin", label: "Margem", align: "right", className: "text-sm font-semibold tabular-nums text-lime-500", render: (a) => `${a.profit_margin || 0}%` },
   ];
 
   return (
@@ -109,31 +109,31 @@ export default function Anuncios() {
         )}
         renderHeader={(a) => (
           <div className="min-w-0">
-            <div className="truncate font-semibold text-foreground">{a.products?.name || "—"}</div>
+            <div className="truncate text-sm font-medium text-foreground">{a.products?.name || "—"}</div>
             <div className="truncate text-[11px] text-muted-foreground">{a.titles?.[0] || "Sem título"}</div>
           </div>
         )}
         renderHighlight={(a) => (
           <div className="flex items-baseline justify-between gap-3">
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Preço</div>
-              <div className="font-mono text-lg font-bold text-cyan-400">R$ {(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Preço</div>
+              <div className="text-[20px] font-bold tabular-nums tracking-tight font-mono text-cyan-400">R$ {(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
             </div>
             <div className="text-right">
-              <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Margem</div>
-              <div className="font-bold text-lime-500">{a.profit_margin || 0}%</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Margem</div>
+              <div className="text-[20px] font-bold tabular-nums tracking-tight text-lime-500">{a.profit_margin || 0}%</div>
             </div>
           </div>
         )}
         renderStatus={(a) => (
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${a.is_active ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${a.is_active ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
             {a.is_active ? 'ATIVO' : 'INATIVO'}
           </span>
         )}
         renderActions={(a) => (
           <div className="flex gap-3 justify-end">
-            <button className="text-primary text-[11px] font-bold uppercase tracking-wider">Editar</button>
-            <button onClick={(e) => { e.stopPropagation(); toast.info("Em breve: métricas"); }} className="text-muted-foreground hover:text-foreground text-[11px] font-bold uppercase tracking-wider">Métricas</button>
+            <button className="text-primary text-[11px] font-bold uppercase tracking-[0.08em]">Editar</button>
+            <button onClick={(e) => { e.stopPropagation(); toast.info("Em breve: métricas"); }} className="text-muted-foreground hover:text-foreground text-[11px] font-bold uppercase tracking-[0.08em]">Métricas</button>
           </div>
         )}
       />

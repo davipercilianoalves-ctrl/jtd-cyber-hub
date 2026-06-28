@@ -59,7 +59,7 @@ function StatusPill({ status }: { status: string }) {
   };
   const cfg = map[status] || { label: status, cls: "bg-muted/20 text-muted-foreground" };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider ${cfg.cls}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-[0.08em] ${cfg.cls}`}>
       {cfg.label}
     </span>
   );
@@ -340,11 +340,11 @@ export default function Vendas() {
       <div className="jtd-glass p-6">
         <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
+            <h1 className="text-[18px] font-bold tracking-tight flex items-center gap-3">
               <ShoppingCart className="w-8 h-8 text-cyan-400" />
               Vendas
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-[13px] text-muted-foreground mt-1">
               Controle financeiro das suas vendas
             </p>
           </div>
@@ -427,8 +427,8 @@ export default function Vendas() {
           </div>
 
           <div className="jtd-glass p-6">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3">Custos do período</div>
-            <div className="space-y-2 text-sm">
+            <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-3">Custos do período</div>
+            <div className="space-y-2">
               {[
                 { icon: Receipt, label: "Taxa ML", value: summary.fee },
                 { icon: Truck, label: "Frete", value: summary.shipping },
@@ -437,11 +437,11 @@ export default function Vendas() {
                 { icon: Percent, label: "Imposto", value: summary.tax },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="flex items-center justify-between py-1 border-b border-border/40 last:border-0">
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Icon className="w-3.5 h-3.5" />
                     <span>{label}</span>
                   </div>
-                  <span className="font-mono">{BRL(value)}</span>
+                  <span className="text-sm font-semibold tabular-nums font-mono">{BRL(value)}</span>
                 </div>
               ))}
             </div>
@@ -467,11 +467,11 @@ export default function Vendas() {
           <table className="w-full">
             <thead>
               <tr className="bg-muted/20 border-b border-border">
-                <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Data</th>
-                <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Produto</th>
-                <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Valor</th>
-                <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Lucro</th>
-                <th className="text-center px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Data</th>
+                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Produto</th>
+                <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Valor</th>
+                <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lucro</th>
+                <th className="text-center px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Status</th>
                 <th className="w-10"></th>
               </tr>
             </thead>
@@ -488,23 +488,23 @@ export default function Vendas() {
                       onClick={() => setExpanded((s) => ({ ...s, [oid]: !s[oid] }))}
                       className="border-b border-border hover:bg-muted/[0.04] cursor-pointer transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm font-medium tabular-nums text-muted-foreground whitespace-nowrap">
                         {fmtDate(c.order.date_created)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className="truncate max-w-[200px] text-sm">{firstItem?.title || "-"}</span>
+                          <span className="truncate max-w-[200px] text-sm font-medium text-foreground">{firstItem?.title || "-"}</span>
                           {extra > 0 && (
-                            <span className="bg-muted/20 text-xs px-1.5 py-0.5 rounded font-mono">+{extra}</span>
+                            <span className="bg-muted/20 text-[11px] px-1.5 py-0.5 rounded font-mono text-muted-foreground">+{extra}</span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right text-cyan-400 font-mono font-bold whitespace-nowrap">
+                      <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums font-mono text-cyan-400 whitespace-nowrap">
                         {BRL(c.totals.revenue)}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         {c.hasAnyAd ? (
-                          <span className={`font-mono font-bold ${c.totals.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
+                          <span className={`text-sm font-semibold tabular-nums font-mono ${c.totals.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
                             {BRL(c.totals.profit)}
                           </span>
                         ) : (
