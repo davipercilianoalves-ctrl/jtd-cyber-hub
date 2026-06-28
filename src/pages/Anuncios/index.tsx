@@ -109,31 +109,31 @@ export default function Anuncios() {
         )}
         renderHeader={(a) => (
           <div className="min-w-0">
-            <div className="truncate font-semibold text-foreground">{a.products?.name || "—"}</div>
+            <div className="truncate text-sm font-medium text-foreground">{a.products?.name || "—"}</div>
             <div className="truncate text-[11px] text-muted-foreground">{a.titles?.[0] || "Sem título"}</div>
           </div>
         )}
         renderHighlight={(a) => (
           <div className="flex items-baseline justify-between gap-3">
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Preço</div>
-              <div className="font-mono text-lg font-bold text-cyan-400">R$ {(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Preço</div>
+              <div className="text-[20px] font-bold tabular-nums tracking-tight font-mono text-cyan-400">R$ {(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
             </div>
             <div className="text-right">
-              <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Margem</div>
-              <div className="font-bold text-lime-500">{a.profit_margin || 0}%</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Margem</div>
+              <div className="text-[20px] font-bold tabular-nums tracking-tight text-lime-500">{a.profit_margin || 0}%</div>
             </div>
           </div>
         )}
         renderStatus={(a) => (
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${a.is_active ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${a.is_active ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
             {a.is_active ? 'ATIVO' : 'INATIVO'}
           </span>
         )}
         renderActions={(a) => (
           <div className="flex gap-3 justify-end">
-            <button className="text-primary text-[11px] font-bold uppercase tracking-wider">Editar</button>
-            <button onClick={(e) => { e.stopPropagation(); toast.info("Em breve: métricas"); }} className="text-muted-foreground hover:text-foreground text-[11px] font-bold uppercase tracking-wider">Métricas</button>
+            <button className="text-primary text-[11px] font-bold uppercase tracking-[0.08em]">Editar</button>
+            <button onClick={(e) => { e.stopPropagation(); toast.info("Em breve: métricas"); }} className="text-muted-foreground hover:text-foreground text-[11px] font-bold uppercase tracking-[0.08em]">Métricas</button>
           </div>
         )}
       />
