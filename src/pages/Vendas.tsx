@@ -467,11 +467,11 @@ export default function Vendas() {
           <table className="w-full">
             <thead>
               <tr className="bg-muted/20 border-b border-border">
-                <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Data</th>
-                <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Produto</th>
-                <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Valor</th>
-                <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Lucro</th>
-                <th className="text-center px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Data</th>
+                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Produto</th>
+                <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Valor</th>
+                <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lucro</th>
+                <th className="text-center px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Status</th>
                 <th className="w-10"></th>
               </tr>
             </thead>
