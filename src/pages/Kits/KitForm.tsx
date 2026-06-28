@@ -1041,9 +1041,9 @@ export default function KitForm({ kitId }: KitFormProps) {
               {kitItems.length}
             </span>
           </h3>
-          <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
             Custo total:&nbsp;
-            <span className="text-primary font-mono text-base">
+            <span className="text-primary text-sm font-semibold tabular-nums font-mono">
               R$ {kitItems.reduce((s, it) => s + it.cost_price * it.quantity, 0).toFixed(2)}
             </span>
           </div>
