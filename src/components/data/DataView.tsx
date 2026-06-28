@@ -73,11 +73,11 @@ export function DataView<T>({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-internal-w03 border-b border-sidebar-border">
-              <th className="p-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Item</th>
+              <th className="p-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Item</th>
               {columns.map((c) => (
                 <th
                   key={c.key}
-                  className={`p-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground ${
+                  className={`p-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground ${
                     c.align === "right" ? "text-right" : ""
                   }`}
                 >
@@ -85,7 +85,7 @@ export function DataView<T>({
                 </th>
               ))}
               {renderStatus && (
-                <th className="p-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="p-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Status</th>
               )}
               {renderActions && <th className="p-3" />}
             </tr>
