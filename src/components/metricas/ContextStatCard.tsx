@@ -50,9 +50,9 @@ export function ContextStatCard({
         )}
       </div>
       <div>
-        <div className="text-xs text-muted-foreground uppercase tracking-wider">{label}</div>
-        <div className="text-2xl font-bold tabular-nums mt-1">{value}</div>
-        {context && <div className="text-[11px] text-muted-foreground mt-1">{context}</div>}
+        <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
+        <div className="text-[20px] font-bold tabular-nums tracking-tight mt-1">{value}</div>
+        {context && <div className="text-[13px] text-muted-foreground mt-1">{context}</div>}
       </div>
     </Card>
   );

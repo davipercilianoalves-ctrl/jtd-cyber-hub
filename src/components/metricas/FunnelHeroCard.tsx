@@ -39,8 +39,8 @@ export function FunnelHeroCard({ title, subtitle, funnel, kpis, secondary }: Fun
     <Card className="overflow-hidden">
       <CardHeader className="flex-row items-start justify-between">
         <div className="space-y-1">
-          <CardTitle className="text-lg">{title}</CardTitle>
-          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+          <CardTitle className="text-[18px] font-bold tracking-tight">{title}</CardTitle>
+          {subtitle && <p className="text-[13px] text-muted-foreground">{subtitle}</p>}
         </div>
       </CardHeader>
       <CardContent className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
@@ -56,15 +56,15 @@ export function FunnelHeroCard({ title, subtitle, funnel, kpis, secondary }: Fun
               const d = delta(k.value, k.previous, k.isNegativeGood);
               return (
                 <div key={k.label} className="space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                     {k.label}
                   </div>
-                  <div className="text-3xl font-bold tabular-nums">
+                  <div className="text-[28px] font-extrabold tabular-nums tracking-tight">
                     <CountUp value={k.value} format={k.format} />
                   </div>
                   <Badge
                     variant="outline"
-                    className={`gap-1 ${
+                    className={`gap-1 text-xs font-bold ${
                       d.positive
                         ? "border-primary/40 text-primary bg-primary/10"
                         : "border-destructive/40 text-destructive bg-destructive/10"
