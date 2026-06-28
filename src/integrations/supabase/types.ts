@@ -525,6 +525,42 @@ export type Database = {
         }
         Relationships: []
       }
+      order_cost_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: number
+          packaging_cost: number
+          tax_cost: number
+          transport_cost: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id: number
+          packaging_cost?: number
+          tax_cost?: number
+          transport_cost?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: number
+          packaging_cost?: number
+          tax_cost?: number
+          transport_cost?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_competitors: {
         Row: {
           created_at: string

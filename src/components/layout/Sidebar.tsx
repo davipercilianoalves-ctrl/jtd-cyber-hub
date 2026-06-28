@@ -12,6 +12,7 @@ import {
   Settings,
   Truck,
   Layers,
+  Wallet,
 } from "lucide-react";
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { to: "/metricas", label: "Métricas", icon: BarChart2 },
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
   { to: "/vendas", label: "Vendas", icon: DollarSign },
+  { to: "/financeiro", label: "Financeiro", icon: Wallet },
   { to: "/compras", label: "Compras", icon: ShoppingCart },
   { to: "/api", label: "API", icon: Plug },
   { to: "/configuracoes", label: "Configuração", icon: Settings },
