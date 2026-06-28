@@ -59,7 +59,7 @@ function CopyBtn({ value }: { value: any }) {
 }
 
 const fieldLabelCls =
-  "text-[10px] font-bold uppercase tracking-wider text-muted-foreground";
+  "text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground";
 
 function Field({
   label,
@@ -499,7 +499,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
     "w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none transition-all break-all";
   const labelCls = fieldLabelCls;
   const sectionTitleCls =
-    "text-[10px] font-black uppercase tracking-wider text-primary/70";
+    "text-[11px] font-bold uppercase tracking-[0.08em] text-primary";
 
   const allSelected =
     formData.keywords.length > 0 && selectedKeywords.length === formData.keywords.length;
@@ -524,7 +524,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6 relative">
         <div className="flex justify-between items-start">
-          <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
             <Package size={20} className="text-primary" />
             Informações Básicas
           </h3>
@@ -891,7 +891,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
 
       <section className="jtd-glass p-6 space-y-5">
         <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
             <Tag size={20} className="text-primary" />
             Palavras-Chave do Produto
             <span className="bg-primary/20 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/40">
@@ -1009,7 +1009,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6">
         <div className="border-b border-sidebar-border/30 pb-6">
-          <h3 className="font-bold text-lg text-foreground">Análise de Concorrentes</h3>
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground">Análise de Concorrentes</h3>
           <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
             Analise preços e extraia keywords
           </p>
@@ -1034,7 +1034,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   <span className="text-primary shrink-0">
                     {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </span>
-                  <span className="flex-1 min-w-0 text-base font-bold text-foreground truncate">
+                  <span className="flex-1 min-w-0 text-sm font-semibold text-foreground truncate">
                     {comp.title || <span className="text-muted-foreground/40">Concorrente sem título</span>}
                   </span>
                 </button>
@@ -1074,7 +1074,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                     />
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[10px] font-bold text-muted-foreground">R$</span>
+                    <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">R$</span>
                     <input
                       type="number"
                       step="any"
@@ -1082,7 +1082,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                       inputMode="decimal"
                       value={comp.price || ""}
                       onChange={(e) => updateCompetitor(idx, "price", e.target.value === "" ? 0 : Number(e.target.value))}
-                      className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-32 text-right focus:ring-0 focus:outline-none font-mono tabular-nums"
+                      className="bg-transparent border-none p-0 text-[20px] font-bold tracking-tight text-cyan-500 w-32 text-right focus:ring-0 focus:outline-none font-mono tabular-nums"
                     />
                   </div>
                   <button
@@ -1102,26 +1102,26 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   <div className="px-4 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="border-t border-sidebar-border/30 pt-4 space-y-3">
                       <div>
-                        <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
+                        <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground block mb-2">
                           Título do Anúncio
                         </label>
                         <input
                           value={comp.title}
                           onChange={(e) => updateCompetitor(idx, "title", e.target.value)}
-                          className="w-full bg-internal-20 border border-sidebar-border rounded p-2 text-sm font-bold focus:border-primary focus:outline-none"
+                          className="w-full bg-internal-20 border border-sidebar-border rounded p-2 text-sm font-medium focus:border-primary focus:outline-none"
                           placeholder="Título do anúncio concorrente..."
                         />
                       </div>
                       <div>
-                        <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
+                        <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground block mb-2">
                           Descrição do Concorrente
                         </label>
                         <div className="relative group">
                           {/* Camada de Visualização (Highlights por ranges) */}
                           <div 
                             data-highlight-layer
-                            className="absolute inset-0 p-3 text-xs pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent border border-transparent rounded"
-                            style={{ ...textareaStyle, height: '100%', fontFamily: 'inherit', lineHeight: '1.5', letterSpacing: 'normal' }}
+                            className="absolute inset-0 p-3 text-sm leading-[1.7] pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent border border-transparent rounded"
+                            style={{ ...textareaStyle, height: '100%', fontFamily: 'inherit', letterSpacing: 'normal' }}
                           >
                             {(() => {
                               const text = comp.description || "";
@@ -1164,8 +1164,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                             }}
                             onMouseUp={(e) => handleTextSelection(e, idx)}
                             ref={(el) => { descriptionRefs.current[idx] = el; }}
-                            style={{ ...textareaStyle, background: 'transparent', lineHeight: '1.5', letterSpacing: 'normal' }}
-                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-xs focus:border-primary focus:outline-none selection:bg-magenta/30 selection:text-current break-all touch-none"
+                            style={{ ...textareaStyle, background: 'transparent', letterSpacing: 'normal' }}
+                            className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-sm leading-[1.7] focus:border-primary focus:outline-none selection:bg-magenta/30 selection:text-current break-all touch-none"
                             placeholder="Cole aqui a descrição do anúncio concorrente..."
                           />
                         </div>
@@ -1324,7 +1324,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       {/* ============================================================ */}
 
       <section className="jtd-glass p-6 space-y-6">
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
           <FileText size={20} className="text-primary" />
           Textos do Produto
         </h3>
@@ -1340,7 +1340,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   autoResize(e.target);
                 }}
                 style={textareaStyle}
-                className={`${inputCls} !min-h-0 py-1`}
+                className={`${inputCls} !min-h-0 py-1 leading-[1.7]`}
                 placeholder="Digite a descrição interna completa do produto..."
               />
               <CopyBtn value={formData.description} />
@@ -1357,7 +1357,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   autoResize(e.target);
                 }}
                 style={textareaStyle}
-                className={`${inputCls} !min-h-0 py-1`}
+                className={`${inputCls} !min-h-0 py-1 leading-[1.7]`}
                 placeholder="Liste as principais dúvidas dos compradores"
               />
               <CopyBtn value={formData.common_questions} />
@@ -1374,7 +1374,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   autoResize(e.target);
                 }}
                 style={textareaStyle}
-                className={`${inputCls} !min-h-0 py-1`}
+                className={`${inputCls} !min-h-0 py-1 leading-[1.7]`}
                 placeholder="Anotações de uso exclusivo da equipe..."
               />
               <CopyBtn value={formData.notes} />
@@ -1388,13 +1388,13 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-5">
 
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
           <BarChart3 size={20} className="text-primary" />
           Análise Geral do Produto
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary/70">Keywords</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary">Keywords</p>
             <p className="text-2xl font-black text-primary font-mono mt-1">{formData.keywords.length}</p>
             <p className="text-[10px] text-muted-foreground uppercase">cadastradas</p>
           </div>

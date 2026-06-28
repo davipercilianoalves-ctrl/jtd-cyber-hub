@@ -318,7 +318,7 @@ export default function AnuncioForm() {
 
       {/* BLOCO 1 — Produto Vinculado */}
       <section className="jtd-glass p-6 space-y-4">
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
           <Tag size={20} className="text-primary" />
           Produto Vinculado
         </h3>
@@ -357,7 +357,7 @@ export default function AnuncioForm() {
       {/* BLOCO 2 — Palavras-Chave */}
       <section className="jtd-glass p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg text-foreground">Palavras-Chave</h3>
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground">Palavras-Chave</h3>
           <div className="flex gap-4">
             <button 
               type="button" 
@@ -435,14 +435,14 @@ export default function AnuncioForm() {
 
       {/* BLOCO 3 — Títulos */}
       <section className="jtd-glass p-6 space-y-6">
-        <h3 className="font-bold text-lg text-foreground">Títulos do Anúncio</h3>
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground">Títulos do Anúncio</h3>
         
         <div className="space-y-4">
           {formData.titles.map((title, idx) => (
             <div key={idx} className="space-y-2">
-              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                <span>Título #{idx + 1}</span>
-                <span className={title.length > 150 ? "text-red-500" : ""}>{title.length}/150</span>
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Título #{idx + 1}</span>
+                <span className={`text-[11px] font-mono tabular-nums ${title.length > 150 ? "text-red-500" : "text-muted-foreground"}`}>{title.length}/150</span>
               </div>
               <div className="flex gap-3">
                 <textarea 
@@ -452,7 +452,7 @@ export default function AnuncioForm() {
                     autoResize(e.target);
                   }}
                   style={textareaStyle}
-                  className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+                  className="flex-1 rounded border border-sidebar-border bg-internal-20 p-3 text-sm leading-[1.7] focus:border-primary focus:outline-none"
                   placeholder="Digite o título do anúncio..."
                 />
                 <button 
@@ -480,7 +480,7 @@ export default function AnuncioForm() {
       {/* BLOCO 4 — Descrições */}
       <section className="jtd-glass p-6 space-y-6">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Breve Descrição</label>
+          <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Breve Descrição</label>
           <textarea 
             value={formData.brief_description || ""}
             onChange={e => {
@@ -488,14 +488,14 @@ export default function AnuncioForm() {
               autoResize(e.target);
             }}
             style={textareaStyle}
-            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm leading-[1.7] focus:border-primary focus:outline-none"
             placeholder="Crie uma breve descrição com as palavras-chave..."
           />
           <KeywordRefStrip keywords={formData.keywords} text={formData.brief_description || ""} />
         </div>
 
         <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
-          <label className="text-xs font-medium text-muted-foreground">Descrição Completa</label>
+          <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Descrição Completa</label>
           <textarea 
             value={formData.full_description || ""}
             onChange={e => {
@@ -503,7 +503,7 @@ export default function AnuncioForm() {
               autoResize(e.target);
             }}
             style={textareaStyle}
-            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm leading-[1.7] focus:border-primary focus:outline-none"
             placeholder="Cole aqui a descrição completa gerada pela IA externa..."
           />
           <KeywordRefStrip keywords={formData.keywords} text={formData.full_description || ""} />
