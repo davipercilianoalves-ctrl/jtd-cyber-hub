@@ -48,8 +48,8 @@ export function PriceSyncCard({ rows }: Props) {
       <CardHeader>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <CardTitle className="text-base">Preço App × Mercado Livre</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
+            <CardTitle className="text-[18px] font-bold tracking-tight">Preço App × Mercado Livre</CardTitle>
+            <p className="text-[13px] text-muted-foreground mt-1">
               Conferência em tempo real com o que está publicado no ML
             </p>
           </div>
@@ -104,23 +104,23 @@ export function PriceSyncCard({ rows }: Props) {
         ) : (
           <div className="max-h-[420px] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-card text-xs uppercase tracking-wider text-muted-foreground">
+              <thead className="sticky top-0 bg-card text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 <tr>
-                  <th className="text-left font-medium px-4 py-2">Anúncio</th>
-                  <th className="text-right font-medium px-3 py-2">App</th>
-                  <th className="text-right font-medium px-3 py-2">ML</th>
-                  <th className="text-right font-medium px-3 py-2">Diff</th>
+                  <th className="text-left font-bold px-4 py-2">Anúncio</th>
+                  <th className="text-right font-bold px-3 py-2">App</th>
+                  <th className="text-right font-bold px-3 py-2">ML</th>
+                  <th className="text-right font-bold px-3 py-2">Diff</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((r) => (
                   <tr key={r.adId} className="border-t border-border/60 hover:bg-muted/20">
                     <td className="px-4 py-2 max-w-[220px]">
-                      <div className="truncate" title={r.title}>{r.title}</div>
+                      <div className="text-sm font-medium text-foreground truncate" title={r.title}>{r.title}</div>
                       <div className="text-[11px] text-muted-foreground">{r.mlItemId}</div>
                     </td>
-                    <td className="text-right tabular-nums px-3 py-2 text-muted-foreground">{BRL(r.appPrice)}</td>
-                    <td className="text-right tabular-nums px-3 py-2">
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-2 text-muted-foreground">{BRL(r.appPrice)}</td>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-2">
                       {r.mlPrice !== null ? BRL(r.mlPrice) : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="text-right px-3 py-2">
@@ -153,7 +153,7 @@ function StatusBadge({ row }: { row: PriceSyncRow }) {
         : "border-destructive/40 text-destructive bg-destructive/10";
   const sign = row.diff >= 0 ? "+" : "";
   return (
-    <Badge variant="outline" className={cn("gap-1 tabular-nums", cls)}>
+    <Badge variant="outline" className={cn("gap-1 tabular-nums text-xs font-bold", cls)}>
       {sign}
       {row.diffPct.toFixed(1)}%
     </Badge>

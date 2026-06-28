@@ -438,10 +438,10 @@ function SummaryCard({
 }) {
   return (
     <div className="bg-card border border-border rounded-xl p-6">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
       <div
         className={cn(
-          "text-3xl font-bold mt-2 tabular-nums",
+          "text-[28px] font-extrabold mt-2 tabular-nums tracking-tight",
           tone === "destructive" && "text-red-500",
           tone === "lime" && "text-lime-500",
           !tone && "text-foreground"
@@ -449,7 +449,7 @@ function SummaryCard({
       >
         {value}
       </div>
-      {subtitle && <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>}
+      {subtitle && <div className="text-[13px] text-muted-foreground mt-1">{subtitle}</div>}
     </div>
   );
 }

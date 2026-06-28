@@ -40,8 +40,8 @@ export function YearlySalesChart({ data }: Props) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between flex-wrap gap-3">
         <div>
-          <CardTitle className="text-base">Vendas no Ano</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
+          <CardTitle className="text-[18px] font-bold tracking-tight">Vendas no Ano</CardTitle>
+          <p className="text-[13px] text-muted-foreground mt-1">
             Últimos 12 meses vs ano anterior · Total {fmt(total)} · Pico em {peak.month}
           </p>
         </div>

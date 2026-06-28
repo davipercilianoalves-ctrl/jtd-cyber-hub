@@ -17,8 +17,8 @@ export function TopProductsSeasonality({ rows }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Top Produtos & Sazonalidade</CardTitle>
-        <p className="text-xs text-muted-foreground mt-1">
+        <CardTitle className="text-[18px] font-bold tracking-tight">Top Produtos & Sazonalidade</CardTitle>
+        <p className="text-[13px] text-muted-foreground mt-1">
           Mais vendidos nos últimos 12 meses — heatmap mostra em quais meses cada um performa melhor
         </p>
       </CardHeader>
@@ -30,20 +30,20 @@ export function TopProductsSeasonality({ rows }: Props) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+              <thead className="bg-muted/30 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 <tr>
-                  <th className="text-left font-medium px-4 py-3 w-8">#</th>
-                  <th className="text-left font-medium px-2 py-3">Produto</th>
-                  <th className="text-right font-medium px-3 py-3">Unid.</th>
-                  <th className="text-right font-medium px-3 py-3">Receita</th>
-                  <th className="text-left font-medium px-3 py-3">
+                  <th className="text-left font-bold px-4 py-3 w-8">#</th>
+                  <th className="text-left font-bold px-2 py-3">Produto</th>
+                  <th className="text-right font-bold px-3 py-3">Unid.</th>
+                  <th className="text-right font-bold px-3 py-3">Receita</th>
+                  <th className="text-left font-bold px-3 py-3">
                     <div className="flex gap-[3px]">
                       {MONTHS.map((m, i) => (
                         <span key={i} className="w-5 text-center text-[10px]">{m}</span>
                       ))}
                     </div>
                   </th>
-                  <th className="text-right font-medium px-3 py-3">Pico</th>
+                  <th className="text-right font-bold px-3 py-3">Pico</th>
                 </tr>
               </thead>
               <tbody>
@@ -59,11 +59,11 @@ export function TopProductsSeasonality({ rows }: Props) {
                     >
                       <td className="px-4 py-3 text-muted-foreground tabular-nums">{idx + 1}</td>
                       <td className="px-2 py-3 max-w-[300px]">
-                        <div className="truncate font-medium" title={r.title}>{r.title}</div>
+                        <div className="truncate text-sm font-medium text-foreground" title={r.title}>{r.title}</div>
                         <div className="text-[11px] text-muted-foreground tabular-nums">{r.itemId}</div>
                       </td>
-                      <td className="text-right tabular-nums px-3 py-3 font-semibold">{r.units}</td>
-                      <td className="text-right tabular-nums px-3 py-3 text-muted-foreground">{BRL(r.revenue)}</td>
+                      <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3">{r.units}</td>
+                      <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3 text-muted-foreground">{BRL(r.revenue)}</td>
                       <td className="px-3 py-3">
                         <div className="flex gap-[3px]">
                           {r.monthly.map((v, i) => {
