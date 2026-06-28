@@ -1164,7 +1164,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                             }}
                             onMouseUp={(e) => handleTextSelection(e, idx)}
                             ref={(el) => { descriptionRefs.current[idx] = el; }}
-                            style={{ ...textareaStyle, background: 'transparent', lineHeight: '1.5', letterSpacing: 'normal' }}
+                            style={{ ...textareaStyle, background: 'transparent', letterSpacing: 'normal' }}
                             className="relative z-10 w-full bg-transparent border border-sidebar-border rounded p-3 text-sm leading-[1.7] focus:border-primary focus:outline-none selection:bg-magenta/30 selection:text-current break-all touch-none"
                             placeholder="Cole aqui a descrição do anúncio concorrente..."
                           />
