@@ -1340,7 +1340,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   autoResize(e.target);
                 }}
                 style={textareaStyle}
-                className={`${inputCls} !min-h-0 py-1`}
+                className={`${inputCls} !min-h-0 py-1 leading-[1.7]`}
                 placeholder="Digite a descrição interna completa do produto..."
               />
               <CopyBtn value={formData.description} />
@@ -1357,7 +1357,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   autoResize(e.target);
                 }}
                 style={textareaStyle}
-                className={`${inputCls} !min-h-0 py-1`}
+                className={`${inputCls} !min-h-0 py-1 leading-[1.7]`}
                 placeholder="Liste as principais dúvidas dos compradores"
               />
               <CopyBtn value={formData.common_questions} />
@@ -1374,7 +1374,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   autoResize(e.target);
                 }}
                 style={textareaStyle}
-                className={`${inputCls} !min-h-0 py-1`}
+                className={`${inputCls} !min-h-0 py-1 leading-[1.7]`}
                 placeholder="Anotações de uso exclusivo da equipe..."
               />
               <CopyBtn value={formData.notes} />
