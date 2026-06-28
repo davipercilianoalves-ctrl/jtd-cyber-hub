@@ -1146,9 +1146,9 @@ export default function KitForm({ kitId }: KitFormProps) {
                     {initial}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-foreground truncate">{it.name}</div>
-                    <div className="text-[10px] font-mono text-muted-foreground">
-                      SKU: {it.sku || "—"} · Unit: R$ {it.cost_price.toFixed(2)}
+                    <div className="text-sm font-medium text-foreground truncate">{it.name}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      SKU: {it.sku || "—"} · Unit: <span className="font-mono tabular-nums">R$ {it.cost_price.toFixed(2)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -1165,7 +1165,7 @@ export default function KitForm({ kitId }: KitFormProps) {
                     >
                       −
                     </button>
-                    <span className="w-8 text-center font-mono font-bold">{it.quantity}</span>
+                    <span className="w-8 text-center text-sm font-bold tabular-nums">{it.quantity}</span>
                     <button
                       type="button"
                       onClick={() =>
@@ -1178,7 +1178,7 @@ export default function KitForm({ kitId }: KitFormProps) {
                       +
                     </button>
                   </div>
-                  <div className="w-24 text-right font-mono font-bold text-primary shrink-0">
+                  <div className="w-24 text-right text-sm font-semibold tabular-nums font-mono text-primary shrink-0">
                     R$ {subtotal.toFixed(2)}
                   </div>
                   <button
