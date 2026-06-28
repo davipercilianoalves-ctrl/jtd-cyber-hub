@@ -155,7 +155,7 @@ export function DataView<T>({
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
               {visibleCols.map((c) => (
                 <div key={c.key} className="min-w-0">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                     {c.label}
                   </div>
                   <div className={`text-sm truncate ${c.className || ""}`}>{c.render(item)}</div>
