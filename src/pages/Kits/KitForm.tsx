@@ -1393,7 +1393,7 @@ export default function KitForm({ kitId }: KitFormProps) {
                   <span className="text-primary shrink-0">
                     {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </span>
-                  <span className="flex-1 min-w-0 text-base font-bold text-foreground truncate">
+                  <span className="flex-1 min-w-0 text-sm font-semibold text-foreground truncate">
                     {comp.title || <span className="text-muted-foreground/40">Concorrente sem título</span>}
                   </span>
                 </button>
@@ -1433,7 +1433,7 @@ export default function KitForm({ kitId }: KitFormProps) {
                     />
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[10px] font-bold text-muted-foreground">R$</span>
+                    <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">R$</span>
                     <input
                       type="number"
                       step="any"
@@ -1441,7 +1441,7 @@ export default function KitForm({ kitId }: KitFormProps) {
                       inputMode="decimal"
                       value={comp.price || ""}
                       onChange={(e) => updateCompetitor(idx, "price", e.target.value === "" ? 0 : Number(e.target.value))}
-                      className="bg-transparent border-none p-0 text-xl font-bold text-cyan-500 w-32 text-right focus:ring-0 focus:outline-none font-mono tabular-nums"
+                      className="bg-transparent border-none p-0 text-[20px] font-bold tracking-tight text-cyan-500 w-32 text-right focus:ring-0 focus:outline-none font-mono tabular-nums"
                     />
                   </div>
                   <button
@@ -1461,7 +1461,7 @@ export default function KitForm({ kitId }: KitFormProps) {
                   <div className="px-4 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="border-t border-sidebar-border/30 pt-4 space-y-3">
                       <div>
-                        <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
+                        <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground block mb-2">
                           Título do Anúncio
                         </label>
                         <input
@@ -1472,7 +1472,7 @@ export default function KitForm({ kitId }: KitFormProps) {
                         />
                       </div>
                       <div>
-                        <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
+                        <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground block mb-2">
                           Descrição do Concorrente
                         </label>
                         <div className="relative group">
