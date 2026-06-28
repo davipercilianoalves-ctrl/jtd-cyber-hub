@@ -488,23 +488,23 @@ export default function Vendas() {
                       onClick={() => setExpanded((s) => ({ ...s, [oid]: !s[oid] }))}
                       className="border-b border-border hover:bg-muted/[0.04] cursor-pointer transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm font-medium tabular-nums text-muted-foreground whitespace-nowrap">
                         {fmtDate(c.order.date_created)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className="truncate max-w-[200px] text-sm">{firstItem?.title || "-"}</span>
+                          <span className="truncate max-w-[200px] text-sm font-medium text-foreground">{firstItem?.title || "-"}</span>
                           {extra > 0 && (
-                            <span className="bg-muted/20 text-xs px-1.5 py-0.5 rounded font-mono">+{extra}</span>
+                            <span className="bg-muted/20 text-[11px] px-1.5 py-0.5 rounded font-mono text-muted-foreground">+{extra}</span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right text-cyan-400 font-mono font-bold whitespace-nowrap">
+                      <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums font-mono text-cyan-400 whitespace-nowrap">
                         {BRL(c.totals.revenue)}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         {c.hasAnyAd ? (
-                          <span className={`font-mono font-bold ${c.totals.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
+                          <span className={`text-sm font-semibold tabular-nums font-mono ${c.totals.profit >= 0 ? "text-lime-500" : "text-red-500"}`}>
                             {BRL(c.totals.profit)}
                           </span>
                         ) : (
