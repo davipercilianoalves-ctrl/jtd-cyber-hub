@@ -1120,8 +1120,8 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                           {/* Camada de Visualização (Highlights por ranges) */}
                           <div 
                             data-highlight-layer
-                            className="absolute inset-0 p-3 text-xs pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent border border-transparent rounded"
-                            style={{ ...textareaStyle, height: '100%', fontFamily: 'inherit', lineHeight: '1.5', letterSpacing: 'normal' }}
+                            className="absolute inset-0 p-3 text-sm leading-[1.7] pointer-events-none whitespace-pre-wrap break-all overflow-hidden text-transparent border border-transparent rounded"
+                            style={{ ...textareaStyle, height: '100%', fontFamily: 'inherit', letterSpacing: 'normal' }}
                           >
                             {(() => {
                               const text = comp.description || "";
