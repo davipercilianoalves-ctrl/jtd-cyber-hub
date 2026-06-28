@@ -62,7 +62,7 @@ function CopyBtn({ value }: { value: any }) {
 }
 
 const fieldLabelCls =
-  "text-[10px] font-bold uppercase tracking-wider text-muted-foreground";
+  "text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground";
 
 function Field({
   label,
@@ -643,7 +643,7 @@ export default function KitForm({ kitId }: KitFormProps) {
     "w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none transition-all break-all";
   const labelCls = fieldLabelCls;
   const sectionTitleCls =
-    "text-[10px] font-black uppercase tracking-wider text-primary/70";
+    "text-[11px] font-bold uppercase tracking-[0.08em] text-primary";
 
   const allSelected =
     formData.keywords.length > 0 && selectedKeywords.length === formData.keywords.length;
@@ -668,7 +668,7 @@ export default function KitForm({ kitId }: KitFormProps) {
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6 relative">
         <div className="flex justify-between items-start">
-          <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
             <Package size={20} className="text-primary" />
             Informações Básicas
           </h3>
@@ -1034,7 +1034,7 @@ export default function KitForm({ kitId }: KitFormProps) {
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-5">
         <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
             <Package size={20} className="text-primary" />
             Composição do Kit
             <span className="bg-primary/20 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/40">
@@ -1205,7 +1205,7 @@ export default function KitForm({ kitId }: KitFormProps) {
 
       <section className="jtd-glass p-6 space-y-5">
         <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
             <Tag size={20} className="text-primary" />
             Palavras-Chave do Kit
             <span className="bg-primary/20 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/40">
@@ -1368,7 +1368,7 @@ export default function KitForm({ kitId }: KitFormProps) {
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6">
         <div className="border-b border-sidebar-border/30 pb-6">
-          <h3 className="font-bold text-lg text-foreground">Análise de Concorrentes</h3>
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground">Análise de Concorrentes</h3>
           <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
             Analise preços e extraia keywords
           </p>
@@ -1575,7 +1575,7 @@ export default function KitForm({ kitId }: KitFormProps) {
       {/* BLOCO 5 — TÍTULOS DO KIT                                     */}
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-6">
-        <h3 className="font-bold text-lg text-foreground">Títulos do Kit</h3>
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground">Títulos do Kit</h3>
         <div className="space-y-4">
           {(formData.titles as string[]).map((title: string, idx: number) => (
             <div key={idx} className="space-y-2">
@@ -1783,7 +1783,7 @@ export default function KitForm({ kitId }: KitFormProps) {
       {/* ============================================================ */}
 
       <section className="jtd-glass p-6 space-y-6">
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
           <FileText size={20} className="text-primary" />
           Textos do Kit
         </h3>
@@ -1861,13 +1861,13 @@ export default function KitForm({ kitId }: KitFormProps) {
       {/* ============================================================ */}
       <section className="jtd-glass p-6 space-y-5">
 
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
           <BarChart3 size={20} className="text-primary" />
           Análise Geral do Kit
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-            <p className="text-[10px] font-black uppercase tracking-wider text-primary/70">Keywords</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary">Keywords</p>
             <p className="text-2xl font-black text-primary font-mono mt-1">{formData.keywords.length}</p>
             <p className="text-[10px] text-muted-foreground uppercase">cadastradas</p>
           </div>

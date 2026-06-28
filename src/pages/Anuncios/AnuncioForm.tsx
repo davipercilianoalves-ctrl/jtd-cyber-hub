@@ -318,7 +318,7 @@ export default function AnuncioForm() {
 
       {/* BLOCO 1 — Produto Vinculado */}
       <section className="jtd-glass p-6 space-y-4">
-        <h3 className="font-bold text-lg text-foreground flex items-center gap-3">
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground flex items-center gap-3">
           <Tag size={20} className="text-primary" />
           Produto Vinculado
         </h3>
@@ -357,7 +357,7 @@ export default function AnuncioForm() {
       {/* BLOCO 2 — Palavras-Chave */}
       <section className="jtd-glass p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg text-foreground">Palavras-Chave</h3>
+          <h3 className="text-[18px] font-bold tracking-tight text-foreground">Palavras-Chave</h3>
           <div className="flex gap-4">
             <button 
               type="button" 
@@ -435,7 +435,7 @@ export default function AnuncioForm() {
 
       {/* BLOCO 3 — Títulos */}
       <section className="jtd-glass p-6 space-y-6">
-        <h3 className="font-bold text-lg text-foreground">Títulos do Anúncio</h3>
+        <h3 className="text-[18px] font-bold tracking-tight text-foreground">Títulos do Anúncio</h3>
         
         <div className="space-y-4">
           {formData.titles.map((title, idx) => (
