@@ -1034,7 +1034,7 @@ export default function ProdutoForm({ productId }: ProdutoFormProps) {
                   <span className="text-primary shrink-0">
                     {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </span>
-                  <span className="flex-1 min-w-0 text-base font-bold text-foreground truncate">
+                  <span className="flex-1 min-w-0 text-sm font-semibold text-foreground truncate">
                     {comp.title || <span className="text-muted-foreground/40">Concorrente sem título</span>}
                   </span>
                 </button>
