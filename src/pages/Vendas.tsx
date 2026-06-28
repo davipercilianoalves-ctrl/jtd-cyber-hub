@@ -59,7 +59,7 @@ function StatusPill({ status }: { status: string }) {
   };
   const cfg = map[status] || { label: status, cls: "bg-muted/20 text-muted-foreground" };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider ${cfg.cls}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-[0.08em] ${cfg.cls}`}>
       {cfg.label}
     </span>
   );
