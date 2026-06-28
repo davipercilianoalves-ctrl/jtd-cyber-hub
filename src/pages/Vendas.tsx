@@ -340,11 +340,11 @@ export default function Vendas() {
       <div className="jtd-glass p-6">
         <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
+            <h1 className="text-[18px] font-bold tracking-tight flex items-center gap-3">
               <ShoppingCart className="w-8 h-8 text-cyan-400" />
               Vendas
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-[13px] text-muted-foreground mt-1">
               Controle financeiro das suas vendas
             </p>
           </div>
