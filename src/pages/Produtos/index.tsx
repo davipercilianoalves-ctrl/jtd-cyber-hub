@@ -43,10 +43,10 @@ export default function Produtos() {
   }, [products, search, status, sort]);
 
   const columns: DataColumn<any>[] = [
-    { key: "supplier", label: "Fornecedor", render: (p) => <span className="text-muted-foreground">{p.suppliers?.name || "—"}</span> },
-    { key: "cost", label: "Custo", align: "right", className: "font-mono font-bold text-primary", render: (p) => `R$ ${(p.cost_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
-    { key: "kw", label: "Keywords", render: (p) => <span className="inline-flex items-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">{p.keywords?.length || 0} kw</span> },
-    { key: "comp", label: "Concorrentes", align: "right", render: (p) => <span className="font-mono text-muted-foreground">{p.product_competitors?.length || 0}</span> },
+    { key: "supplier", label: "Fornecedor", render: (p) => <span className="text-sm text-muted-foreground">{p.suppliers?.name || "—"}</span> },
+    { key: "cost", label: "Custo", align: "right", className: "text-sm font-semibold tabular-nums font-mono text-primary", render: (p) => `R$ ${(p.cost_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
+    { key: "kw", label: "Keywords", render: (p) => <span className="inline-flex items-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">{p.keywords?.length || 0} kw</span> },
+    { key: "comp", label: "Concorrentes", align: "right", render: (p) => <span className="text-sm font-semibold tabular-nums font-mono text-muted-foreground">{p.product_competitors?.length || 0}</span> },
   ];
 
   return (
