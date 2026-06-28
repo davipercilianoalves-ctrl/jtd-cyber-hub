@@ -50,15 +50,15 @@ export default function Anuncios() {
   }, [ads, search, marketplace, sort]);
 
   const columns: DataColumn<any>[] = [
-    { key: "mp", label: "Marketplace", render: (a) => <span className="inline-flex items-center rounded border border-cyan-400/30 bg-cyan-400/10 px-1.5 py-0.5 text-[10px] font-bold text-cyan-400 uppercase">{a.marketplace || "—"}</span> },
+    { key: "mp", label: "Marketplace", render: (a) => <span className="inline-flex items-center rounded border border-cyan-400/30 bg-cyan-400/10 px-1.5 py-0.5 text-[11px] font-bold text-cyan-400 uppercase tracking-[0.08em]">{a.marketplace || "—"}</span> },
     { key: "title", label: "Título", render: (a) => (
       <span className="inline-flex items-center gap-1.5">
-        <span className="text-muted-foreground truncate max-w-[180px] inline-block align-bottom">{a.titles?.[0] || "—"}</span>
-        {a.titles?.length > 1 && <span className="bg-muted/15 text-[10px] px-1.5 py-0.5 rounded">+{a.titles.length - 1}</span>}
+        <span className="text-sm text-muted-foreground truncate max-w-[180px] inline-block align-bottom">{a.titles?.[0] || "—"}</span>
+        {a.titles?.length > 1 && <span className="bg-muted/15 text-[11px] px-1.5 py-0.5 rounded text-muted-foreground">+{a.titles.length - 1}</span>}
       </span>
     ), tableOnly: true },
-    { key: "price", label: "Preço", align: "right", className: "font-mono font-bold text-cyan-400", render: (a) => `R$ ${(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
-    { key: "margin", label: "Margem", align: "right", className: "font-bold text-lime-500", render: (a) => `${a.profit_margin || 0}%` },
+    { key: "price", label: "Preço", align: "right", className: "text-sm font-semibold tabular-nums font-mono text-cyan-400", render: (a) => `R$ ${(a.final_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
+    { key: "margin", label: "Margem", align: "right", className: "text-sm font-semibold tabular-nums text-lime-500", render: (a) => `${a.profit_margin || 0}%` },
   ];
 
   return (
