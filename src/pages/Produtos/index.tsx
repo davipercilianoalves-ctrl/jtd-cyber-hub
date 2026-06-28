@@ -94,27 +94,27 @@ export default function Produtos() {
         )}
         renderHeader={(p) => (
           <div className="min-w-0">
-            <div className="truncate font-semibold text-foreground">{p.name}</div>
-            <div className="truncate font-mono text-[10px] text-muted-foreground">{p.sku || "sem SKU"}</div>
+            <div className="truncate text-sm font-medium text-foreground">{p.name}</div>
+            <div className="truncate text-[11px] text-muted-foreground">{p.sku || "sem SKU"}</div>
           </div>
         )}
         renderHighlight={(p) => (
           <div className="flex items-baseline justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Custo</span>
-            <span className="font-mono text-xl font-bold text-primary">
+            <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Custo</span>
+            <span className="text-[20px] font-bold tabular-nums tracking-tight font-mono text-primary">
               R$ {(p.cost_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
           </div>
         )}
         renderStatus={(p) => (
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.is_active ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${p.is_active ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
             {p.is_active ? 'ATIVO' : 'INATIVO'}
           </span>
         )}
         renderActions={(p) => (
           <div className="flex gap-3 justify-end">
-            <button className="text-primary text-[11px] font-bold uppercase tracking-wider">Editar</button>
-            <button onClick={(e) => { e.stopPropagation(); toast.info("Em breve: anúncios vinculados"); }} className="text-muted-foreground hover:text-foreground text-[11px] font-bold uppercase tracking-wider">Anúncios</button>
+            <button className="text-primary text-[11px] font-bold uppercase tracking-[0.08em]">Editar</button>
+            <button onClick={(e) => { e.stopPropagation(); toast.info("Em breve: anúncios vinculados"); }} className="text-muted-foreground hover:text-foreground text-[11px] font-bold uppercase tracking-[0.08em]">Anúncios</button>
           </div>
         )}
       />
