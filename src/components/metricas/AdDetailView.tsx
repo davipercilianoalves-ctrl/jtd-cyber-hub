@@ -73,15 +73,15 @@ export function AdDetailView({ row, evolution, sales, onBack }: Props) {
         <CardHeader>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
-              <CardTitle className="text-base truncate" title={row.title}>{row.title}</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1 tabular-nums">
+              <CardTitle className="text-[18px] font-bold tracking-tight truncate" title={row.title}>{row.title}</CardTitle>
+              <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">
                 {row.mlItemId || "—"} {row.sku ? `· ${row.sku}` : ""}
               </p>
             </div>
             <Badge
               variant="outline"
               className={cn(
-                "tabular-nums",
+                "tabular-nums text-xs font-bold",
                 row.margin >= 20 && "border-primary/40 text-primary bg-primary/10",
                 row.margin < 20 && row.margin >= 5 && "border-amber-500/40 text-amber-500 bg-amber-500/10",
                 row.margin < 5 && "border-destructive/40 text-destructive bg-destructive/10"
@@ -105,7 +105,7 @@ export function AdDetailView({ row, evolution, sales, onBack }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Distribuição de custos deste anúncio</CardTitle>
+          <CardTitle className="text-[18px] font-bold tracking-tight">Distribuição de custos deste anúncio</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {items.map((it) => {
@@ -149,8 +149,8 @@ export function AdDetailView({ row, evolution, sales, onBack }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Evolução no período</CardTitle>
-          <p className="text-xs text-muted-foreground">Receita e lucro estimado dia a dia</p>
+          <CardTitle className="text-[18px] font-bold tracking-tight">Evolução no período</CardTitle>
+          <p className="text-[13px] text-muted-foreground">Receita e lucro estimado dia a dia</p>
         </CardHeader>
         <CardContent>
           {evolution.length === 0 ? (
@@ -182,8 +182,8 @@ export function AdDetailView({ row, evolution, sales, onBack }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Histórico de vendas</CardTitle>
-          <p className="text-xs text-muted-foreground">{sales.length} venda(s) no período</p>
+          <CardTitle className="text-[18px] font-bold tracking-tight">Histórico de vendas</CardTitle>
+          <p className="text-[13px] text-muted-foreground">{sales.length} venda(s) no período</p>
         </CardHeader>
         <CardContent className="p-0">
           {sales.length === 0 ? (
@@ -192,25 +192,25 @@ export function AdDetailView({ row, evolution, sales, onBack }: Props) {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+                  <thead className="bg-muted/30 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                     <tr>
-                      <th className="text-left font-medium px-4 py-3">Data</th>
-                      <th className="text-left font-medium px-3 py-3">Pedido</th>
-                      <th className="text-right font-medium px-3 py-3">Qtd</th>
-                      <th className="text-right font-medium px-3 py-3">Valor unit.</th>
-                      <th className="text-right font-medium px-3 py-3">Total</th>
+                      <th className="text-left font-bold px-4 py-3">Data</th>
+                      <th className="text-left font-bold px-3 py-3">Pedido</th>
+                      <th className="text-right font-bold px-3 py-3">Qtd</th>
+                      <th className="text-right font-bold px-3 py-3">Valor unit.</th>
+                      <th className="text-right font-bold px-3 py-3">Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pageSales.map((s) => (
                       <tr key={s.orderId} className="border-t border-border/60">
-                        <td className="px-4 py-2.5 tabular-nums">
+                        <td className="px-4 py-2.5 text-sm font-semibold tabular-nums font-mono">
                           {new Date(s.date).toLocaleDateString("pt-BR")}
                         </td>
-                        <td className="px-3 py-2.5 tabular-nums text-muted-foreground">{s.orderId}</td>
-                        <td className="text-right tabular-nums px-3 py-2.5">{s.quantity}</td>
-                        <td className="text-right tabular-nums font-mono px-3 py-2.5">{BRL(s.unitPrice)}</td>
-                        <td className="text-right tabular-nums font-mono px-3 py-2.5">{BRL(s.total)}</td>
+                        <td className="px-3 py-2.5 text-[11px] tabular-nums text-muted-foreground">{s.orderId}</td>
+                        <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-2.5">{s.quantity}</td>
+                        <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-2.5">{BRL(s.unitPrice)}</td>
+                        <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-2.5">{BRL(s.total)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -258,10 +258,10 @@ function Stat({
 }) {
   return (
     <div className="rounded-lg border border-border bg-card/50 p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
       <div
         className={cn(
-          "text-2xl font-bold mt-1 tabular-nums",
+          "text-[20px] font-bold mt-1 tabular-nums tracking-tight",
           tone === "primary" && "text-primary",
           tone === "destructive" && "text-destructive"
         )}

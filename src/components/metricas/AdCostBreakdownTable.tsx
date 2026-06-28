@@ -52,8 +52,8 @@ export function AdCostBreakdownTable({ rows, onSelect }: Props) {
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
         <div>
-          <CardTitle className="text-base">Custos por Anúncio</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
+          <CardTitle className="text-[18px] font-bold tracking-tight">Custos por Anúncio</CardTitle>
+          <p className="text-[13px] text-muted-foreground mt-1">
             Detalhamento de cada custo × unidades vendidas no período
           </p>
         </div>
@@ -75,17 +75,17 @@ export function AdCostBreakdownTable({ rows, onSelect }: Props) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+              <thead className="bg-muted/30 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 <tr>
-                  <th className="text-left font-medium px-4 py-3">Anúncio</th>
+                  <th className="text-left font-bold px-4 py-3">Anúncio</th>
                   <SortableTh label="Vend." active={sortKey === "unitsSold"} dir={sortDir} onClick={() => toggleSort("unitsSold")} />
                   <SortableTh label="Receita" active={sortKey === "revenue"} dir={sortDir} onClick={() => toggleSort("revenue")} />
-                  <th className="text-right font-medium px-3 py-3">Produto</th>
-                  <th className="text-right font-medium px-3 py-3">Taxa ML</th>
-                  <th className="text-right font-medium px-3 py-3">Frete</th>
-                  <th className="text-right font-medium px-3 py-3">Embal.</th>
-                  <th className="text-right font-medium px-3 py-3">Transp.</th>
-                  <th className="text-right font-medium px-3 py-3">Imp.</th>
+                  <th className="text-right font-bold px-3 py-3">Produto</th>
+                  <th className="text-right font-bold px-3 py-3">Taxa ML</th>
+                  <th className="text-right font-bold px-3 py-3">Frete</th>
+                  <th className="text-right font-bold px-3 py-3">Embal.</th>
+                  <th className="text-right font-bold px-3 py-3">Transp.</th>
+                  <th className="text-right font-bold px-3 py-3">Imp.</th>
                   <SortableTh label="Custo Total" active={sortKey === "totalCost"} dir={sortDir} onClick={() => toggleSort("totalCost")} />
                   <SortableTh label="Lucro" active={sortKey === "grossProfit"} dir={sortDir} onClick={() => toggleSort("grossProfit")} />
                   <SortableTh label="Margem" active={sortKey === "margin"} dir={sortDir} onClick={() => toggleSort("margin")} />
@@ -102,28 +102,28 @@ export function AdCostBreakdownTable({ rows, onSelect }: Props) {
                     className="border-t border-border/60 hover:bg-muted/20 transition-colors"
                   >
                     <td className="px-4 py-3 max-w-[260px]">
-                      <div className="font-medium truncate" title={r.title}>{r.title}</div>
+                      <div className="text-sm font-medium text-foreground truncate" title={r.title}>{r.title}</div>
                       <div className="text-[11px] text-muted-foreground tabular-nums">
                         {r.mlItemId || "—"} {r.sku ? `· ${r.sku}` : ""}
                       </div>
                     </td>
-                    <td className="text-right tabular-nums px-3 py-3">{r.unitsSold}</td>
-                    <td className="text-right tabular-nums px-3 py-3">{BRL(r.revenue)}</td>
-                    <td className="text-right tabular-nums px-3 py-3 text-muted-foreground">{BRL(r.totalProductCost)}</td>
-                    <td className="text-right tabular-nums px-3 py-3 text-muted-foreground">{BRL(r.totalFee)}</td>
-                    <td className="text-right tabular-nums px-3 py-3 text-muted-foreground">{BRL(r.totalShipping)}</td>
-                    <td className="text-right tabular-nums px-3 py-3 text-muted-foreground">{BRL(r.totalPackaging)}</td>
-                    <td className="text-right tabular-nums px-3 py-3 text-muted-foreground">{BRL(r.totalTransport)}</td>
-                    <td className="text-right tabular-nums px-3 py-3 text-muted-foreground">{BRL(r.totalTax)}</td>
-                    <td className="text-right tabular-nums px-3 py-3 font-medium">{BRL(r.totalCost)}</td>
-                    <td className={cn("text-right tabular-nums px-3 py-3 font-semibold", r.grossProfit >= 0 ? "text-primary" : "text-destructive")}>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3">{r.unitsSold}</td>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3">{BRL(r.revenue)}</td>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3 text-muted-foreground">{BRL(r.totalProductCost)}</td>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3 text-muted-foreground">{BRL(r.totalFee)}</td>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3 text-muted-foreground">{BRL(r.totalShipping)}</td>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3 text-muted-foreground">{BRL(r.totalPackaging)}</td>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3 text-muted-foreground">{BRL(r.totalTransport)}</td>
+                    <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3 text-muted-foreground">{BRL(r.totalTax)}</td>
+                    <td className="text-right text-sm font-bold tabular-nums font-mono px-3 py-3">{BRL(r.totalCost)}</td>
+                    <td className={cn("text-right text-sm font-bold tabular-nums font-mono px-3 py-3", r.grossProfit >= 0 ? "text-primary" : "text-destructive")}>
                       {BRL(r.grossProfit)}
                     </td>
                     <td className="text-right px-3 py-3">
                       <Badge
                         variant="outline"
                         className={cn(
-                          "tabular-nums",
+                          "tabular-nums text-xs font-bold",
                           r.margin >= 20 && "border-primary/40 text-primary bg-primary/10",
                           r.margin < 20 && r.margin >= 5 && "border-amber-500/40 text-amber-500 bg-amber-500/10",
                           r.margin < 5 && "border-destructive/40 text-destructive bg-destructive/10"
@@ -167,7 +167,7 @@ function SortableTh({
   onClick: () => void;
 }) {
   return (
-    <th className="text-right font-medium px-3 py-3">
+    <th className="text-right font-bold px-3 py-3">
       <button
         type="button"
         onClick={onClick}

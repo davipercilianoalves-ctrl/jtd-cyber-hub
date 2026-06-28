@@ -42,7 +42,7 @@ export function MultiSeriesChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle className="text-[18px] font-bold tracking-tight">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
@@ -123,8 +123,8 @@ function Stat({
     tone === "positive" ? "text-primary" : tone === "negative" ? "text-destructive" : "text-foreground";
   return (
     <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-lg font-bold tabular-nums ${color}`}>{value}</div>
+      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
+      <div className={`mt-1 text-[20px] font-bold tabular-nums tracking-tight ${color}`}>{value}</div>
     </div>
   );
 }

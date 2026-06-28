@@ -146,8 +146,8 @@ export function ForecastView({ daily, monthly, topProducts, marginPct }: Props) 
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Tendência de Faturamento</CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <CardTitle className="text-[18px] font-bold tracking-tight">Tendência de Faturamento</CardTitle>
+          <p className="text-[13px] text-muted-foreground">
             Últimos 90 dias (sólido) e projeção para os próximos 30 dias (tracejado)
           </p>
         </CardHeader>
@@ -188,8 +188,8 @@ export function ForecastView({ daily, monthly, topProducts, marginPct }: Props) 
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Sazonalidade</CardTitle>
-          <p className="text-xs text-muted-foreground">Faturamento por mês (12 meses)</p>
+          <CardTitle className="text-[18px] font-bold tracking-tight">Sazonalidade</CardTitle>
+          <p className="text-[13px] text-muted-foreground">Faturamento por mês (12 meses)</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-12 gap-1">
@@ -221,7 +221,7 @@ export function ForecastView({ daily, monthly, topProducts, marginPct }: Props) 
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Projeção por Produto (Top 5)</CardTitle>
+          <CardTitle className="text-[18px] font-bold tracking-tight">Projeção por Produto (Top 5)</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {top5.length === 0 ? (
@@ -229,12 +229,12 @@ export function ForecastView({ daily, monthly, topProducts, marginPct }: Props) 
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+                <thead className="bg-muted/30 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   <tr>
-                    <th className="text-left font-medium px-4 py-3">Produto</th>
-                    <th className="text-right font-medium px-3 py-3">Vendas 30d</th>
-                    <th className="text-right font-medium px-3 py-3">Projeção 30d</th>
-                    <th className="text-center font-medium px-3 py-3">Tendência</th>
+                    <th className="text-left font-bold px-4 py-3">Produto</th>
+                    <th className="text-right font-bold px-3 py-3">Vendas 30d</th>
+                    <th className="text-right font-bold px-3 py-3">Projeção 30d</th>
+                    <th className="text-center font-bold px-3 py-3">Tendência</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -283,17 +283,17 @@ function ProjCard({
   return (
     <Card>
       <CardContent className="p-5">
-        <div className="text-xs text-muted-foreground uppercase tracking-wider">{label}</div>
+        <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
         <div
           className={cn(
-            "text-3xl font-bold mt-2 tabular-nums",
+            "text-[28px] font-extrabold mt-2 tabular-nums tracking-tight",
             tone === "lime" && "text-lime-500",
             tone === "destructive" && "text-destructive"
           )}
         >
           {value}
         </div>
-        {subtitle && <div className="text-xs text-muted-foreground mt-2">{subtitle}</div>}
+        {subtitle && <div className="text-[13px] text-muted-foreground mt-2">{subtitle}</div>}
       </CardContent>
     </Card>
   );

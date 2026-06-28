@@ -110,8 +110,8 @@ export function InventoryView({ salesByProduct }: Props) {
       <Card>
         <CardHeader className="gap-3">
           <div>
-            <CardTitle className="text-base">Estoque Inteligente</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
+            <CardTitle className="text-[18px] font-bold tracking-tight">Estoque Inteligente</CardTitle>
+            <p className="text-[13px] text-muted-foreground mt-1">
               Vendas dos últimos 30 dias vs. estoque cadastrado
             </p>
           </div>
@@ -153,14 +153,14 @@ export function InventoryView({ salesByProduct }: Props) {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+                <thead className="bg-muted/30 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   <tr>
-                    <th className="text-left font-medium px-4 py-3">Produto</th>
-                    <th className="text-right font-medium px-3 py-3">Estoque</th>
-                    <th className="text-right font-medium px-3 py-3">Vendas/mês</th>
-                    <th className="text-right font-medium px-3 py-3">Dias restantes</th>
-                    <th className="text-left font-medium px-3 py-3">Status</th>
-                    <th className="text-left font-medium px-4 py-3">Ação sugerida</th>
+                    <th className="text-left font-bold px-4 py-3">Produto</th>
+                    <th className="text-right font-bold px-3 py-3">Estoque</th>
+                    <th className="text-right font-bold px-3 py-3">Vendas/mês</th>
+                    <th className="text-right font-bold px-3 py-3">Dias restantes</th>
+                    <th className="text-left font-bold px-3 py-3">Status</th>
+                    <th className="text-left font-bold px-4 py-3">Ação sugerida</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -176,20 +176,20 @@ export function InventoryView({ salesByProduct }: Props) {
                     return (
                       <tr key={p.id} className="border-t border-border/60">
                         <td className="px-4 py-3 max-w-[280px]">
-                          <div className="font-medium truncate">{p.name || "—"}</div>
+                          <div className="text-sm font-medium text-foreground truncate">{p.name || "—"}</div>
                           <div className="text-[11px] text-muted-foreground tabular-nums">{p.sku || "—"}</div>
                         </td>
-                        <td className="text-right tabular-nums px-3 py-3">
+                        <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3">
                           {p.status === "NONE" ? "—" : INT(p.stock)}
                         </td>
-                        <td className="text-right tabular-nums px-3 py-3">{INT(p.monthlyUnits)}</td>
-                        <td className="text-right tabular-nums px-3 py-3">
+                        <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3">{INT(p.monthlyUnits)}</td>
+                        <td className="text-right text-sm font-semibold tabular-nums font-mono px-3 py-3">
                           {p.daysLeft === null ? "—" : `${p.daysLeft}d`}
                         </td>
                         <td className="px-3 py-3">
                           <StatusBadge status={p.status} />
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{suggested}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{suggested}</td>
                       </tr>
                     );
                   })}
@@ -202,7 +202,7 @@ export function InventoryView({ salesByProduct }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Alertas de Reposição</CardTitle>
+          <CardTitle className="text-[18px] font-bold tracking-tight">Alertas de Reposição</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {alerts.length === 0 ? (
@@ -249,9 +249,9 @@ function SemaphoreCard({ tone, label, count }: { tone: "red" | "amber" | "lime";
       <CardContent className="p-5 flex items-center gap-4">
         <div className="text-3xl">{dot}</div>
         <div>
-          <div className="text-xs uppercase tracking-wider opacity-80">{label}</div>
-          <div className="text-3xl font-bold tabular-nums">{count}</div>
-          <div className="text-xs opacity-80">produto(s)</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-80">{label}</div>
+          <div className="text-[28px] font-extrabold tabular-nums tracking-tight">{count}</div>
+          <div className="text-[13px] opacity-80">produto(s)</div>
         </div>
         <Package className="ml-auto size-6 opacity-50" />
       </CardContent>

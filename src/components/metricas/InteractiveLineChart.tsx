@@ -78,13 +78,13 @@ export function InteractiveLineChart({ metrics, data, defaultKey }: InteractiveL
                 }
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                     {metric.label}
                   </span>
                   <Badge
                     variant="outline"
                     className={cn(
-                      "gap-1 text-[10px]",
+                      "gap-1 text-xs font-bold",
                       positive
                         ? "border-primary/40 text-primary bg-primary/10"
                         : "border-destructive/40 text-destructive bg-destructive/10"
@@ -94,7 +94,7 @@ export function InteractiveLineChart({ metrics, data, defaultKey }: InteractiveL
                     {Math.abs(change).toFixed(1)}%
                   </Badge>
                 </div>
-                <div className="text-2xl font-bold tabular-nums">
+                <div className="text-[28px] font-extrabold tabular-nums tracking-tight">
                   {metric.format(metric.value)}
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-1 tabular-nums">

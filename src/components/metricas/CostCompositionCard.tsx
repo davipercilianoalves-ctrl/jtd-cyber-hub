@@ -27,8 +27,8 @@ export function CostCompositionCard({ revenue, slices }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Composição de Custos</CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <CardTitle className="text-[18px] font-bold tracking-tight">Composição de Custos</CardTitle>
+        <p className="text-[13px] text-muted-foreground">
           Onde cada real do faturamento está sendo gasto
         </p>
       </CardHeader>
@@ -54,18 +54,18 @@ export function CostCompositionCard({ revenue, slices }: Props) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Custo</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Custo</span>
               <CountUp value={totalCost} format={BRL} className="text-sm font-bold tabular-nums" />
             </div>
           </div>
           <div className="space-y-2">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Faturamento</div>
-            <CountUp value={revenue} format={BRL} className="text-xl font-bold tabular-nums block" />
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-2">Lucro Bruto</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Faturamento</div>
+            <CountUp value={revenue} format={BRL} className="text-[20px] font-bold tabular-nums tracking-tight block" />
+            <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mt-2">Lucro Bruto</div>
             <CountUp
               value={profit}
               format={BRL}
-              className={`text-xl font-bold tabular-nums block ${profit >= 0 ? "text-primary" : "text-destructive"}`}
+              className={`text-[20px] font-bold tabular-nums tracking-tight block ${profit >= 0 ? "text-primary" : "text-destructive"}`}
             />
           </div>
         </div>

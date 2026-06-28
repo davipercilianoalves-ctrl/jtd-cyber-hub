@@ -70,7 +70,7 @@ export function ConversionFunnel({ stages, className }: ConversionFunnelProps) {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-between px-4">
-                  <span className="text-xs font-medium text-foreground/90 uppercase tracking-wider">
+                  <span className="text-[11px] font-bold text-foreground/90 uppercase tracking-[0.08em]">
                     {stage.label}
                   </span>
                   <div className="flex items-baseline gap-2">
@@ -78,7 +78,7 @@ export function ConversionFunnel({ stages, className }: ConversionFunnelProps) {
                       {stage.value.toLocaleString("pt-BR")}
                     </span>
                     {pct && (
-                      <span className="text-[10px] text-muted-foreground tabular-nums">
+                      <span className="text-[11px] text-muted-foreground tabular-nums">
                         {pct}%
                       </span>
                     )}

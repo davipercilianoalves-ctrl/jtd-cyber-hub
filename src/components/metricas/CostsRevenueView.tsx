@@ -145,21 +145,21 @@ export function CostsRevenueView({ rows, grossRevenue, ordersCount, monthly, onS
       {/* SEÇÃO 2 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Detalhamento de Custos</CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <CardTitle className="text-[18px] font-bold tracking-tight">Detalhamento de Custos</CardTitle>
+          <p className="text-[13px] text-muted-foreground">
             Calculado cruzando vendas do ML com precificação cadastrada
           </p>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+              <thead className="bg-muted/30 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 <tr>
-                  <th className="text-left font-medium px-4 py-3">Item de Custo</th>
-                  <th className="text-right font-medium px-3 py-3">Valor Total</th>
-                  <th className="text-right font-medium px-3 py-3">% do Fat.</th>
-                  <th className="text-right font-medium px-3 py-3">% do Custo</th>
-                  <th className="text-right font-medium px-3 py-3">Por Venda</th>
+                  <th className="text-left font-bold px-4 py-3">Item de Custo</th>
+                  <th className="text-right font-bold px-3 py-3">Valor Total</th>
+                  <th className="text-right font-bold px-3 py-3">% do Fat.</th>
+                  <th className="text-right font-bold px-3 py-3">% do Custo</th>
+                  <th className="text-right font-bold px-3 py-3">Por Venda</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,7 +212,7 @@ export function CostsRevenueView({ rows, grossRevenue, ordersCount, monthly, onS
       {/* SEÇÃO 3 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Distribuição dos Custos</CardTitle>
+          <CardTitle className="text-[18px] font-bold tracking-tight">Distribuição dos Custos</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {breakdownItems.map((it) => {
@@ -238,8 +238,8 @@ export function CostsRevenueView({ rows, grossRevenue, ordersCount, monthly, onS
       <Card>
         <CardHeader className="gap-3">
           <div>
-            <CardTitle className="text-base">Custos por Anúncio</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
+            <CardTitle className="text-[18px] font-bold tracking-tight">Custos por Anúncio</CardTitle>
+            <p className="text-[13px] text-muted-foreground mt-1">
               Quanto cada anúncio custou e gerou no período
             </p>
           </div>
@@ -289,17 +289,17 @@ export function CostsRevenueView({ rows, grossRevenue, ordersCount, monthly, onS
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+                <thead className="bg-muted/30 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   <tr>
-                    <th className="text-left font-medium px-4 py-3">Anúncio</th>
-                    <th className="text-right font-medium px-3 py-3">Vendas</th>
-                    <th className="text-right font-medium px-3 py-3">Faturamento</th>
-                    <th className="text-right font-medium px-3 py-3">Custo Total</th>
-                    <th className="text-right font-medium px-3 py-3">Taxa ML</th>
-                    <th className="text-right font-medium px-3 py-3">Frete</th>
-                    <th className="text-right font-medium px-3 py-3">Produto</th>
-                    <th className="text-right font-medium px-3 py-3">Lucro</th>
-                    <th className="text-right font-medium px-3 py-3">Margem</th>
+                    <th className="text-left font-bold px-4 py-3">Anúncio</th>
+                    <th className="text-right font-bold px-3 py-3">Vendas</th>
+                    <th className="text-right font-bold px-3 py-3">Faturamento</th>
+                    <th className="text-right font-bold px-3 py-3">Custo Total</th>
+                    <th className="text-right font-bold px-3 py-3">Taxa ML</th>
+                    <th className="text-right font-bold px-3 py-3">Frete</th>
+                    <th className="text-right font-bold px-3 py-3">Produto</th>
+                    <th className="text-right font-bold px-3 py-3">Lucro</th>
+                    <th className="text-right font-bold px-3 py-3">Margem</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -310,7 +310,7 @@ export function CostsRevenueView({ rows, grossRevenue, ordersCount, monthly, onS
                       className="border-t border-border/60 cursor-pointer hover:bg-muted/20 transition-colors"
                     >
                       <td className="px-4 py-3 max-w-[240px]">
-                        <div className="font-medium truncate" title={r.title}>{r.title}</div>
+                        <div className="text-sm font-medium text-foreground truncate" title={r.title}>{r.title}</div>
                         <div className="text-[11px] text-muted-foreground tabular-nums">
                           {r.sku || r.mlItemId || "—"}
                         </div>
@@ -377,8 +377,8 @@ export function CostsRevenueView({ rows, grossRevenue, ordersCount, monthly, onS
       {/* SEÇÃO 5 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Evolução Mensal</CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <CardTitle className="text-[18px] font-bold tracking-tight">Evolução Mensal</CardTitle>
+          <p className="text-[13px] text-muted-foreground">
             Acompanhe como seus custos e receita evoluem
           </p>
         </CardHeader>
@@ -438,10 +438,10 @@ function SummaryCard({
 }) {
   return (
     <div className="bg-card border border-border rounded-xl p-6">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
       <div
         className={cn(
-          "text-3xl font-bold mt-2 tabular-nums",
+          "text-[28px] font-extrabold mt-2 tabular-nums tracking-tight",
           tone === "destructive" && "text-red-500",
           tone === "lime" && "text-lime-500",
           !tone && "text-foreground"
@@ -449,7 +449,7 @@ function SummaryCard({
       >
         {value}
       </div>
-      {subtitle && <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>}
+      {subtitle && <div className="text-[13px] text-muted-foreground mt-1">{subtitle}</div>}
     </div>
   );
 }
