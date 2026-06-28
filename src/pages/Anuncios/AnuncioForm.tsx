@@ -480,7 +480,7 @@ export default function AnuncioForm() {
       {/* BLOCO 4 — Descrições */}
       <section className="jtd-glass p-6 space-y-6">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Breve Descrição</label>
+          <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Breve Descrição</label>
           <textarea 
             value={formData.brief_description || ""}
             onChange={e => {
@@ -488,14 +488,14 @@ export default function AnuncioForm() {
               autoResize(e.target);
             }}
             style={textareaStyle}
-            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm leading-[1.7] focus:border-primary focus:outline-none"
             placeholder="Crie uma breve descrição com as palavras-chave..."
           />
           <KeywordRefStrip keywords={formData.keywords} text={formData.brief_description || ""} />
         </div>
 
         <div className="space-y-1.5 pt-4 border-t border-sidebar-border/30">
-          <label className="text-xs font-medium text-muted-foreground">Descrição Completa</label>
+          <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Descrição Completa</label>
           <textarea 
             value={formData.full_description || ""}
             onChange={e => {
@@ -503,7 +503,7 @@ export default function AnuncioForm() {
               autoResize(e.target);
             }}
             style={textareaStyle}
-            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm focus:border-primary focus:outline-none"
+            className="w-full rounded border border-sidebar-border bg-internal-20 p-3 text-sm leading-[1.7] focus:border-primary focus:outline-none"
             placeholder="Cole aqui a descrição completa gerada pela IA externa..."
           />
           <KeywordRefStrip keywords={formData.keywords} text={formData.full_description || ""} />
