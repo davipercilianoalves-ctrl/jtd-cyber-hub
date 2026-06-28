@@ -44,14 +44,14 @@ export default function Kits() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Kits e Composições</h1>
-          <p className="text-sm text-muted-foreground">Gerencie seus kits de produtos</p>
+          <h1 className="text-[18px] font-bold tracking-tight text-foreground">Kits e Composições</h1>
+          <p className="text-[13px] text-muted-foreground">Gerencie seus kits de produtos</p>
         </div>
         <Link 
           to="/kits/novo" 
-          className="bg-primary px-4 py-2 text-sm font-bold text-black rounded hover:brightness-110 flex items-center gap-2"
+          className="bg-primary px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] text-black rounded hover:brightness-110 flex items-center gap-2"
         >
-          <Plus size={18}/> NOVO KIT
+          <Plus size={18}/> Novo Kit
         </Link>
       </div>
 
@@ -65,7 +65,7 @@ export default function Kits() {
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">Mostrando {filtered.length} de {kits.length} kits</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Mostrando {filtered.length} de {kits.length} kits</p>
 
       {loading ? (
         <div className="space-y-2">
