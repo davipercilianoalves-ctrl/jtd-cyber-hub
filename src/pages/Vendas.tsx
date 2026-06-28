@@ -427,8 +427,8 @@ export default function Vendas() {
           </div>
 
           <div className="jtd-glass p-6">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3">Custos do período</div>
-            <div className="space-y-2 text-sm">
+            <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-3">Custos do período</div>
+            <div className="space-y-2">
               {[
                 { icon: Receipt, label: "Taxa ML", value: summary.fee },
                 { icon: Truck, label: "Frete", value: summary.shipping },
@@ -437,11 +437,11 @@ export default function Vendas() {
                 { icon: Percent, label: "Imposto", value: summary.tax },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="flex items-center justify-between py-1 border-b border-border/40 last:border-0">
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Icon className="w-3.5 h-3.5" />
                     <span>{label}</span>
                   </div>
-                  <span className="font-mono">{BRL(value)}</span>
+                  <span className="text-sm font-semibold tabular-nums font-mono">{BRL(value)}</span>
                 </div>
               ))}
             </div>
