@@ -65,11 +65,31 @@ serve(async (req) => {
           const salePrice = order.order_items?.[0]?.unit_price || grossAmount;
           const fakeDiscount = originalPrice - salePrice;
 
-          const mlFee = payments.reduce(
-            (sum: number, p: any) => sum + (p.marketplace_fee || 0),
+          const mlFee = payments.reduce((sum: number, p: any) => {
+            const direct = Math.abs(Number(p.marketplace_fee) || 0);
+            const fromDetails = Array.isArray(p.fee_details)
+              ? p.fee_details.reduce(
+                  (s: number, f: any) => s + Math.abs(Number(f.amount) || 0),
+                  0
+                )
+              : 0;
+            return sum + (direct || fromDetails);
+          }, 0);
+
+          const orderFees = Array.isArray(order.order_fees) ? order.order_fees : [];
+          const orderFeeTotal = orderFees.reduce(
+            (s: number, f: any) => s + Math.abs(Number(f.value || f.amount) || 0),
             0
           );
-          const netAmount = grossAmount - Math.abs(mlFee);
+          const totalMlFee = mlFee || orderFeeTotal;
+          const shippingCost = Math.abs(Number(order.shipping?.cost) || 0);
+          const netAmount = grossAmount - totalMlFee - shippingCost;
+
+          if (orders.indexOf(order) === 0) {
+            console.log("Payment sample:", JSON.stringify(payments[0], null, 2));
+            console.log("Order fees:", JSON.stringify(order.order_fees, null, 2));
+            console.log("Computed mlFee:", totalMlFee, "shipping:", shippingCost);
+          }
 
           const mainPayment = payments[0] || {};
           const releaseDate = mainPayment.money_release_date || null;
