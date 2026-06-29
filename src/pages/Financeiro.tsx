@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Wallet, RefreshCcw, Loader2, AlertCircle, Inbox, Link2 } from "lucide-react";
+import { Wallet, RefreshCcw, Loader2, AlertCircle, Inbox, Link2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFinanceiro, type FinanceiroPeriod, type FinanceiroOrder } from "@/hooks/useFinanceiro";
