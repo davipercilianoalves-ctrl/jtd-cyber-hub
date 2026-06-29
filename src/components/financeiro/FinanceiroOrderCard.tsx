@@ -153,16 +153,32 @@ export function FinanceiroOrderCard({
                 {order.items.map((item, i) => {
                   const kitItem = order.kit_items?.[i];
                   return (
-                    <div key={i} className="text-sm">
+                    <div key={i} className="text-sm border-l-2 border-sidebar-border/40 pl-3">
                       <div className="font-medium">
                         {item.title} × {item.quantity}
                       </div>
                       <div className="text-[11px] text-muted-foreground font-mono">
-                        ID: {item.id}
+                        MLB: {item.id}
                       </div>
-                      {kitItem && (
-                        <div className="text-[11px] text-muted-foreground">
-                          Custo unitário: {fmtBRL(kitItem.cost)}
+                      {kitItem ? (
+                        <div className="text-[11px] space-y-0.5 mt-1">
+                          <div className="text-muted-foreground">
+                            Custo unit.:{" "}
+                            <span className="font-mono text-foreground">{fmtBRL(kitItem.cost)}</span>
+                          </div>
+                          <div className="text-muted-foreground">
+                            Total ({item.quantity}×):{" "}
+                            <span className="font-mono text-foreground font-semibold">
+                              {fmtBRL(kitItem.total ?? kitItem.cost * item.quantity)}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground/60">
+                            Fonte: {kitItem.source === "ad" ? "Anúncio vinculado" : "Produto vinculado"}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-amber-500 mt-1">
+                          ⚠️ Produto não vinculado — custo não disponível
                         </div>
                       )}
                     </div>
