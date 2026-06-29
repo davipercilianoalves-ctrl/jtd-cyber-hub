@@ -1292,25 +1292,44 @@ function PromoTab({
 
         <div className="grid md:grid-cols-5 gap-3">
           <PromoField label="Preço Real" value={fmtBRL(result.idealPrice)} readOnly tone="primary" help="Seu preço ideal calculado. É o que você efetivamente recebe — a vitrine só infla para criar percepção de desconto." />
-          <div>
-            <FieldLabel
-              helpTitle="Aumento Estratégico"
-              help="Quanto inflar o preço para criar o 'Preço Vitrine'. Exemplo: 25% gera um desconto exibido de ~20%. O preço final volta ao ideal."
-            >
-              Aumento Estratégico (%)
-            </FieldLabel>
-            <input
-              type="number"
-              step="0.1"
-              value={value.promo.strategicMarkupPct || ""}
-              onChange={(e) =>
-                patch({ promo: { strategicMarkupPct: parseFloat(e.target.value) || 0 } })
-              }
-              className={`${cellNumCls} mt-1`}
-            />
-          </div>
-          <PromoField label="Preço Vitrine" value={fmtBRL(result.showcasePrice)} readOnly help="Preço inflado mostrado riscado para o cliente. = Preço Real × (1 + Aumento Estratégico)." />
-          <PromoField label="Desconto Exibido" value={fmtPct(result.promoDiscountPct)} readOnly tone="good" help="Desconto percentual exibido na vitrine. Calculado para que (Vitrine − Desconto) volte exatamente ao Preço Real." />
+          <PromoNumberField
+            label="Aumento Estratégico (%)"
+            helpTitle="Aumento Estratégico"
+            help="Quanto inflar o preço para criar o 'Preço Vitrine'. Editar aqui recalcula Vitrine e Desconto."
+            value={value.promo.strategicMarkupPct || 0}
+            step={0.1}
+            onChange={(n) => patch({ promo: { strategicMarkupPct: Math.max(0, n) } })}
+          />
+          <PromoNumberField
+            label="Preço Vitrine"
+            helpTitle="Preço Vitrine"
+            help="Preço inflado mostrado riscado. Editar aqui recalcula Aumento e Desconto para manter o Preço Final = Real."
+            value={+result.showcasePrice.toFixed(2)}
+            step={0.01}
+            disabled={result.idealPrice <= 0}
+            onChange={(n) => {
+              if (result.idealPrice <= 0) return;
+              const pct = ((n - result.idealPrice) / result.idealPrice) * 100;
+              patch({ promo: { strategicMarkupPct: Math.max(0, +pct.toFixed(2)) } });
+            }}
+          />
+          <PromoNumberField
+            label="Desconto Exibido (%)"
+            helpTitle="Desconto Exibido"
+            help="Desconto percentual mostrado na vitrine. Editar aqui recalcula Vitrine e Aumento para que o Preço Final volte ao Real."
+            value={+result.promoDiscountPct.toFixed(2)}
+            step={0.1}
+            disabled={result.idealPrice <= 0}
+            tone="good"
+            onChange={(n) => {
+              const d = Math.min(Math.max(n, 0), 99);
+              const denom = 1 - d / 100;
+              if (denom <= 0) return;
+              const newShowcase = result.idealPrice / denom;
+              const pct = ((newShowcase - result.idealPrice) / result.idealPrice) * 100;
+              patch({ promo: { strategicMarkupPct: Math.max(0, +pct.toFixed(2)) } });
+            }}
+          />
           <PromoField label="Preço Final" value={fmtBRL(result.promoFinalPrice)} readOnly tone="primary" help="O que o cliente paga e o que você recebe. Igual ao Preço Real — a estratégia é só percepção." />
         </div>
       </div>
