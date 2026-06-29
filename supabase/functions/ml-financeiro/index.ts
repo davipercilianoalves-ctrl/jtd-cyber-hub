@@ -101,7 +101,8 @@ serve(async (req) => {
           const shippingCost = Math.abs(Number(order.shipping?.cost) || 0);
           const netAmount = grossAmount - totalMlFee - shippingCost;
 
-          if (orders.indexOf(order) === 0) {
+          const orderIndex = orders.indexOf(order);
+          if (orderIndex === 0) {
             console.log("Payment sample:", JSON.stringify(payments[0], null, 2));
             console.log("Order fees:", JSON.stringify(order.order_fees, null, 2));
             console.log("Computed mlFee:", totalMlFee, "shipping:", shippingCost);
@@ -126,9 +127,22 @@ serve(async (req) => {
           }
           const releaseStatus = mainPayment.money_release_status || computedReleaseStatus;
 
-          if (orders.indexOf(order) === 0) {
-            console.log("Release date:", releaseDate, "Status:", releaseStatus);
+          if (orderIndex < 3) {
+            console.log(`=== ORDER ${order.id} ===`);
+            console.log("order.status:", order.status);
+            console.log("order.date_created:", order.date_created);
+            console.log("order.payments raw:", JSON.stringify(order.payments, null, 2));
+            console.log("paymentDetails[0]:", JSON.stringify(paymentDetails[0], null, 2));
+            console.log("release_date encontrada:", releaseDate);
+            console.log("release_status encontrado:", releaseStatus);
+            console.log("computedReleaseStatus:", computedReleaseStatus);
+            if (orderIndex === 0) {
+              const allKeys = paymentDetails[0] ? Object.keys(paymentDetails[0]) : [];
+              console.log("Campos disponíveis no payment:", allKeys.join(", "));
+            }
           }
+
+
 
           return {
             order_id: order.id,
