@@ -244,96 +244,103 @@ export default function Financeiro() {
         </div>
       ) : null}
 
-      {/* Summary */}
-      {loading && !summary ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-[130px]" />
-            ))}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-[90px]" />
-            ))}
-          </div>
-        </div>
-      ) : summary ? (
-        <FinanceiroSummaryCards summary={summary} />
-      ) : null}
-
-      {/* Aviso de produtos não vinculados */}
-      {orders.length > 0 && (() => {
-        const unlinkedCount = orders.filter((o) => !o.product_cost || o.product_cost === 0).length;
-        if (!unlinkedCount) return null;
-        return (
-          <div className="jtd-glass p-3 border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm text-amber-400">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>
-                <strong>{unlinkedCount}</strong> venda(s) sem produto vinculado — custo e lucro não calculados.
-              </span>
+      {activeTab === "vendas" ? (
+        <>
+          {/* Summary */}
+          {loading && !summary ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-[130px]" />
+                ))}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-[90px]" />
+                ))}
+              </div>
             </div>
-            <Link to="/configuracoes">
-              <Button size="sm" variant="outline" className="text-amber-400 border-amber-500/30">
-                Vincular produtos
-              </Button>
-            </Link>
-          </div>
-        );
-      })()}
+          ) : summary ? (
+            <FinanceiroSummaryCards summary={summary} />
+          ) : null}
 
-      {/* Filters */}
-      <FinanceiroFilters
-        search={search}
-        onSearchChange={setSearch}
-        status={status}
-        onStatusChange={setStatus}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
+          {/* Aviso de produtos não vinculados */}
+          {orders.length > 0 && (() => {
+            const unlinkedCount = orders.filter((o) => !o.product_cost || o.product_cost === 0).length;
+            if (!unlinkedCount) return null;
+            return (
+              <div className="jtd-glass p-3 border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm text-amber-400">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>
+                    <strong>{unlinkedCount}</strong> venda(s) sem produto vinculado — custo e lucro não calculados.
+                  </span>
+                </div>
+                <Link to="/configuracoes">
+                  <Button size="sm" variant="outline" className="text-amber-400 border-amber-500/30">
+                    Vincular produtos
+                  </Button>
+                </Link>
+              </div>
+            );
+          })()}
 
-      {/* Order list */}
-      <div className="space-y-2">
-        {loading && orders.length === 0 ? (
-          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-16" />)
-        ) : filtered.length === 0 ? (
-          <div className="jtd-glass p-10 text-center space-y-2">
-            <Inbox className="h-10 w-10 text-muted-foreground mx-auto" />
-            <p className="text-sm text-muted-foreground">
-              Nenhuma venda encontrada {search || status !== "all" ? "com esses filtros" : "no período"}.
-            </p>
-            {(search || status !== "all") && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setSearch("");
-                  setStatus("all");
-                }}
-              >
-                Limpar filtros
-              </Button>
+          {/* Filters */}
+          <FinanceiroFilters
+            search={search}
+            onSearchChange={setSearch}
+            status={status}
+            onStatusChange={setStatus}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+          />
+
+          {/* Order list */}
+          <div className="space-y-2">
+            {loading && orders.length === 0 ? (
+              [...Array(5)].map((_, i) => <Skeleton key={i} className="h-16" />)
+            ) : filtered.length === 0 ? (
+              <div className="jtd-glass p-10 text-center space-y-2">
+                <Inbox className="h-10 w-10 text-muted-foreground mx-auto" />
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma venda encontrada {search || status !== "all" ? "com esses filtros" : "no período"}.
+                </p>
+                {(search || status !== "all") && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSearch("");
+                      setStatus("all");
+                    }}
+                  >
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
+            ) : (
+              filtered.map((o) => (
+                <FinanceiroOrderCard key={o.order_id} order={o} onSaveOverride={saveOverride} />
+              ))
+            )}
+
+            {hasMore && !loading && (
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" size="sm" onClick={loadMore}>
+                  Carregar mais
+                </Button>
+              </div>
             )}
           </div>
-        ) : (
-          filtered.map((o) => (
-            <FinanceiroOrderCard
-              key={o.order_id}
-              order={o}
-              onSaveOverride={saveOverride}
-            />
-          ))
-        )}
-
-        {hasMore && !loading && (
-          <div className="flex justify-center pt-2">
-            <Button variant="outline" size="sm" onClick={loadMore}>
-              Carregar mais
-            </Button>
-          </div>
-        )}
-      </div>
+        </>
+      ) : (
+        <ExtratoML
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          fetchMovements={fetchMovements}
+          refreshKey={refreshKey}
+        />
+      )}
     </div>
   );
 }
