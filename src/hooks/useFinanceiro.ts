@@ -48,7 +48,8 @@ export interface FinanceiroOrder {
     release_status: string;
   };
   product_cost?: number;
-  kit_items?: Array<{ name: string; cost: number; quantity: number }>;
+  kit_items?: Array<{ name: string; sku?: string; cost: number; quantity: number; total?: number; source?: string }>;
+  shipping_cost?: number;
   packaging_cost?: number;
   transport_cost?: number;
   tax_cost?: number;
