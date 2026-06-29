@@ -1388,6 +1388,64 @@ function PromoField({
 }
 
 
+function PromoNumberField({
+  label,
+  helpTitle,
+  help,
+  value,
+  step = 0.1,
+  onChange,
+  disabled,
+  tone,
+}: {
+  label: string;
+  helpTitle?: string;
+  help?: string;
+  value: number;
+  step?: number;
+  onChange: (n: number) => void;
+  disabled?: boolean;
+  tone?: "primary" | "good" | "default";
+}) {
+  const [draft, setDraft] = React.useState<string>(String(value ?? ""));
+  const [focused, setFocused] = React.useState(false);
+  React.useEffect(() => {
+    if (!focused) setDraft(value === 0 ? "" : String(value));
+  }, [value, focused]);
+
+  const borderTone =
+    tone === "primary"
+      ? "border-primary/50 text-primary"
+      : tone === "good"
+      ? "border-lime-500/40 text-lime-400"
+      : "border-sidebar-border text-foreground";
+
+  return (
+    <div>
+      <FieldLabel help={help} helpTitle={helpTitle || label}>{label}</FieldLabel>
+      <input
+        type="number"
+        step={step}
+        disabled={disabled}
+        value={focused ? draft : (value === 0 ? "" : String(+value.toFixed(2)))}
+        onFocus={() => {
+          setFocused(true);
+          setDraft(value === 0 ? "" : String(value));
+        }}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const n = parseFloat(e.target.value);
+          if (!isNaN(n)) onChange(n);
+        }}
+        onBlur={() => setFocused(false)}
+        className={`mt-1 h-9 w-full px-2 rounded border bg-internal-20 text-right font-mono text-sm outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-60 ${borderTone}`}
+      />
+    </div>
+  );
+}
+
+
+
 // =============================================================
 // CENÁRIOS
 // =============================================================
