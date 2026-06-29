@@ -1407,9 +1407,9 @@ function PromoNumberField({
   disabled?: boolean;
   tone?: "primary" | "good" | "default";
 }) {
-  const [draft, setDraft] = React.useState<string>(String(value ?? ""));
-  const [focused, setFocused] = React.useState(false);
-  React.useEffect(() => {
+  const [draft, setDraft] = useState<string>(String(value ?? ""));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
     if (!focused) setDraft(value === 0 ? "" : String(value));
   }, [value, focused]);
 
