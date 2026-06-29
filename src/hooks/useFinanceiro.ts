@@ -210,7 +210,7 @@ function calculateSummary(orders: FinanceiroOrder[]): FinanceiroSummary {
       pending_count++;
       if (o.release_date) {
         const rd = new Date(o.release_date);
-        if (rd <= next7days) total_upcoming += o.net_amount;
+        if (rd >= now && rd <= next7days) total_upcoming += o.net_amount;
       }
     }
   });
