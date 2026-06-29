@@ -131,7 +131,8 @@ serve(async (req) => {
             fake_discount: fakeDiscount,
             fake_discount_pct:
               originalPrice > 0 ? ((fakeDiscount / originalPrice) * 100).toFixed(1) : "0",
-            ml_fee: Math.abs(mlFee),
+            ml_fee: totalMlFee,
+            shipping_cost: shippingCost,
             net_amount: netAmount,
             order_status: order.status,
             payment_status: mainPayment.status || "unknown",
