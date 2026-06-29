@@ -335,6 +335,8 @@ export default function Financeiro() {
             )}
           </div>
         </>
+      ) : activeTab === "liberacoes" ? (
+        <LiberacoesView orders={enriched} />
       ) : (
         <ExtratoML
           dateFrom={dateFrom}
