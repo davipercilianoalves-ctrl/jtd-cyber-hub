@@ -10,9 +10,12 @@ import {
   type SortBy,
 } from "@/components/financeiro/FinanceiroFilters";
 import { FinanceiroOrderCard } from "@/components/financeiro/FinanceiroOrderCard";
+import { SaldoMLCard } from "@/components/financeiro/SaldoMLCard";
+import { ExtratoML } from "@/components/financeiro/ExtratoML";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
+import { subDays, startOfDay, endOfDay, formatISO } from "date-fns";
 
 const PERIODS: { value: FinanceiroPeriod; label: string }[] = [
   { value: "7d", label: "7 dias" },
