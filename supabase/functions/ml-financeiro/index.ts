@@ -52,7 +52,23 @@ serve(async (req) => {
 
       const enriched = await Promise.all(
         orders.map(async (order: any) => {
-          const payments = order.payments || [];
+          const basePayments = order.payments || [];
+
+          // Buscar detalhes completos de cada payment
+          const paymentDetails = await Promise.all(
+            basePayments.map(async (p: any) => {
+              if (!p.id) return p;
+              try {
+                const payRes = await fetch(`${BASE}/collections/notifications/${p.id}`, { headers });
+                if (payRes.ok) {
+                  const payData = await payRes.json();
+                  return { ...p, ...(payData.collection || payData) };
+                }
+              } catch { /* ignore */ }
+              return p;
+            })
+          );
+          const payments = paymentDetails;
 
           let shipment: any = null;
           if (order.shipping?.id) {
@@ -92,13 +108,31 @@ serve(async (req) => {
           }
 
           const mainPayment = payments[0] || {};
-          const releaseDate = mainPayment.money_release_date || null;
-          const releaseStatus =
-            mainPayment.money_release_status ||
-            (mainPayment.status === "approved" ? "pending" : mainPayment.status);
+          const releaseDate =
+            mainPayment.money_release_date ||
+            mainPayment.release_date ||
+            mainPayment.date_approved ||
+            null;
+
+          const nowDate = new Date();
+          let computedReleaseStatus: string;
+          if (releaseDate) {
+            const rd = new Date(releaseDate);
+            computedReleaseStatus = rd <= nowDate ? "released" : "pending";
+          } else if (mainPayment.status === "approved" || mainPayment.status === "in_process") {
+            computedReleaseStatus = "pending";
+          } else {
+            computedReleaseStatus = mainPayment.status || "pending";
+          }
+          const releaseStatus = mainPayment.money_release_status || computedReleaseStatus;
+
+          if (orders.indexOf(order) === 0) {
+            console.log("Release date:", releaseDate, "Status:", releaseStatus);
+          }
 
           return {
             order_id: order.id,
+            order_number: `#${order.id}`,
             payment_id: mainPayment.id || null,
             items: (order.order_items || []).map((item: any) => ({
               id: item.item?.id,

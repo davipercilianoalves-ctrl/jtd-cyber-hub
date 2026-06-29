@@ -12,6 +12,7 @@ import {
 import { FinanceiroOrderCard } from "@/components/financeiro/FinanceiroOrderCard";
 import { SaldoMLCard } from "@/components/financeiro/SaldoMLCard";
 import { ExtratoML } from "@/components/financeiro/ExtratoML";
+import { LiberacoesView } from "@/components/financeiro/LiberacoesView";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
@@ -31,7 +32,7 @@ export default function Financeiro() {
   const [status, setStatus] = useState<FilterStatus>("all");
   const [sortBy, setSortBy] = useState<SortBy>("date_desc");
   const [overrides, setOverrides] = useState<Record<number, Partial<FinanceiroOrder>>>({});
-  const [activeTab, setActiveTab] = useState<"vendas" | "extrato">("vendas");
+  const [activeTab, setActiveTab] = useState<"vendas" | "liberacoes" | "extrato">("vendas");
   const [refreshKey, setRefreshKey] = useState(0);
 
   const { orders, summary, loading, error, fetchOrders, hasMore, loadMore, fetchBalance, fetchMovements } =
@@ -204,6 +205,7 @@ export default function Financeiro() {
       <div className="flex items-center gap-1 border-b border-white/5">
         {([
           { value: "vendas", label: "Vendas" },
+          { value: "liberacoes", label: "Liberações" },
           { value: "extrato", label: "Extrato ML" },
         ] as const).map((t) => (
           <button
