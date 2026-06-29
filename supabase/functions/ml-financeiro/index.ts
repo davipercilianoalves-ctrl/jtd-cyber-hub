@@ -142,7 +142,7 @@ serve(async (req) => {
             }
           }
 
-          }
+
 
           return {
             order_id: order.id,
