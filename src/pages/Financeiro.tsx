@@ -181,13 +181,43 @@ export default function Financeiro() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchOrders(period)}
+            onClick={() => {
+              fetchOrders(period);
+              setRefreshKey((k) => k + 1);
+            }}
             disabled={loading}
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
             <span className="ml-2">Atualizar</span>
           </Button>
         </div>
+      </div>
+
+      {/* Saldo ML */}
+      {!noMlConnection && (
+        <div className="flex justify-end">
+          <SaldoMLCard fetchBalance={fetchBalance} refreshKey={refreshKey} />
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-white/5">
+        {([
+          { value: "vendas", label: "Vendas" },
+          { value: "extrato", label: "Extrato ML" },
+        ] as const).map((t) => (
+          <button
+            key={t.value}
+            onClick={() => setActiveTab(t.value)}
+            className={`px-4 py-2 text-[11px] font-bold uppercase tracking-[0.08em] border-b-2 transition-colors ${
+              activeTab === t.value
+                ? "border-[color:var(--lime,#a3e635)] text-[color:var(--lime,#a3e635)]"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {/* Errors / states */}
