@@ -31,8 +31,20 @@ export default function Financeiro() {
   const [status, setStatus] = useState<FilterStatus>("all");
   const [sortBy, setSortBy] = useState<SortBy>("date_desc");
   const [overrides, setOverrides] = useState<Record<number, Partial<FinanceiroOrder>>>({});
+  const [activeTab, setActiveTab] = useState<"vendas" | "extrato">("vendas");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const { orders, summary, loading, error, fetchOrders, hasMore, loadMore } = useFinanceiro();
+  const { orders, summary, loading, error, fetchOrders, hasMore, loadMore, fetchBalance, fetchMovements } =
+    useFinanceiro();
+
+  const { dateFrom, dateTo } = useMemo(() => {
+    const now = new Date();
+    const days = ({ "7d": 7, "15d": 15, "30d": 30, "60d": 60, "90d": 90 } as Record<string, number>)[period] || 30;
+    return {
+      dateFrom: formatISO(startOfDay(subDays(now, days))),
+      dateTo: formatISO(endOfDay(now)),
+    };
+  }, [period]);
 
   useEffect(() => {
     fetchOrders(period);
