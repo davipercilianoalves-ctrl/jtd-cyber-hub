@@ -161,17 +161,46 @@ serve(async (req) => {
     if (action === "get_movements") {
       const { date_from, date_to, offset = 0, limit = 50 } = params || {};
       const movUrl = `${BASE}/account/movements/search?user_id=${sellerId}&date_from=${date_from}&date_to=${date_to}&offset=${offset}&limit=${limit}`;
-      const movRes = await fetch(movUrl, { headers });
-      const movData = await movRes.json();
-      return new Response(JSON.stringify(movData), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      let movRes = await fetch(movUrl, { headers });
+      let movData: any;
+      if (!movRes.ok) {
+        const altUrl = `${BASE}/users/${sellerId}/movements?date_from=${date_from}&date_to=${date_to}`;
+        const altRes = await fetch(altUrl, { headers });
+        movData = await altRes.json();
+      } else {
+        movData = await movRes.json();
+      }
+
+      const raw = movData.results || movData.movements || [];
+      const movements = raw.map((m: any) => ({
+        id: String(m.id || m.movement_id || crypto.randomUUID()),
+        date: m.date || m.date_created,
+        type: m.type || m.movement_type || "other",
+        description: m.description || m.reason || m.type || "—",
+        amount: Number(m.amount ?? m.net_credited_amount ?? 0),
+        reference_id: m.reference_id || m.source_id || null,
+        status: m.status || "settled",
+        currency_id: m.currency_id || "BRL",
+      }));
+
+      return new Response(
+        JSON.stringify({ movements, paging: movData.paging || { total: movements.length } }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     if (action === "get_balance") {
       const balRes = await fetch(`${BASE}/account/balance?user_id=${sellerId}`, { headers });
       const balData = await balRes.json();
-      return new Response(JSON.stringify(balData), {
+      const available = Number(balData.available_balance ?? balData.available ?? 0);
+      const unavailable = Number(balData.unavailable_balance ?? balData.unavailable ?? 0);
+      const balance = {
+        available,
+        unavailable,
+        total: Number(balData.total) || available + unavailable,
+        currency: balData.currency_id || "BRL",
+      };
+      return new Response(JSON.stringify(balance), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

@@ -10,9 +10,12 @@ import {
   type SortBy,
 } from "@/components/financeiro/FinanceiroFilters";
 import { FinanceiroOrderCard } from "@/components/financeiro/FinanceiroOrderCard";
+import { SaldoMLCard } from "@/components/financeiro/SaldoMLCard";
+import { ExtratoML } from "@/components/financeiro/ExtratoML";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
+import { subDays, startOfDay, endOfDay, formatISO } from "date-fns";
 
 const PERIODS: { value: FinanceiroPeriod; label: string }[] = [
   { value: "7d", label: "7 dias" },
@@ -28,8 +31,20 @@ export default function Financeiro() {
   const [status, setStatus] = useState<FilterStatus>("all");
   const [sortBy, setSortBy] = useState<SortBy>("date_desc");
   const [overrides, setOverrides] = useState<Record<number, Partial<FinanceiroOrder>>>({});
+  const [activeTab, setActiveTab] = useState<"vendas" | "extrato">("vendas");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const { orders, summary, loading, error, fetchOrders, hasMore, loadMore } = useFinanceiro();
+  const { orders, summary, loading, error, fetchOrders, hasMore, loadMore, fetchBalance, fetchMovements } =
+    useFinanceiro();
+
+  const { dateFrom, dateTo } = useMemo(() => {
+    const now = new Date();
+    const days = ({ "7d": 7, "15d": 15, "30d": 30, "60d": 60, "90d": 90 } as Record<string, number>)[period] || 30;
+    return {
+      dateFrom: formatISO(startOfDay(subDays(now, days))),
+      dateTo: formatISO(endOfDay(now)),
+    };
+  }, [period]);
 
   useEffect(() => {
     fetchOrders(period);
@@ -166,13 +181,43 @@ export default function Financeiro() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchOrders(period)}
+            onClick={() => {
+              fetchOrders(period);
+              setRefreshKey((k) => k + 1);
+            }}
             disabled={loading}
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
             <span className="ml-2">Atualizar</span>
           </Button>
         </div>
+      </div>
+
+      {/* Saldo ML */}
+      {!noMlConnection && (
+        <div className="flex justify-end">
+          <SaldoMLCard fetchBalance={fetchBalance} refreshKey={refreshKey} />
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-white/5">
+        {([
+          { value: "vendas", label: "Vendas" },
+          { value: "extrato", label: "Extrato ML" },
+        ] as const).map((t) => (
+          <button
+            key={t.value}
+            onClick={() => setActiveTab(t.value)}
+            className={`px-4 py-2 text-[11px] font-bold uppercase tracking-[0.08em] border-b-2 transition-colors ${
+              activeTab === t.value
+                ? "border-[color:var(--lime,#a3e635)] text-[color:var(--lime,#a3e635)]"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {/* Errors / states */}
@@ -199,96 +244,103 @@ export default function Financeiro() {
         </div>
       ) : null}
 
-      {/* Summary */}
-      {loading && !summary ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-[130px]" />
-            ))}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-[90px]" />
-            ))}
-          </div>
-        </div>
-      ) : summary ? (
-        <FinanceiroSummaryCards summary={summary} />
-      ) : null}
-
-      {/* Aviso de produtos não vinculados */}
-      {orders.length > 0 && (() => {
-        const unlinkedCount = orders.filter((o) => !o.product_cost || o.product_cost === 0).length;
-        if (!unlinkedCount) return null;
-        return (
-          <div className="jtd-glass p-3 border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm text-amber-400">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>
-                <strong>{unlinkedCount}</strong> venda(s) sem produto vinculado — custo e lucro não calculados.
-              </span>
+      {activeTab === "vendas" ? (
+        <>
+          {/* Summary */}
+          {loading && !summary ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-[130px]" />
+                ))}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-[90px]" />
+                ))}
+              </div>
             </div>
-            <Link to="/configuracoes">
-              <Button size="sm" variant="outline" className="text-amber-400 border-amber-500/30">
-                Vincular produtos
-              </Button>
-            </Link>
-          </div>
-        );
-      })()}
+          ) : summary ? (
+            <FinanceiroSummaryCards summary={summary} />
+          ) : null}
 
-      {/* Filters */}
-      <FinanceiroFilters
-        search={search}
-        onSearchChange={setSearch}
-        status={status}
-        onStatusChange={setStatus}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
+          {/* Aviso de produtos não vinculados */}
+          {orders.length > 0 && (() => {
+            const unlinkedCount = orders.filter((o) => !o.product_cost || o.product_cost === 0).length;
+            if (!unlinkedCount) return null;
+            return (
+              <div className="jtd-glass p-3 border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm text-amber-400">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>
+                    <strong>{unlinkedCount}</strong> venda(s) sem produto vinculado — custo e lucro não calculados.
+                  </span>
+                </div>
+                <Link to="/configuracoes">
+                  <Button size="sm" variant="outline" className="text-amber-400 border-amber-500/30">
+                    Vincular produtos
+                  </Button>
+                </Link>
+              </div>
+            );
+          })()}
 
-      {/* Order list */}
-      <div className="space-y-2">
-        {loading && orders.length === 0 ? (
-          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-16" />)
-        ) : filtered.length === 0 ? (
-          <div className="jtd-glass p-10 text-center space-y-2">
-            <Inbox className="h-10 w-10 text-muted-foreground mx-auto" />
-            <p className="text-sm text-muted-foreground">
-              Nenhuma venda encontrada {search || status !== "all" ? "com esses filtros" : "no período"}.
-            </p>
-            {(search || status !== "all") && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setSearch("");
-                  setStatus("all");
-                }}
-              >
-                Limpar filtros
-              </Button>
+          {/* Filters */}
+          <FinanceiroFilters
+            search={search}
+            onSearchChange={setSearch}
+            status={status}
+            onStatusChange={setStatus}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+          />
+
+          {/* Order list */}
+          <div className="space-y-2">
+            {loading && orders.length === 0 ? (
+              [...Array(5)].map((_, i) => <Skeleton key={i} className="h-16" />)
+            ) : filtered.length === 0 ? (
+              <div className="jtd-glass p-10 text-center space-y-2">
+                <Inbox className="h-10 w-10 text-muted-foreground mx-auto" />
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma venda encontrada {search || status !== "all" ? "com esses filtros" : "no período"}.
+                </p>
+                {(search || status !== "all") && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSearch("");
+                      setStatus("all");
+                    }}
+                  >
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
+            ) : (
+              filtered.map((o) => (
+                <FinanceiroOrderCard key={o.order_id} order={o} onSaveOverride={saveOverride} />
+              ))
+            )}
+
+            {hasMore && !loading && (
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" size="sm" onClick={loadMore}>
+                  Carregar mais
+                </Button>
+              </div>
             )}
           </div>
-        ) : (
-          filtered.map((o) => (
-            <FinanceiroOrderCard
-              key={o.order_id}
-              order={o}
-              onSaveOverride={saveOverride}
-            />
-          ))
-        )}
-
-        {hasMore && !loading && (
-          <div className="flex justify-center pt-2">
-            <Button variant="outline" size="sm" onClick={loadMore}>
-              Carregar mais
-            </Button>
-          </div>
-        )}
-      </div>
+        </>
+      ) : (
+        <ExtratoML
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          fetchMovements={fetchMovements}
+          refreshKey={refreshKey}
+        />
+      )}
     </div>
   );
 }
