@@ -48,7 +48,8 @@ export interface FinanceiroOrder {
     release_status: string;
   };
   product_cost?: number;
-  kit_items?: Array<{ name: string; cost: number; quantity: number }>;
+  kit_items?: Array<{ name: string; sku?: string; cost: number; quantity: number; total?: number; source?: string }>;
+  shipping_cost?: number;
   packaging_cost?: number;
   transport_cost?: number;
   tax_cost?: number;
@@ -71,7 +72,7 @@ export interface FinanceiroSummary {
 }
 
 async function enrichWithAppData(orders: FinanceiroOrder[]): Promise<FinanceiroOrder[]> {
-  const mlIds = orders.flatMap((o) => o.items.map((i) => i.id)).filter(Boolean);
+  const mlIds = [...new Set(orders.flatMap((o) => o.items.map((i) => i.id)).filter(Boolean))];
   if (!mlIds.length) return orders;
 
   const { data: products } = await supabase
@@ -79,23 +80,53 @@ async function enrichWithAppData(orders: FinanceiroOrder[]): Promise<FinanceiroO
     .select("id, name, sku, ml_item_id, cost_price, pricing")
     .in("ml_item_id", mlIds);
 
-  const { data: ads } = await supabase
+  const { data: adsDirect } = await supabase
     .from("ads")
-    .select("id, titles, ml_item_id, cost_price, pricing, products(name, cost_price)")
+    .select("id, titles, ml_item_id, ml_item_ids, cost_price, pricing, products(name, sku, cost_price, pricing)")
     .in("ml_item_id", mlIds);
 
+  const { data: adsArray } = await supabase
+    .from("ads")
+    .select("id, titles, ml_item_id, ml_item_ids, cost_price, pricing, products(name, sku, cost_price, pricing)")
+    .overlaps("ml_item_ids", mlIds);
+
   const productMap = new Map<string, any>();
+
   (products || []).forEach((p: any) => {
-    if (p.ml_item_id) productMap.set(p.ml_item_id, p);
-  });
-  (ads || []).forEach((a: any) => {
-    if (a.ml_item_id) {
-      productMap.set(a.ml_item_id, {
-        cost_price: a.cost_price || a.products?.cost_price || 0,
-        name: a.titles?.[0] || a.products?.name,
-        pricing: a.pricing,
+    if (p.ml_item_id) {
+      productMap.set(p.ml_item_id, {
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        cost_price: Number(p.cost_price) || 0,
+        pricing: p.pricing,
+        source: "product",
       });
     }
+  });
+
+  const setFromAd = (a: any) => {
+    const data = {
+      id: a.id,
+      name: a.titles?.[0] || a.products?.name,
+      sku: a.products?.sku,
+      cost_price: Number(a.cost_price) || Number(a.products?.cost_price) || 0,
+      pricing: a.pricing || a.products?.pricing,
+      source: "ad",
+    };
+    if (a.ml_item_id) productMap.set(a.ml_item_id, data);
+    if (Array.isArray(a.ml_item_ids)) {
+      a.ml_item_ids.forEach((id: string) => {
+        if (id && mlIds.includes(id)) productMap.set(id, data);
+      });
+    }
+  };
+  (adsDirect || []).forEach(setFromAd);
+  (adsArray || []).forEach(setFromAd);
+
+  console.log(`[enrichWithAppData] MLB buscados: ${mlIds.length}, encontrados: ${productMap.size}`);
+  mlIds.forEach((id) => {
+    if (!productMap.has(id)) console.log(`[enrichWithAppData] MLB sem vínculo: ${id}`);
   });
 
   return orders.map((order) => {
@@ -105,19 +136,31 @@ async function enrichWithAppData(orders: FinanceiroOrder[]): Promise<FinanceiroO
     order.items.forEach((item) => {
       const product = productMap.get(item.id);
       if (product) {
-        const cost = (product.cost_price || 0) * item.quantity;
-        totalProductCost += cost;
+        const unitCost = product.cost_price || 0;
+        const totalCost = unitCost * item.quantity;
+        totalProductCost += totalCost;
         kitItems.push({
           name: product.name || item.title,
-          cost: product.cost_price || 0,
+          sku: product.sku,
+          cost: unitCost,
           quantity: item.quantity,
+          total: totalCost,
+          source: product.source,
         });
       }
     });
 
     const firstProduct = productMap.get(order.items[0]?.id);
-    const pricing = firstProduct?.pricing || {};
-    const reinvestment_pct = pricing?.reinvestmentPct || 0;
+    const pricing = firstProduct?.pricing;
+    let reinvestment_pct = 0;
+    if (pricing) {
+      try {
+        const p = typeof pricing === "string" ? JSON.parse(pricing) : pricing;
+        reinvestment_pct = Number(p?.reinvestmentPct || p?.reinvestment_pct || 0);
+      } catch {
+        /* ignore */
+      }
+    }
 
     return {
       ...order,
@@ -127,6 +170,7 @@ async function enrichWithAppData(orders: FinanceiroOrder[]): Promise<FinanceiroO
     };
   });
 }
+
 
 function calculateSummary(orders: FinanceiroOrder[]): FinanceiroSummary {
   const now = new Date();

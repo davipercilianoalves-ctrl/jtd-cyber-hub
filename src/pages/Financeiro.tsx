@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Wallet, RefreshCcw, Loader2, AlertCircle, Inbox, Link2 } from "lucide-react";
+import { Wallet, RefreshCcw, Loader2, AlertCircle, Inbox, Link2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFinanceiro, type FinanceiroPeriod, type FinanceiroOrder } from "@/hooks/useFinanceiro";
@@ -216,6 +216,27 @@ export default function Financeiro() {
       ) : summary ? (
         <FinanceiroSummaryCards summary={summary} />
       ) : null}
+
+      {/* Aviso de produtos não vinculados */}
+      {orders.length > 0 && (() => {
+        const unlinkedCount = orders.filter((o) => !o.product_cost || o.product_cost === 0).length;
+        if (!unlinkedCount) return null;
+        return (
+          <div className="jtd-glass p-3 border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-amber-400">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>
+                <strong>{unlinkedCount}</strong> venda(s) sem produto vinculado — custo e lucro não calculados.
+              </span>
+            </div>
+            <Link to="/configuracoes">
+              <Button size="sm" variant="outline" className="text-amber-400 border-amber-500/30">
+                Vincular produtos
+              </Button>
+            </Link>
+          </div>
+        );
+      })()}
 
       {/* Filters */}
       <FinanceiroFilters
