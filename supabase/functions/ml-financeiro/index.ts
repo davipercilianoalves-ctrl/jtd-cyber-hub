@@ -195,8 +195,10 @@ serve(async (req) => {
             order_status: order.status,
             payment_status: mainPayment.status || "unknown",
             release_status: releaseStatus,
-            shipment_status: shipment?.status || order.shipping?.status || null,
-            shipment_substatus: shipment?.substatus || null,
+            shipment_status: translateShipmentStatus(shipmentStatus, shipmentSubstatus),
+            shipment_status_raw: shipmentStatus,
+            shipment_substatus: shipmentSubstatus,
+
             bank_reference: {
               payment_id: mainPayment.id,
               net_amount: netAmount,
