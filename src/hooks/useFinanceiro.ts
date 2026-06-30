@@ -190,28 +190,7 @@ async function enrichWithAppData(
   });
 }
 
-    });
 
-    const firstProduct = productMap.get(order.items[0]?.id);
-    const pricing = firstProduct?.pricing;
-    let reinvestment_pct = 0;
-    if (pricing) {
-      try {
-        const p = typeof pricing === "string" ? JSON.parse(pricing) : pricing;
-        reinvestment_pct = Number(p?.reinvestmentPct || p?.reinvestment_pct || 0);
-      } catch {
-        /* ignore */
-      }
-    }
-
-    return {
-      ...order,
-      product_cost: totalProductCost,
-      kit_items: kitItems,
-      reinvestment_pct,
-    };
-  });
-}
 
 
 function calculateSummary(orders: FinanceiroOrder[]): FinanceiroSummary {
