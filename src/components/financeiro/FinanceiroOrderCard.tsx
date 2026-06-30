@@ -17,15 +17,47 @@ const fmtBRL = (n: number) =>
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    released: { label: "✅ Liberado", cls: "bg-green-500/15 text-green-400" },
-    pending: { label: "⏳ Pendente", cls: "bg-amber-500/15 text-amber-400" },
-    in_mediation: { label: "⚠️ Em Mediação", cls: "bg-red-500/15 text-red-400" },
+    released: {
+      label: "✅ Liberado",
+      cls: "bg-green-500/15 text-green-400 border border-green-500/30",
+    },
+    pending: {
+      label: "⏳ Pendente",
+      cls: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+    },
+    in_mediation: {
+      label: "⚠️ Em Mediação",
+      cls: "bg-red-500/15 text-red-400 border border-red-500/30",
+    },
+    cancelled: {
+      label: "❌ Cancelado",
+      cls: "bg-muted/20 text-muted-foreground border border-border",
+    },
   };
   const s = map[status] || { label: status, cls: "bg-muted/20 text-muted-foreground" };
   return (
-    <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${s.cls}`}>{s.label}</span>
+    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>
   );
 }
+
+function ShipmentBadge({ status }: { status: string | null }) {
+  if (!status || status === "—") return <span className="text-muted-foreground">—</span>;
+  const isDelivered = status === "Entregue" || status === "Entregue ao comprador";
+  const isTransit =
+    status.includes("trânsito") || status.includes("Coletado") || status.includes("entrega");
+  const isCancelled = status.includes("Cancelado") || status.includes("Devolvido");
+  const cls = isDelivered
+    ? "bg-green-500/15 text-green-400 border border-green-500/30"
+    : isTransit
+    ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+    : isCancelled
+    ? "bg-red-500/15 text-red-400 border border-red-500/30"
+    : "bg-amber-500/15 text-amber-400 border border-amber-500/30";
+  return (
+    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${cls}`}>{status}</span>
+  );
+}
+
 
 function CopyButton({ text, label }: { text: string | number; label: string }) {
   return (
