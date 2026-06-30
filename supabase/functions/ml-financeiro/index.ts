@@ -127,7 +127,7 @@ serve(async (req) => {
             console.log("paymentDetails[0]:", JSON.stringify(paymentDetails[0], null, 2));
             console.log("release_date encontrada:", releaseDate);
             console.log("release_status encontrado:", releaseStatus);
-            console.log("computedReleaseStatus:", computedReleaseStatus);
+            
             if (orderIndex === 0) {
               const allKeys = paymentDetails[0] ? Object.keys(paymentDetails[0]) : [];
               console.log("Campos disponíveis no payment:", allKeys.join(", "));
