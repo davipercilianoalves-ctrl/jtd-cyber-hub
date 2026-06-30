@@ -181,9 +181,13 @@ export function FinanceiroOrderCard({
         >
           {fmtBRL(finalProfit)}
         </div>
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-1.5 flex-wrap justify-end">
           <StatusBadge status={order.release_status} />
+          {order.shipment_status && order.shipment_status !== "—" && (
+            <ShipmentBadge status={order.shipment_status} />
+          )}
         </div>
+
       </button>
 
       {/* Expanded */}
