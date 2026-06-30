@@ -59,11 +59,12 @@ serve(async (req) => {
             basePayments.map(async (p: any) => {
               if (!p.id) return p;
               try {
-                const payRes = await fetch(`${BASE}/collections/notifications/${p.id}`, { headers });
+                const payRes = await fetch(`${BASE}/payments/${p.id}`, { headers });
                 if (payRes.ok) {
                   const payData = await payRes.json();
-                  return { ...p, ...(payData.collection || payData) };
+                  return { ...p, ...payData };
                 }
+
               } catch { /* ignore */ }
               return p;
             })
