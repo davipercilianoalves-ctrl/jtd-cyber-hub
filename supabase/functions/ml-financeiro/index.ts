@@ -109,23 +109,15 @@ serve(async (req) => {
           }
 
           const mainPayment = payments[0] || {};
-          const releaseDate =
-            mainPayment.money_release_date ||
-            mainPayment.release_date ||
-            mainPayment.date_approved ||
-            null;
+          const releaseDate = mainPayment.money_release_date || null;
+          const releaseStatus =
+            mainPayment.money_release_status ||
+            (mainPayment.status === "approved"
+              ? "pending"
+              : mainPayment.status === "cancelled"
+              ? "cancelled"
+              : "pending");
 
-          const nowDate = new Date();
-          let computedReleaseStatus: string;
-          if (releaseDate) {
-            const rd = new Date(releaseDate);
-            computedReleaseStatus = rd <= nowDate ? "released" : "pending";
-          } else if (mainPayment.status === "approved" || mainPayment.status === "in_process") {
-            computedReleaseStatus = "pending";
-          } else {
-            computedReleaseStatus = mainPayment.status || "pending";
-          }
-          const releaseStatus = mainPayment.money_release_status || computedReleaseStatus;
 
           if (orderIndex < 3) {
             console.log(`=== ORDER ${order.id} ===`);
