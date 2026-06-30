@@ -112,10 +112,29 @@ serve(async (req) => {
             console.log("Computed mlFee:", totalMlFee, "shipping:", shippingCost);
           }
 
-          const releaseDate = mainPayment.money_release_date || null;
-          const releaseStatus =
-            mainPayment.money_release_status ||
-            (mainPayment.status === "approved" ? "pending" : "pending");
+          const shipmentStatus = shipment?.status || order.shipping?.status || null;
+          const shipmentSubstatus = shipment?.substatus || null;
+
+          let releaseDate = mainPayment.money_release_date || null;
+          let releaseStatus: string;
+          if (mainPayment.money_release_status) {
+            releaseStatus = mainPayment.money_release_status;
+          } else if (
+            shipmentStatus === "delivered" ||
+            shipmentSubstatus === "delivered_to_buyer"
+          ) {
+            releaseStatus = "released";
+            if (!releaseDate) releaseDate = mainPayment.date_approved || null;
+          } else if (mainPayment.status === "cancelled") {
+            releaseStatus = "cancelled";
+          } else {
+            releaseStatus = "pending";
+          }
+
+          console.log(
+            `[ORDER ${order.id}] shipment: ${shipmentStatus}/${shipmentSubstatus}, payment: ${mainPayment.status}, money_release_status: ${mainPayment.money_release_status}, → releaseStatus: ${releaseStatus}`
+          );
+
 
 
 
