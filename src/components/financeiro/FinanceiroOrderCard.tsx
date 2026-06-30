@@ -260,12 +260,16 @@ export function FinanceiroOrderCard({
                   <h4 className="text-[11px] font-bold uppercase tracking-[0.08em] text-[color:var(--cyan,#22d3ee)] mb-1 flex items-center gap-2">
                     <Truck className="h-3 w-3" /> Envio
                   </h4>
-                  <div className="text-sm">
-                    Status: <span className="font-medium">{order.shipment_status}</span>
-                    {order.shipment_substatus && (
-                      <span className="text-muted-foreground"> · {order.shipment_substatus}</span>
-                    )}
+                  <div className="text-sm flex items-center gap-2 flex-wrap">
+                    <ShipmentBadge status={order.shipment_status} />
+                    {order.shipment_substatus &&
+                      order.shipment_status !== order.shipment_substatus && (
+                        <span className="text-[11px] text-muted-foreground">
+                          · {order.shipment_substatus}
+                        </span>
+                      )}
                   </div>
+
                 </div>
               )}
             </div>
