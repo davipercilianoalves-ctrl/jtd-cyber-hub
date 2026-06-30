@@ -59,11 +59,12 @@ serve(async (req) => {
             basePayments.map(async (p: any) => {
               if (!p.id) return p;
               try {
-                const payRes = await fetch(`${BASE}/collections/notifications/${p.id}`, { headers });
+                const payRes = await fetch(`${BASE}/payments/${p.id}`, { headers });
                 if (payRes.ok) {
                   const payData = await payRes.json();
-                  return { ...p, ...(payData.collection || payData) };
+                  return { ...p, ...payData };
                 }
+
               } catch { /* ignore */ }
               return p;
             })
@@ -99,7 +100,10 @@ serve(async (req) => {
           );
           const totalMlFee = mlFee || orderFeeTotal;
           const shippingCost = Math.abs(Number(order.shipping?.cost) || 0);
-          const netAmount = grossAmount - totalMlFee - shippingCost;
+          const mainPayment = payments[0] || {};
+          const netAmount = mainPayment.net_received_amount
+            ? Number(mainPayment.net_received_amount)
+            : grossAmount - totalMlFee - shippingCost;
 
           const orderIndex = orders.indexOf(order);
           if (orderIndex === 0) {
@@ -108,31 +112,26 @@ serve(async (req) => {
             console.log("Computed mlFee:", totalMlFee, "shipping:", shippingCost);
           }
 
-          const mainPayment = payments[0] || {};
           const releaseDate = mainPayment.money_release_date || null;
           const releaseStatus =
             mainPayment.money_release_status ||
-            (mainPayment.status === "approved"
-              ? "pending"
-              : mainPayment.status === "cancelled"
-              ? "cancelled"
-              : "pending");
+            (mainPayment.status === "approved" ? "pending" : "pending");
+
 
 
           if (orderIndex < 3) {
             console.log(`=== ORDER ${order.id} ===`);
-            console.log("order.status:", order.status);
-            console.log("order.date_created:", order.date_created);
-            console.log("order.payments raw:", JSON.stringify(order.payments, null, 2));
-            console.log("paymentDetails[0]:", JSON.stringify(paymentDetails[0], null, 2));
-            console.log("release_date encontrada:", releaseDate);
-            console.log("release_status encontrado:", releaseStatus);
-            
+            console.log("payment.money_release_date:", mainPayment.money_release_date);
+            console.log("payment.money_release_status:", mainPayment.money_release_status);
+            console.log("payment.marketplace_fee:", mainPayment.marketplace_fee);
+            console.log("payment.net_received_amount:", mainPayment.net_received_amount);
+            console.log("payment.status:", mainPayment.status);
             if (orderIndex === 0) {
-              const allKeys = paymentDetails[0] ? Object.keys(paymentDetails[0]) : [];
-              console.log("Campos disponíveis no payment:", allKeys.join(", "));
+              const allKeys = mainPayment ? Object.keys(mainPayment) : [];
+              console.log("Campos disponíveis:", allKeys.join(", "));
             }
           }
+
 
 
 
