@@ -100,7 +100,10 @@ serve(async (req) => {
           );
           const totalMlFee = mlFee || orderFeeTotal;
           const shippingCost = Math.abs(Number(order.shipping?.cost) || 0);
-          const netAmount = grossAmount - totalMlFee - shippingCost;
+          const mainPayment = payments[0] || {};
+          const netAmount = mainPayment.net_received_amount
+            ? Number(mainPayment.net_received_amount)
+            : grossAmount - totalMlFee - shippingCost;
 
           const orderIndex = orders.indexOf(order);
           if (orderIndex === 0) {
@@ -109,15 +112,11 @@ serve(async (req) => {
             console.log("Computed mlFee:", totalMlFee, "shipping:", shippingCost);
           }
 
-          const mainPayment = payments[0] || {};
           const releaseDate = mainPayment.money_release_date || null;
           const releaseStatus =
             mainPayment.money_release_status ||
-            (mainPayment.status === "approved"
-              ? "pending"
-              : mainPayment.status === "cancelled"
-              ? "cancelled"
-              : "pending");
+            (mainPayment.status === "approved" ? "pending" : "pending");
+
 
 
           if (orderIndex < 3) {
