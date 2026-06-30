@@ -6,6 +6,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function translateShipmentStatus(status: string | null, substatus: string | null): string {
+  if (!status) return "—";
+  const statusMap: Record<string, string> = {
+    delivered: "Entregue",
+    shipped: "Em trânsito",
+    ready_to_ship: "Pronto para envio",
+    pending: "Aguardando postagem",
+    handling: "Em preparação",
+    not_delivered: "Não entregue",
+    cancelled: "Cancelado",
+    returning: "Em devolução",
+    returned: "Devolvido",
+  };
+  const substatusMap: Record<string, string> = {
+    delivered_to_buyer: "Entregue ao comprador",
+    waiting_for_pickup: "Aguardando retirada",
+    picked_up: "Coletado",
+    in_hub: "No centro de distribuição",
+    out_for_delivery: "Saiu para entrega",
+    returning_to_sender: "Retornando ao remetente",
+  };
+  if (substatus && substatusMap[substatus]) return substatusMap[substatus];
+  return statusMap[status] || status;
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
