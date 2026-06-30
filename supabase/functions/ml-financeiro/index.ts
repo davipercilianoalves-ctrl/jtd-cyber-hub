@@ -6,6 +6,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function translateShipmentStatus(status: string | null, substatus: string | null): string {
+  if (!status) return "—";
+  const statusMap: Record<string, string> = {
+    delivered: "Entregue",
+    shipped: "Em trânsito",
+    ready_to_ship: "Pronto para envio",
+    pending: "Aguardando postagem",
+    handling: "Em preparação",
+    not_delivered: "Não entregue",
+    cancelled: "Cancelado",
+    returning: "Em devolução",
+    returned: "Devolvido",
+  };
+  const substatusMap: Record<string, string> = {
+    delivered_to_buyer: "Entregue ao comprador",
+    waiting_for_pickup: "Aguardando retirada",
+    picked_up: "Coletado",
+    in_hub: "No centro de distribuição",
+    out_for_delivery: "Saiu para entrega",
+    returning_to_sender: "Retornando ao remetente",
+  };
+  if (substatus && substatusMap[substatus]) return substatusMap[substatus];
+  return statusMap[status] || status;
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -112,10 +138,29 @@ serve(async (req) => {
             console.log("Computed mlFee:", totalMlFee, "shipping:", shippingCost);
           }
 
-          const releaseDate = mainPayment.money_release_date || null;
-          const releaseStatus =
-            mainPayment.money_release_status ||
-            (mainPayment.status === "approved" ? "pending" : "pending");
+          const shipmentStatus = shipment?.status || order.shipping?.status || null;
+          const shipmentSubstatus = shipment?.substatus || null;
+
+          let releaseDate = mainPayment.money_release_date || null;
+          let releaseStatus: string;
+          if (mainPayment.money_release_status) {
+            releaseStatus = mainPayment.money_release_status;
+          } else if (
+            shipmentStatus === "delivered" ||
+            shipmentSubstatus === "delivered_to_buyer"
+          ) {
+            releaseStatus = "released";
+            if (!releaseDate) releaseDate = mainPayment.date_approved || null;
+          } else if (mainPayment.status === "cancelled") {
+            releaseStatus = "cancelled";
+          } else {
+            releaseStatus = "pending";
+          }
+
+          console.log(
+            `[ORDER ${order.id}] shipment: ${shipmentStatus}/${shipmentSubstatus}, payment: ${mainPayment.status}, money_release_status: ${mainPayment.money_release_status}, → releaseStatus: ${releaseStatus}`
+          );
+
 
 
 
@@ -176,8 +221,10 @@ serve(async (req) => {
             order_status: order.status,
             payment_status: mainPayment.status || "unknown",
             release_status: releaseStatus,
-            shipment_status: shipment?.status || order.shipping?.status || null,
-            shipment_substatus: shipment?.substatus || null,
+            shipment_status: translateShipmentStatus(shipmentStatus, shipmentSubstatus),
+            shipment_status_raw: shipmentStatus,
+            shipment_substatus: shipmentSubstatus,
+
             bank_reference: {
               payment_id: mainPayment.id,
               net_amount: netAmount,
