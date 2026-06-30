@@ -121,18 +121,17 @@ serve(async (req) => {
 
           if (orderIndex < 3) {
             console.log(`=== ORDER ${order.id} ===`);
-            console.log("order.status:", order.status);
-            console.log("order.date_created:", order.date_created);
-            console.log("order.payments raw:", JSON.stringify(order.payments, null, 2));
-            console.log("paymentDetails[0]:", JSON.stringify(paymentDetails[0], null, 2));
-            console.log("release_date encontrada:", releaseDate);
-            console.log("release_status encontrado:", releaseStatus);
-            
+            console.log("payment.money_release_date:", mainPayment.money_release_date);
+            console.log("payment.money_release_status:", mainPayment.money_release_status);
+            console.log("payment.marketplace_fee:", mainPayment.marketplace_fee);
+            console.log("payment.net_received_amount:", mainPayment.net_received_amount);
+            console.log("payment.status:", mainPayment.status);
             if (orderIndex === 0) {
-              const allKeys = paymentDetails[0] ? Object.keys(paymentDetails[0]) : [];
-              console.log("Campos disponíveis no payment:", allKeys.join(", "));
+              const allKeys = mainPayment ? Object.keys(mainPayment) : [];
+              console.log("Campos disponíveis:", allKeys.join(", "));
             }
           }
+
 
 
 
