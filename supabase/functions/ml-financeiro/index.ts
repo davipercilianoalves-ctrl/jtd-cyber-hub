@@ -31,6 +31,29 @@ function translateShipmentStatus(status: string | null, substatus: string | null
   return statusMap[status] || status;
 }
 
+function addCalendarDaysAtSafeNoon(dateStr: string | null, days: number): string | null {
+  if (!dateStr) return null;
+
+  const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    const date = new Date(
+      Date.UTC(Number(year), Number(month) - 1, Number(day) + days, 15, 0, 0)
+    );
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
+
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setDate(date.getDate() + days);
+  date.setUTCHours(15, 0, 0, 0);
+  return date.toISOString();
+}
+
+function firstValidDate(...dates: Array<string | null | undefined>): string | null {
+  return dates.find((date) => !!date) || null;
+}
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -66,6 +89,7 @@ serve(async (req) => {
       "Content-Type": "application/json",
     };
     const BASE = "https://api.mercadolibre.com";
+    const MP_BASE = "https://api.mercadopago.com/v1";
     const sellerId = tokenData.user_id;
 
     if (action === "get_orders") {
@@ -85,10 +109,16 @@ serve(async (req) => {
             basePayments.map(async (p: any) => {
               if (!p.id) return p;
               try {
-                const payRes = await fetch(`${BASE}/payments/${p.id}`, { headers });
-                if (payRes.ok) {
-                  const payData = await payRes.json();
-                  return { ...p, ...payData };
+                const mpPayRes = await fetch(`${MP_BASE}/payments/${p.id}`, { headers });
+                if (mpPayRes.ok) {
+                  const payData = await mpPayRes.json();
+                  return { ...p, ...payData, payment_api_source: "mercadopago_v1" };
+                }
+
+                const mlPayRes = await fetch(`${BASE}/payments/${p.id}`, { headers });
+                if (mlPayRes.ok) {
+                  const payData = await mlPayRes.json();
+                  return { ...p, ...payData, payment_api_source: "mercadolibre_payments" };
                 }
 
               } catch { /* ignore */ }
@@ -142,6 +172,11 @@ serve(async (req) => {
           const shipmentSubstatus = shipment?.substatus || null;
 
           // Release date + status with smart fallback
+          const deliveredDate = firstValidDate(
+            shipment?.status_history?.date_delivered,
+            shipment?.date_delivered,
+            shipment?.delivered_date
+          );
           const estimatedDeliveryDate =
             shipment?.shipping_option?.estimated_delivery_time?.date ||
             shipment?.shipping_option?.estimated_delivery_final?.date ||
@@ -149,19 +184,23 @@ serve(async (req) => {
             null;
 
           const moneyReleaseStatus = mainPayment.money_release_status;
-          const moneyReleaseDate = mainPayment.money_release_date || null;
+          const moneyReleaseDate = firstValidDate(
+            mainPayment.money_release_date,
+            mainPayment.money_release_date_from,
+            mainPayment.transaction_details?.money_release_date
+          );
+          const fallbackReleaseDate = moneyReleaseDate
+            ? null
+            : addCalendarDaysAtSafeNoon(deliveredDate || estimatedDeliveryDate, 7);
 
           let releaseStatus: string;
-          let finalReleaseDate: string | null = moneyReleaseDate;
+          let finalReleaseDate: string | null = moneyReleaseDate || fallbackReleaseDate;
 
           if (moneyReleaseStatus) {
             releaseStatus = moneyReleaseStatus;
           } else if (moneyReleaseDate) {
             releaseStatus = new Date(moneyReleaseDate) <= new Date() ? "released" : "pending";
-          } else if (estimatedDeliveryDate) {
-            const d = new Date(estimatedDeliveryDate);
-            d.setDate(d.getDate() + 7);
-            finalReleaseDate = d.toISOString();
+          } else if (fallbackReleaseDate) {
             releaseStatus = new Date(finalReleaseDate) <= new Date() ? "released" : "pending";
           } else {
             releaseStatus = "pending";
@@ -204,8 +243,9 @@ serve(async (req) => {
             console.log(`[ORDER ${order.id}] release:`, {
               money_release_date: mainPayment.money_release_date,
               date_approved: mainPayment.date_approved,
+              delivered_date: deliveredDate,
               estimated_delivery: estimatedDeliveryDate,
-              estimated_release: finalReleaseDate,
+              fallback_release: fallbackReleaseDate,
               final: releaseDate,
             });
             console.log(`[ORDER ${order.id}] release_status:`, {
