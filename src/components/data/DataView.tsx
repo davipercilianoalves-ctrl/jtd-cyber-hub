@@ -49,14 +49,72 @@ export function DataView<T>({
   emptyText,
 }: DataViewProps<T>) {
   if (loading) {
+    const skeletonCount = view === "table" ? 8 : 6;
+    if (view === "table") {
+      return (
+        <div className="overflow-hidden rounded-xl border border-sidebar-border">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-internal-w03 border-b border-sidebar-border">
+                <th className="p-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Item</th>
+                {columns.map((c) => (
+                  <th key={c.key} className={`p-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground ${c.align === "right" ? "text-right" : ""}`}>
+                    {c.label}
+                  </th>
+                ))}
+                {renderStatus && <th className="p-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Status</th>}
+                {renderActions && <th className="p-3" />}
+              </tr>
+            </thead>
+            <tbody>
+              {[...Array(skeletonCount)].map((_, i) => (
+                <tr key={i} className={`border-b border-sidebar-border/30 ${i % 2 === 1 ? "bg-internal-w03/40" : ""}`}>
+                  <td className="p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-internal-w03 animate-pulse" />
+                      <div className="space-y-1.5">
+                        <div className="h-3 w-32 rounded bg-internal-w03 animate-pulse" />
+                        <div className="h-2 w-20 rounded bg-internal-w03/60 animate-pulse" />
+                      </div>
+                    </div>
+                  </td>
+                  {columns.map((c) => (
+                    <td key={c.key} className="p-3">
+                      <div className={`h-3 rounded bg-internal-w03 animate-pulse ${c.align === "right" ? "ml-auto w-16" : "w-24"}`} />
+                    </td>
+                  ))}
+                  {renderStatus && <td className="p-3"><div className="h-5 w-16 rounded-full bg-internal-w03 animate-pulse" /></td>}
+                  {renderActions && <td className="p-3"><div className="h-3 w-20 rounded bg-internal-w03 animate-pulse ml-auto" /></td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    // grid / card skeleton
     return (
-      <div className="space-y-2">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-14 w-full rounded-lg bg-internal-w03 animate-pulse" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {[...Array(skeletonCount)].map((_, i) => (
+          <div key={i} className="rounded-xl border border-sidebar-border bg-internal-w03/30 p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-internal-w03 animate-pulse" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 w-3/4 rounded bg-internal-w03 animate-pulse" />
+                <div className="h-2 w-1/2 rounded bg-internal-w03/60 animate-pulse" />
+              </div>
+            </div>
+            <div className="h-8 w-full rounded bg-internal-w03 animate-pulse" />
+            <div className="flex justify-between">
+              <div className="h-5 w-16 rounded-full bg-internal-w03 animate-pulse" />
+              <div className="h-3 w-20 rounded bg-internal-w03 animate-pulse" />
+            </div>
+          </div>
         ))}
       </div>
     );
   }
+
 
   if (items.length === 0) {
     return (
