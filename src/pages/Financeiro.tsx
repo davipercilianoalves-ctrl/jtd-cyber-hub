@@ -145,9 +145,43 @@ export default function Financeiro() {
       toast.error(`Erro ao salvar: ${error.message}`);
       return;
     }
-    setOverrides((prev) => ({ ...prev, [orderId]: next }));
+    setOverrides((prev) => ({ ...prev, [orderId]: { ...(prev[orderId] || {}), ...next } }));
     toast.success("Custo atualizado");
   };
+
+  const saveReleaseDate = async (orderId: number, isoDate: string | null) => {
+    const { data: userRes } = await supabase.auth.getUser();
+    const userId = userRes.user?.id;
+    if (!userId) {
+      toast.error("Sessão expirada");
+      return;
+    }
+    const current = overrides[orderId] || {};
+    const payload = {
+      user_id: userId,
+      order_id: orderId,
+      packaging_cost: current.packaging_cost || 0,
+      transport_cost: current.transport_cost || 0,
+      tax_cost: current.tax_cost || 0,
+      custom_release_date: isoDate,
+    };
+    const { error } = await supabase
+      .from("order_cost_overrides")
+      .upsert(payload, { onConflict: "user_id,order_id" });
+    if (error) {
+      toast.error(`Erro ao salvar: ${error.message}`);
+      return;
+    }
+    setOverrides((prev) => ({
+      ...prev,
+      [orderId]: {
+        ...(prev[orderId] || {}),
+        ...(isoDate ? { release_date: isoDate } : { release_date: undefined as any }),
+      },
+    }));
+    toast.success(isoDate ? "Data de liberação atualizada" : "Data restaurada");
+  };
+
 
   const noMlConnection = error?.toLowerCase().includes("token") || error?.toLowerCase().includes("ml");
 
