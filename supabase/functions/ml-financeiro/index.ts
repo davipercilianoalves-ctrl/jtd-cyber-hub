@@ -141,35 +141,35 @@ serve(async (req) => {
           const shipmentStatus = shipment?.status || order.shipping?.status || null;
           const shipmentSubstatus = shipment?.substatus || null;
 
-          // Release date — NEVER use date_approved as fallback
+          // Release date + status with smart fallback
           const estimatedDeliveryDate =
             shipment?.shipping_option?.estimated_delivery_time?.date ||
             shipment?.shipping_option?.estimated_delivery_final?.date ||
             shipment?.shipping_option?.estimated_delivery?.date ||
             null;
 
-          const realReleaseDate = mainPayment.money_release_date || null;
-          let estimatedReleaseDate: string | null = null;
-          if (!realReleaseDate && estimatedDeliveryDate) {
+          const moneyReleaseStatus = mainPayment.money_release_status;
+          const moneyReleaseDate = mainPayment.money_release_date || null;
+
+          let releaseStatus: string;
+          let finalReleaseDate: string | null = moneyReleaseDate;
+
+          if (moneyReleaseStatus) {
+            releaseStatus = moneyReleaseStatus;
+          } else if (moneyReleaseDate) {
+            releaseStatus = new Date(moneyReleaseDate) <= new Date() ? "released" : "pending";
+          } else if (estimatedDeliveryDate) {
             const d = new Date(estimatedDeliveryDate);
             d.setDate(d.getDate() + 7);
-            estimatedReleaseDate = d.toISOString();
-          }
-          const releaseDate = realReleaseDate || estimatedReleaseDate;
-
-          // Release status — based ONLY on money_release_status
-          let releaseStatus: string;
-          if (mainPayment.money_release_status === "released") {
-            releaseStatus = "released";
-          } else if (mainPayment.money_release_status === "pending") {
-            releaseStatus = "pending";
-          } else if (mainPayment.money_release_status) {
-            releaseStatus = mainPayment.money_release_status;
-          } else if (mainPayment.status === "cancelled") {
-            releaseStatus = "cancelled";
+            finalReleaseDate = d.toISOString();
+            releaseStatus = new Date(finalReleaseDate) <= new Date() ? "released" : "pending";
           } else {
             releaseStatus = "pending";
           }
+
+          if (mainPayment.status === "cancelled") releaseStatus = "cancelled";
+
+          const releaseDate = finalReleaseDate;
 
           if (orderIndex < 3) {
             console.log(`=== PAYMENT COMPLETO ORDER ${order.id} ===`);
