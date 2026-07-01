@@ -59,7 +59,7 @@ export default function Financeiro() {
     (async () => {
       const { data } = await supabase
         .from("order_cost_overrides")
-        .select("order_id, packaging_cost, transport_cost, tax_cost")
+        .select("order_id, packaging_cost, transport_cost, tax_cost, custom_release_date")
         .in("order_id", ids);
       const map: Record<number, Partial<FinanceiroOrder>> = {};
       (data || []).forEach((r: any) => {
@@ -67,6 +67,7 @@ export default function Financeiro() {
           packaging_cost: Number(r.packaging_cost) || 0,
           transport_cost: Number(r.transport_cost) || 0,
           tax_cost: Number(r.tax_cost) || 0,
+          ...(r.custom_release_date ? { release_date: r.custom_release_date } : {}),
         };
       });
       setOverrides(map);
@@ -81,6 +82,7 @@ export default function Financeiro() {
       })),
     [orders, overrides]
   );
+
 
   const filtered = useMemo(() => {
     return enriched

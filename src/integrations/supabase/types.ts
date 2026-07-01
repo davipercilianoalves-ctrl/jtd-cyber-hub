@@ -528,6 +528,7 @@ export type Database = {
       order_cost_overrides: {
         Row: {
           created_at: string
+          custom_release_date: string | null
           id: string
           notes: string | null
           order_id: number
@@ -539,6 +540,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_release_date?: string | null
           id?: string
           notes?: string | null
           order_id: number
@@ -550,6 +552,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_release_date?: string | null
           id?: string
           notes?: string | null
           order_id?: number
