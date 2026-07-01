@@ -67,7 +67,7 @@ export default function Financeiro() {
           packaging_cost: Number(r.packaging_cost) || 0,
           transport_cost: Number(r.transport_cost) || 0,
           tax_cost: Number(r.tax_cost) || 0,
-          ...(r.custom_release_date ? { release_date: r.custom_release_date } : {}),
+          ...(r.custom_release_date ? { release_date: r.custom_release_date, release_date_source: "custom" as const } : {}),
         };
       });
       setOverrides(map);
