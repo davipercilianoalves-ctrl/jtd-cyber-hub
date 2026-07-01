@@ -445,8 +445,8 @@ export default function Dashboard() {
           <h3 className="text-lg font-bold text-foreground">Criação</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <MetricBox label="Anúncios criados hoje" value={loadingLocal ? "…" : String(adsToday)} icon={<Megaphone className="text-[color:var(--cyan)]" />} />
-          <MetricBox label="Kits criados hoje" value={loadingLocal ? "…" : String(kitsToday)} icon={<Layers className="text-[color:var(--magenta)]" />} />
+          <MetricBox label="Anúncios criados hoje" value={String(adsToday)} loading={loadingLocal} icon={<Megaphone className="text-[color:var(--cyan)]" />} />
+          <MetricBox label="Kits criados hoje" value={String(kitsToday)} loading={loadingLocal} icon={<Layers className="text-[color:var(--magenta)]" />} />
         </div>
 
         <div className="rounded-lg border border-border p-4 space-y-3">
@@ -629,14 +629,18 @@ function QuickCard({
   );
 }
 
-function MetricBox({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+function MetricBox({ label, value, icon, loading }: { label: string; value: string; icon: React.ReactNode; loading?: boolean }) {
   return (
     <div className="rounded-lg border border-border p-4 bg-muted/5">
       <div className="flex items-center gap-2 text-muted-foreground">
         <div className="opacity-80">{icon}</div>
         <span className="text-[10px] font-mono uppercase tracking-widest">{label}</span>
       </div>
-      <p className="mt-2 text-xl font-bold text-foreground font-mono">{value}</p>
+      {loading ? (
+        <Skeleton className="mt-2 h-7 w-16" />
+      ) : (
+        <p className="mt-2 text-xl font-bold text-foreground font-mono">{value}</p>
+      )}
     </div>
   );
 }
