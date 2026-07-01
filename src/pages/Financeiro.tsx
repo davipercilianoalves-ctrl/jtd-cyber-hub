@@ -176,7 +176,9 @@ export default function Financeiro() {
       ...prev,
       [orderId]: {
         ...(prev[orderId] || {}),
-        ...(isoDate ? { release_date: isoDate } : { release_date: undefined as any }),
+        ...(isoDate
+          ? { release_date: isoDate, release_date_source: "custom" as const }
+          : { release_date: undefined as any, release_date_source: undefined as any }),
       },
     }));
     toast.success(isoDate ? "Data de liberação atualizada" : "Data restaurada");
