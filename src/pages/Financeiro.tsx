@@ -358,7 +358,7 @@ export default function Financeiro() {
               </div>
             ) : (
               filtered.map((o) => (
-                <FinanceiroOrderCard key={o.order_id} order={o} onSaveOverride={saveOverride} />
+                <FinanceiroOrderCard key={o.order_id} order={o} onSaveOverride={saveOverride} onSaveReleaseDate={saveReleaseDate} />
               ))
             )}
 
