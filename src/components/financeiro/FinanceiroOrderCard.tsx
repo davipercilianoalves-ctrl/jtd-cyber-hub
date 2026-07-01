@@ -101,6 +101,7 @@ function CompositionBar({
 export function FinanceiroOrderCard({
   order,
   onSaveOverride,
+  onSaveReleaseDate,
 }: {
   order: FinanceiroOrder;
   onSaveOverride: (
@@ -108,8 +109,11 @@ export function FinanceiroOrderCard({
     field: "packaging_cost" | "transport_cost" | "tax_cost",
     value: number
   ) => Promise<void>;
+  onSaveReleaseDate?: (orderId: number, isoDate: string | null) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [editingDate, setEditingDate] = useState(false);
+
 
   const productCost = order.product_cost || 0;
   const packaging = order.packaging_cost || 0;
