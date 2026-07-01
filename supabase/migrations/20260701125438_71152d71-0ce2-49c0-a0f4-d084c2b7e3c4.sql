@@ -1,0 +1,1 @@
+ALTER TABLE public.order_cost_overrides ADD COLUMN IF NOT EXISTS custom_release_date date;

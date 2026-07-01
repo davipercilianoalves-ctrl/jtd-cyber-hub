@@ -59,7 +59,7 @@ export default function Financeiro() {
     (async () => {
       const { data } = await supabase
         .from("order_cost_overrides")
-        .select("order_id, packaging_cost, transport_cost, tax_cost")
+        .select("order_id, packaging_cost, transport_cost, tax_cost, custom_release_date")
         .in("order_id", ids);
       const map: Record<number, Partial<FinanceiroOrder>> = {};
       (data || []).forEach((r: any) => {
@@ -67,6 +67,7 @@ export default function Financeiro() {
           packaging_cost: Number(r.packaging_cost) || 0,
           transport_cost: Number(r.transport_cost) || 0,
           tax_cost: Number(r.tax_cost) || 0,
+          ...(r.custom_release_date ? { release_date: r.custom_release_date } : {}),
         };
       });
       setOverrides(map);
@@ -81,6 +82,7 @@ export default function Financeiro() {
       })),
     [orders, overrides]
   );
+
 
   const filtered = useMemo(() => {
     return enriched
@@ -143,9 +145,43 @@ export default function Financeiro() {
       toast.error(`Erro ao salvar: ${error.message}`);
       return;
     }
-    setOverrides((prev) => ({ ...prev, [orderId]: next }));
+    setOverrides((prev) => ({ ...prev, [orderId]: { ...(prev[orderId] || {}), ...next } }));
     toast.success("Custo atualizado");
   };
+
+  const saveReleaseDate = async (orderId: number, isoDate: string | null) => {
+    const { data: userRes } = await supabase.auth.getUser();
+    const userId = userRes.user?.id;
+    if (!userId) {
+      toast.error("Sessão expirada");
+      return;
+    }
+    const current = overrides[orderId] || {};
+    const payload = {
+      user_id: userId,
+      order_id: orderId,
+      packaging_cost: current.packaging_cost || 0,
+      transport_cost: current.transport_cost || 0,
+      tax_cost: current.tax_cost || 0,
+      custom_release_date: isoDate,
+    };
+    const { error } = await supabase
+      .from("order_cost_overrides")
+      .upsert(payload, { onConflict: "user_id,order_id" });
+    if (error) {
+      toast.error(`Erro ao salvar: ${error.message}`);
+      return;
+    }
+    setOverrides((prev) => ({
+      ...prev,
+      [orderId]: {
+        ...(prev[orderId] || {}),
+        ...(isoDate ? { release_date: isoDate } : { release_date: undefined as any }),
+      },
+    }));
+    toast.success(isoDate ? "Data de liberação atualizada" : "Data restaurada");
+  };
+
 
   const noMlConnection = error?.toLowerCase().includes("token") || error?.toLowerCase().includes("ml");
 
@@ -322,7 +358,7 @@ export default function Financeiro() {
               </div>
             ) : (
               filtered.map((o) => (
-                <FinanceiroOrderCard key={o.order_id} order={o} onSaveOverride={saveOverride} />
+                <FinanceiroOrderCard key={o.order_id} order={o} onSaveOverride={saveOverride} onSaveReleaseDate={saveReleaseDate} />
               ))
             )}
 
