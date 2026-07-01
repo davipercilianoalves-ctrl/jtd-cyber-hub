@@ -205,7 +205,7 @@ serve(async (req) => {
               money_release_date: mainPayment.money_release_date,
               date_approved: mainPayment.date_approved,
               estimated_delivery: estimatedDeliveryDate,
-              estimated_release: estimatedReleaseDate,
+              estimated_release: finalReleaseDate,
               final: releaseDate,
             });
             console.log(`[ORDER ${order.id}] release_status:`, {
