@@ -41,7 +41,7 @@ export default function API() {
     try {
       const { data, error } = await supabase
         .from('ml_tokens')
-        .select('*')
+        .select('id, user_id, expires_at, owner_id, created_at')
         .maybeSingle();
       
       if (error) throw error;
