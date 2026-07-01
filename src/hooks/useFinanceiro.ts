@@ -87,7 +87,7 @@ async function enrichWithAppData(
 
   const { data: adsDirect, error: adsErr } = await supabase
     .from("ads")
-    .select("id, titles, ml_item_id, cost_price, pricing")
+    .select("id, titles, ml_item_id, cost_price")
     .in("ml_item_id", mlIds);
   if (adsErr) console.error("ads query error:", adsErr.message);
 
