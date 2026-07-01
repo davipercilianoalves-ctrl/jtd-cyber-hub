@@ -29,6 +29,7 @@ export interface FinanceiroOrder {
   date_created: string;
   date_closed: string;
   release_date: string | null;
+  release_date_source?: "ml" | "estimated" | "custom" | "none";
   gross_amount: number;
   original_price: number;
   sale_price: number;

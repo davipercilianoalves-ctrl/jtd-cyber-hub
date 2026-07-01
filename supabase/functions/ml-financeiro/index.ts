@@ -191,10 +191,15 @@ serve(async (req) => {
           );
           const fallbackReleaseDate = moneyReleaseDate
             ? null
-            : addCalendarDaysAtSafeNoon(deliveredDate || estimatedDeliveryDate, 7);
+            : addCalendarDaysAtSafeNoon(deliveredDate || estimatedDeliveryDate, 8);
 
           let releaseStatus: string;
           let finalReleaseDate: string | null = moneyReleaseDate || fallbackReleaseDate;
+          const releaseDateSource: "ml" | "estimated" | "none" = moneyReleaseDate
+            ? "ml"
+            : fallbackReleaseDate
+              ? "estimated"
+              : "none";
 
           if (moneyReleaseStatus) {
             releaseStatus = moneyReleaseStatus;
@@ -287,6 +292,7 @@ serve(async (req) => {
             date_created: order.date_created,
             date_closed: order.date_closed,
             release_date: releaseDate,
+            release_date_source: releaseDateSource,
             gross_amount: grossAmount,
             original_price: originalPrice,
             sale_price: salePrice,
