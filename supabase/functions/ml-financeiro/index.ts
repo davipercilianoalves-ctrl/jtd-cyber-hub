@@ -292,6 +292,7 @@ serve(async (req) => {
             date_created: order.date_created,
             date_closed: order.date_closed,
             release_date: releaseDate,
+            release_date_source: releaseDateSource,
             gross_amount: grossAmount,
             original_price: originalPrice,
             sale_price: salePrice,
