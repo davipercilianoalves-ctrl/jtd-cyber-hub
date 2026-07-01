@@ -479,10 +479,25 @@ export function FinanceiroOrderCard({
                     </button>
                   </div>
                 ) : (
-                  <div className="font-mono">
+                  <div className="font-mono flex items-center gap-1 flex-wrap">
                     {order.release_date
                       ? format(new Date(order.release_date), "dd/MM/yyyy", { locale: ptBR })
                       : "—"}
+                    {order.release_date_source === "estimated" && (
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-400 font-sans" title="Data estimada: entrega + 8 dias. Ainda não confirmada pelo ML.">
+                        estimada
+                      </span>
+                    )}
+                    {order.release_date_source === "custom" && (
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-sky-500/20 text-sky-400 font-sans" title="Data editada manualmente">
+                        manual
+                      </span>
+                    )}
+                    {order.release_date_source === "ml" && (
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-sans" title="Confirmada pelo Mercado Livre">
+                        ML
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
