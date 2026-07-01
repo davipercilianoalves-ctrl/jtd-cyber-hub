@@ -134,7 +134,7 @@ async function enrichWithAppData(
       sku: linkedProduct?.sku || null,
       cost_price:
         Number(a.cost_price) || Number(linkedProduct?.cost_price) || 0,
-      pricing: a.pricing || linkedProduct?.pricing,
+      pricing: linkedProduct?.pricing,
       source: "ad",
     });
   });
