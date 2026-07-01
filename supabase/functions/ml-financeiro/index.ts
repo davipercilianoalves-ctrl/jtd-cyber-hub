@@ -108,73 +108,111 @@ serve(async (req) => {
           const salePrice = order.order_items?.[0]?.unit_price || grossAmount;
           const fakeDiscount = originalPrice - salePrice;
 
-          const mlFee = payments.reduce((sum: number, p: any) => {
-            const direct = Math.abs(Number(p.marketplace_fee) || 0);
-            const fromDetails = Array.isArray(p.fee_details)
-              ? p.fee_details.reduce(
-                  (s: number, f: any) => s + Math.abs(Number(f.amount) || 0),
-                  0
-                )
-              : 0;
-            return sum + (direct || fromDetails);
-          }, 0);
+          const mainPayment = payments[0] || {};
+          const orderIndex = orders.indexOf(order);
 
-          const orderFees = Array.isArray(order.order_fees) ? order.order_fees : [];
-          const orderFeeTotal = orderFees.reduce(
-            (s: number, f: any) => s + Math.abs(Number(f.value || f.amount) || 0),
+          // ML fee — multiple sources
+          const mlFeeFromPayment = Math.abs(Number(mainPayment.marketplace_fee) || 0);
+          const mlFeeFromDetails = Array.isArray(mainPayment.fee_details)
+            ? mainPayment.fee_details.reduce(
+                (s: number, f: any) => s + Math.abs(Number(f.amount) || 0), 0
+              )
+            : 0;
+          const mlFeeFromOrderFees = (order.order_fees || []).reduce(
+            (s: number, f: any) => s + Math.abs(Number(f.value || f.amount) || 0), 0
+          );
+          const totalMlFee = mlFeeFromPayment || mlFeeFromDetails || mlFeeFromOrderFees;
+
+          // Shipping — multiple sources
+          const shippingCost = Math.abs(
+            Number(mainPayment.shipping_cost) ||
+            Number(order.shipping?.cost) ||
+            Number(shipment?.shipping_option?.cost) ||
             0
           );
-          const totalMlFee = mlFee || orderFeeTotal;
-          const shippingCost = Math.abs(Number(order.shipping?.cost) || 0);
-          const mainPayment = payments[0] || {};
-          const netAmount = mainPayment.net_received_amount
-            ? Number(mainPayment.net_received_amount)
-            : grossAmount - totalMlFee - shippingCost;
 
-          const orderIndex = orders.indexOf(order);
-          if (orderIndex === 0) {
-            console.log("Payment sample:", JSON.stringify(payments[0], null, 2));
-            console.log("Order fees:", JSON.stringify(order.order_fees, null, 2));
-            console.log("Computed mlFee:", totalMlFee, "shipping:", shippingCost);
-          }
+          // Net amount
+          const netFromApi = mainPayment.net_received_amount
+            ? Number(mainPayment.net_received_amount)
+            : null;
+          const netCalculated = grossAmount - totalMlFee - shippingCost;
+          const netAmount = netFromApi ?? netCalculated;
 
           const shipmentStatus = shipment?.status || order.shipping?.status || null;
           const shipmentSubstatus = shipment?.substatus || null;
 
-          let releaseDate = mainPayment.money_release_date || null;
+          // Release date — NEVER use date_approved as fallback
+          const estimatedDeliveryDate =
+            shipment?.shipping_option?.estimated_delivery_time?.date ||
+            shipment?.shipping_option?.estimated_delivery_final?.date ||
+            shipment?.shipping_option?.estimated_delivery?.date ||
+            null;
+
+          const realReleaseDate = mainPayment.money_release_date || null;
+          let estimatedReleaseDate: string | null = null;
+          if (!realReleaseDate && estimatedDeliveryDate) {
+            const d = new Date(estimatedDeliveryDate);
+            d.setDate(d.getDate() + 7);
+            estimatedReleaseDate = d.toISOString();
+          }
+          const releaseDate = realReleaseDate || estimatedReleaseDate;
+
+          // Release status — based ONLY on money_release_status
           let releaseStatus: string;
-          if (mainPayment.money_release_status) {
-            releaseStatus = mainPayment.money_release_status;
-          } else if (
-            shipmentStatus === "delivered" ||
-            shipmentSubstatus === "delivered_to_buyer"
-          ) {
+          if (mainPayment.money_release_status === "released") {
             releaseStatus = "released";
-            if (!releaseDate) releaseDate = mainPayment.date_approved || null;
+          } else if (mainPayment.money_release_status === "pending") {
+            releaseStatus = "pending";
+          } else if (mainPayment.money_release_status) {
+            releaseStatus = mainPayment.money_release_status;
           } else if (mainPayment.status === "cancelled") {
             releaseStatus = "cancelled";
           } else {
             releaseStatus = "pending";
           }
 
-          console.log(
-            `[ORDER ${order.id}] shipment: ${shipmentStatus}/${shipmentSubstatus}, payment: ${mainPayment.status}, money_release_status: ${mainPayment.money_release_status}, → releaseStatus: ${releaseStatus}`
-          );
-
-
-
-
           if (orderIndex < 3) {
-            console.log(`=== ORDER ${order.id} ===`);
-            console.log("payment.money_release_date:", mainPayment.money_release_date);
-            console.log("payment.money_release_status:", mainPayment.money_release_status);
-            console.log("payment.marketplace_fee:", mainPayment.marketplace_fee);
-            console.log("payment.net_received_amount:", mainPayment.net_received_amount);
-            console.log("payment.status:", mainPayment.status);
-            if (orderIndex === 0) {
-              const allKeys = mainPayment ? Object.keys(mainPayment) : [];
-              console.log("Campos disponíveis:", allKeys.join(", "));
-            }
+            console.log(`=== PAYMENT COMPLETO ORDER ${order.id} ===`);
+            console.log(JSON.stringify(mainPayment, null, 2));
+            console.log(`=== ORDER COMPLETA ${order.id} ===`);
+            console.log("order.shipping:", JSON.stringify(order.shipping, null, 2));
+            console.log("order.order_fees:", JSON.stringify(order.order_fees, null, 2));
+            console.log("order.total_amount:", order.total_amount);
+            console.log("order.paid_amount:", order.paid_amount);
+            console.log("order.amount_paid:", order.amount_paid);
+            console.log(`[ORDER ${order.id}] shipping sources:`, {
+              payment_shipping: mainPayment.shipping_cost,
+              order_shipping_cost: order.shipping?.cost,
+              shipment_cost: shipment?.shipping_option?.cost,
+              final: shippingCost,
+            });
+            console.log(`[ORDER ${order.id}] fee sources:`, {
+              payment_marketplace_fee: mainPayment.marketplace_fee,
+              fee_details_count: mainPayment.fee_details?.length,
+              fee_details_total: mlFeeFromDetails,
+              order_fees_total: mlFeeFromOrderFees,
+              final: totalMlFee,
+            });
+            console.log(`[ORDER ${order.id}] net:`, {
+              gross: grossAmount,
+              mlFee: totalMlFee,
+              shipping: shippingCost,
+              net_from_api: netFromApi,
+              net_calculated: netCalculated,
+              final: netAmount,
+            });
+            console.log(`[ORDER ${order.id}] release:`, {
+              money_release_date: mainPayment.money_release_date,
+              date_approved: mainPayment.date_approved,
+              estimated_delivery: estimatedDeliveryDate,
+              estimated_release: estimatedReleaseDate,
+              final: releaseDate,
+            });
+            console.log(`[ORDER ${order.id}] release_status:`, {
+              money_release_status: mainPayment.money_release_status,
+              shipment_status: shipmentStatus,
+              final_release_status: releaseStatus,
+            });
           }
 
 
