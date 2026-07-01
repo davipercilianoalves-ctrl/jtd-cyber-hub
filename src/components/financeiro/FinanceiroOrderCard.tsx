@@ -434,13 +434,59 @@ export function FinanceiroOrderCard({
                 <CopyButton text={order.net_amount.toFixed(2)} label="Valor" />
               </div>
               <div>
-                <div className="text-[11px] text-muted-foreground uppercase">Liberação</div>
-                <div className="font-mono">
-                  {order.release_date
-                    ? format(new Date(order.release_date), "dd/MM/yyyy", { locale: ptBR })
-                    : "—"}
+                <div className="text-[11px] text-muted-foreground uppercase flex items-center gap-1">
+                  Liberação
+                  {onSaveReleaseDate && !editingDate && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingDate(true)}
+                      className="text-[10px] text-[color:var(--lime,#a3e635)] hover:underline ml-1"
+                      title="Editar data de liberação"
+                    >
+                      editar
+                    </button>
+                  )}
                 </div>
+                {editingDate && onSaveReleaseDate ? (
+                  <div className="flex items-center gap-1 mt-1">
+                    <input
+                      type="date"
+                      defaultValue={
+                        order.release_date
+                          ? new Date(order.release_date).toISOString().slice(0, 10)
+                          : ""
+                      }
+                      className="bg-background border border-border rounded px-1 py-0.5 text-[12px] font-mono"
+                      onBlur={async (e) => {
+                        const val = e.target.value;
+                        if (val && val !== (order.release_date ? new Date(order.release_date).toISOString().slice(0, 10) : "")) {
+                          await onSaveReleaseDate(order.order_id, val);
+                        }
+                        setEditingDate(false);
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await onSaveReleaseDate(order.order_id, null);
+                        setEditingDate(false);
+                      }}
+                      className="text-[10px] text-muted-foreground hover:text-red-400"
+                      title="Restaurar data original do ML"
+                    >
+                      resetar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="font-mono">
+                    {order.release_date
+                      ? format(new Date(order.release_date), "dd/MM/yyyy", { locale: ptBR })
+                      : "—"}
+                  </div>
+                )}
               </div>
+
               <div>
                 <div className="text-[11px] text-muted-foreground uppercase">Status</div>
                 <StatusBadge status={order.release_status} />
