@@ -147,7 +147,7 @@ function VinculacaoML() {
 
   useEffect(() => {
     (async () => {
-      const { data: tk } = await supabase.from('ml_tokens').select('*').maybeSingle();
+      const { data: tk } = await supabase.from('ml_tokens').select('id, user_id, expires_at, owner_id, created_at').maybeSingle();
       setToken(tk);
       const { adsArr, prodArr } = await loadAppData();
       if (tk) await handleBuscar(tk, adsArr, prodArr);
