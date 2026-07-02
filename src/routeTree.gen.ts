@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCallbackRouteImport } from './routes/api/callback'
 import { Route as AuthenticatedVendasRouteImport } from './routes/_authenticated/vendas'
+import { Route as AuthenticatedPromocoesRouteImport } from './routes/_authenticated/promocoes'
 import { Route as AuthenticatedMetricasRouteImport } from './routes/_authenticated/metricas'
 import { Route as AuthenticatedFornecedoresRouteImport } from './routes/_authenticated/fornecedores'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
@@ -27,6 +28,7 @@ import { Route as AuthenticatedAnunciosIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos/novo'
 import { Route as AuthenticatedKitsNovoRouteImport } from './routes/_authenticated/kits/novo'
 import { Route as AuthenticatedAnunciosNovoRouteImport } from './routes/_authenticated/anuncios/novo'
+import { Route as ApiPublicHooksRefreshPromosRouteImport } from './routes/api/public/hooks/refresh-promos'
 import { Route as AuthenticatedProdutosIdEditarRouteImport } from './routes/_authenticated/produtos/$id.editar'
 import { Route as AuthenticatedKitsIdEditarRouteImport } from './routes/_authenticated/kits/$id.editar'
 import { Route as AuthenticatedAnunciosIdEditarRouteImport } from './routes/_authenticated/anuncios/$id.editar'
@@ -53,6 +55,11 @@ const ApiCallbackRoute = ApiCallbackRouteImport.update({
 const AuthenticatedVendasRoute = AuthenticatedVendasRouteImport.update({
   id: '/vendas',
   path: '/vendas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPromocoesRoute = AuthenticatedPromocoesRouteImport.update({
+  id: '/promocoes',
+  path: '/promocoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMetricasRoute = AuthenticatedMetricasRouteImport.update({
@@ -126,6 +133,12 @@ const AuthenticatedAnunciosNovoRoute =
     path: '/anuncios/novo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicHooksRefreshPromosRoute =
+  ApiPublicHooksRefreshPromosRouteImport.update({
+    id: '/api/public/hooks/refresh-promos',
+    path: '/api/public/hooks/refresh-promos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedProdutosIdEditarRoute =
   AuthenticatedProdutosIdEditarRouteImport.update({
     id: '/produtos/$id/editar',
@@ -155,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
+  '/promocoes': typeof AuthenticatedPromocoesRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/api/callback': typeof ApiCallbackRoute
   '/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
@@ -166,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
   '/kits/$id/editar': typeof AuthenticatedKitsIdEditarRoute
   '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
+  '/api/public/hooks/refresh-promos': typeof ApiPublicHooksRefreshPromosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -177,6 +192,7 @@ export interface FileRoutesByTo {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/metricas': typeof AuthenticatedMetricasRoute
+  '/promocoes': typeof AuthenticatedPromocoesRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/api/callback': typeof ApiCallbackRoute
   '/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
@@ -188,6 +204,7 @@ export interface FileRoutesByTo {
   '/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
   '/kits/$id/editar': typeof AuthenticatedKitsIdEditarRoute
   '/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
+  '/api/public/hooks/refresh-promos': typeof ApiPublicHooksRefreshPromosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -201,6 +218,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/_authenticated/metricas': typeof AuthenticatedMetricasRoute
+  '/_authenticated/promocoes': typeof AuthenticatedPromocoesRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
   '/api/callback': typeof ApiCallbackRoute
   '/_authenticated/anuncios/novo': typeof AuthenticatedAnunciosNovoRoute
@@ -212,6 +230,7 @@ export interface FileRoutesById {
   '/_authenticated/anuncios/$id/editar': typeof AuthenticatedAnunciosIdEditarRoute
   '/_authenticated/kits/$id/editar': typeof AuthenticatedKitsIdEditarRoute
   '/_authenticated/produtos/$id/editar': typeof AuthenticatedProdutosIdEditarRoute
+  '/api/public/hooks/refresh-promos': typeof ApiPublicHooksRefreshPromosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -225,6 +244,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/fornecedores'
     | '/metricas'
+    | '/promocoes'
     | '/vendas'
     | '/api/callback'
     | '/anuncios/novo'
@@ -236,6 +256,7 @@ export interface FileRouteTypes {
     | '/anuncios/$id/editar'
     | '/kits/$id/editar'
     | '/produtos/$id/editar'
+    | '/api/public/hooks/refresh-promos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -247,6 +268,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/fornecedores'
     | '/metricas'
+    | '/promocoes'
     | '/vendas'
     | '/api/callback'
     | '/anuncios/novo'
@@ -258,6 +280,7 @@ export interface FileRouteTypes {
     | '/anuncios/$id/editar'
     | '/kits/$id/editar'
     | '/produtos/$id/editar'
+    | '/api/public/hooks/refresh-promos'
   id:
     | '__root__'
     | '/'
@@ -270,6 +293,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro'
     | '/_authenticated/fornecedores'
     | '/_authenticated/metricas'
+    | '/_authenticated/promocoes'
     | '/_authenticated/vendas'
     | '/api/callback'
     | '/_authenticated/anuncios/novo'
@@ -281,6 +305,7 @@ export interface FileRouteTypes {
     | '/_authenticated/anuncios/$id/editar'
     | '/_authenticated/kits/$id/editar'
     | '/_authenticated/produtos/$id/editar'
+    | '/api/public/hooks/refresh-promos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -288,6 +313,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiCallbackRoute: typeof ApiCallbackRoute
+  ApiPublicHooksRefreshPromosRoute: typeof ApiPublicHooksRefreshPromosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -325,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/vendas'
       fullPath: '/vendas'
       preLoaderRoute: typeof AuthenticatedVendasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/promocoes': {
+      id: '/_authenticated/promocoes'
+      path: '/promocoes'
+      fullPath: '/promocoes'
+      preLoaderRoute: typeof AuthenticatedPromocoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/metricas': {
@@ -418,6 +451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnunciosNovoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/refresh-promos': {
+      id: '/api/public/hooks/refresh-promos'
+      path: '/api/public/hooks/refresh-promos'
+      fullPath: '/api/public/hooks/refresh-promos'
+      preLoaderRoute: typeof ApiPublicHooksRefreshPromosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/produtos/$id/editar': {
       id: '/_authenticated/produtos/$id/editar'
       path: '/produtos/$id/editar'
@@ -450,6 +490,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedFornecedoresRoute: typeof AuthenticatedFornecedoresRoute
   AuthenticatedMetricasRoute: typeof AuthenticatedMetricasRoute
+  AuthenticatedPromocoesRoute: typeof AuthenticatedPromocoesRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
   AuthenticatedAnunciosNovoRoute: typeof AuthenticatedAnunciosNovoRoute
   AuthenticatedKitsNovoRoute: typeof AuthenticatedKitsNovoRoute
@@ -470,6 +511,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedFornecedoresRoute: AuthenticatedFornecedoresRoute,
   AuthenticatedMetricasRoute: AuthenticatedMetricasRoute,
+  AuthenticatedPromocoesRoute: AuthenticatedPromocoesRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
   AuthenticatedAnunciosNovoRoute: AuthenticatedAnunciosNovoRoute,
   AuthenticatedKitsNovoRoute: AuthenticatedKitsNovoRoute,
@@ -490,6 +532,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiCallbackRoute: ApiCallbackRoute,
+  ApiPublicHooksRefreshPromosRoute: ApiPublicHooksRefreshPromosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
