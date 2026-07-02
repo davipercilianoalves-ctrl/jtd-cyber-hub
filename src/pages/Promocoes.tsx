@@ -129,18 +129,20 @@ export default function Promocoes() {
       const allIds: string[] = [];
       let scrollId: string | null = null;
       for (let page = 0; page < 20; page++) {
-        const qs = scrollId
-          ? `search_type=scan&scroll_id=${encodeURIComponent(scrollId)}`
+        const currentScroll: string | null = scrollId;
+        const qs: string = currentScroll
+          ? `search_type=scan&scroll_id=${encodeURIComponent(currentScroll)}`
           : `search_type=scan`;
-        const searchRes = await supabase.functions.invoke("ml-proxy", {
+        const searchRes: { data: any; error: any } = await supabase.functions.invoke("ml-proxy", {
           body: { endpoint: `/users/${mlUserId}/items/search?${qs}&limit=100`, method: "GET" },
         });
         if (searchRes.error) throw new Error(searchRes.error.message);
         const results: string[] = searchRes.data?.results ?? [];
         allIds.push(...results);
-        scrollId = searchRes.data?.scroll_id ?? null;
+        scrollId = (searchRes.data?.scroll_id as string | null) ?? null;
         if (!scrollId || results.length === 0) break;
       }
+
 
       if (allIds.length === 0) {
         toast.info("Nenhum anúncio encontrado na sua conta ML.");
