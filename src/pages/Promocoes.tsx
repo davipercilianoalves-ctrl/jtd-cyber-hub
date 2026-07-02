@@ -228,6 +228,27 @@ export default function Promocoes() {
         };
       };
 
+      const makeMissingSnapshot = (itemId: string) => {
+        const ad = adByItem.get(itemId);
+        const expected = ad?.fake ?? 0;
+        return {
+          user_id: userId,
+          ml_item_id: itemId,
+          ad_id: ad?.id ?? null,
+          title: itemId,
+          permalink: null,
+          thumbnail: null,
+          price: null,
+          original_price: null,
+          ml_discount_pct: null,
+          expected_discount_pct: expected,
+          deal_ids: [],
+          has_fake_promo_expected: expected > 0,
+          status: "no_ml" as Status,
+          checked_at: new Date().toISOString(),
+        };
+      };
+
       // 4) Batch /items?ids=... (20 por vez) para trazer preço, original_price, título etc.
       let ok = 0, fail = 0;
       for (let i = 0; i < allIds.length; i += 20) {
@@ -237,14 +258,27 @@ export default function Promocoes() {
           body: { endpoint, method: "GET" },
         });
         if (error) {
-          fail += chunk.length;
+          const fallbackRows = chunk.map(makeMissingSnapshot);
+          const { error: fallbackErr } = await supabase
+            .from("promo_snapshots")
+            .upsert(fallbackRows as any, { onConflict: "user_id,ml_item_id" });
+          if (fallbackErr) fail += chunk.length;
+          else ok += fallbackRows.length;
           continue;
         }
 
         const arr = Array.isArray(data) ? data : [];
+        const foundIds = new Set<string>();
         const upserts = arr
-          .map((entry: any) => makeSnapshot(entry?.body ?? entry))
+          .map((entry: any) => {
+            const snapshot = makeSnapshot(entry?.body ?? entry);
+            if (snapshot?.ml_item_id) foundIds.add(snapshot.ml_item_id);
+            return snapshot;
+          })
           .filter(Boolean);
+        chunk.forEach((itemId) => {
+          if (!foundIds.has(itemId)) upserts.push(makeMissingSnapshot(itemId) as any);
+        });
 
         if (upserts.length) {
           const { error: upErr } = await supabase
