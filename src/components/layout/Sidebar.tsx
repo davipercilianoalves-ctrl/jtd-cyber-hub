@@ -13,6 +13,7 @@ import {
   Truck,
   Layers,
   Wallet,
+  Tag,
 } from "lucide-react";
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { to: "/produtos", label: "Produtos", icon: Package },
   { to: "/anuncios", label: "Anúncios", icon: Megaphone },
   { to: "/kits", label: "Kits", icon: Layers },
+  { to: "/promocoes", label: "Promoções", icon: Tag },
   { to: "/metricas", label: "Métricas", icon: BarChart2 },
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
   { to: "/vendas", label: "Vendas", icon: DollarSign },
