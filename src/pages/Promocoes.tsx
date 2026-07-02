@@ -210,6 +210,24 @@ export default function Promocoes() {
 
   return (
     <div className="space-y-4">
+      {counts.problem > 0 && filter !== "problem" && (
+        <button
+          type="button"
+          onClick={() => setFilter("problem")}
+          className="w-full text-left rounded-lg border border-destructive/50 bg-destructive/10 p-4 flex items-center gap-3 hover:bg-destructive/15 transition-colors"
+        >
+          <AlertTriangle className="size-5 text-destructive shrink-0" />
+          <div className="flex-1">
+            <div className="text-sm font-bold text-destructive">
+              {counts.problem} anúncio{counts.problem > 1 ? "s" : ""} precisam de atenção
+            </div>
+            <div className="text-xs text-destructive/80 mt-0.5">
+              Promoção fake caiu, desconto divergente ou promoção indevida no ML. Clique para ver a lista.
+            </div>
+          </div>
+          <span className="text-xs font-semibold text-destructive underline">Ver pendências →</span>
+        </button>
+      )}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-3 flex-wrap">
