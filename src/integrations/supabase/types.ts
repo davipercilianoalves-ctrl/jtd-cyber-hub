@@ -786,6 +786,63 @@ export type Database = {
           },
         ]
       }
+      promo_snapshots: {
+        Row: {
+          ad_id: string | null
+          checked_at: string
+          created_at: string
+          deal_ids: Json | null
+          expected_discount_pct: number | null
+          has_fake_promo_expected: boolean
+          id: string
+          just_ended: boolean
+          ml_discount_pct: number | null
+          ml_item_id: string
+          original_price: number | null
+          previous_status: string | null
+          price: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ad_id?: string | null
+          checked_at?: string
+          created_at?: string
+          deal_ids?: Json | null
+          expected_discount_pct?: number | null
+          has_fake_promo_expected?: boolean
+          id?: string
+          just_ended?: boolean
+          ml_discount_pct?: number | null
+          ml_item_id: string
+          original_price?: number | null
+          previous_status?: string | null
+          price?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ad_id?: string | null
+          checked_at?: string
+          created_at?: string
+          deal_ids?: Json | null
+          expected_discount_pct?: number | null
+          has_fake_promo_expected?: boolean
+          id?: string
+          just_ended?: boolean
+          ml_discount_pct?: number | null
+          ml_item_id?: string
+          original_price?: number | null
+          previous_status?: string | null
+          price?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sale_overrides: {
         Row: {
           created_at: string
