@@ -1,6 +1,7 @@
 // Sidebar JTD — fixa, expande no hover do mouse
 import { useState, useRef } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
+import { usePromoAlerts } from "@/hooks/usePromoAlerts";
 import {
   LayoutDashboard,
   Package,
@@ -38,6 +39,7 @@ export function Sidebar() {
   const [expanded, setExpanded] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const promoAlerts = usePromoAlerts();
 
   const handleEnter = () => {
     if (closeTimer.current) {
@@ -79,27 +81,44 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 px-2 py-2">
         {navItems.map(({ to, label, icon: Icon }) => {
           const active = pathname === to || pathname.startsWith(to + "/");
+          const alertCount = to === "/promocoes" ? promoAlerts : 0;
           return (
             <Link
               key={to}
               to={to}
-              title={label}
+              title={alertCount > 0 ? `${label} — ${alertCount} pendente(s)` : label}
               className={[
-                "group flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                "group relative flex items-center rounded-lg text-sm font-medium transition-all duration-200",
                 expanded ? "gap-3 px-3 py-2 justify-start" : "justify-center px-0 py-2.5",
                 active
                   ? "bg-[color:var(--lime)]/10 text-[color:var(--lime)] shadow-[inset_0_0_12px_color-mix(in_oklab,var(--lime)_15%,transparent)]"
                   : "text-muted-foreground hover:bg-muted/10 hover:text-foreground",
               ].join(" ")}
             >
-              <Icon
-                size={20}
-                className={[
-                  "shrink-0 transition-transform duration-200 group-hover:scale-110",
-                  active ? "text-[color:var(--lime)]" : "text-muted-foreground/70 group-hover:text-foreground",
-                ].join(" ")}
-              />
-              {expanded && <span className="truncate">{label}</span>}
+              <div className="relative shrink-0">
+                <Icon
+                  size={20}
+                  className={[
+                    "transition-transform duration-200 group-hover:scale-110",
+                    active ? "text-[color:var(--lime)]" : "text-muted-foreground/70 group-hover:text-foreground",
+                  ].join(" ")}
+                />
+                {alertCount > 0 && !expanded && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center leading-none">
+                    {alertCount > 9 ? "9+" : alertCount}
+                  </span>
+                )}
+              </div>
+              {expanded && (
+                <>
+                  <span className="truncate flex-1">{label}</span>
+                  {alertCount > 0 && (
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                      {alertCount > 99 ? "99+" : alertCount}
+                    </span>
+                  )}
+                </>
+              )}
             </Link>
           );
         })}
