@@ -1,0 +1,1 @@
+ALTER TABLE public.promo_snapshots ADD COLUMN IF NOT EXISTS title text, ADD COLUMN IF NOT EXISTS permalink text, ADD COLUMN IF NOT EXISTS thumbnail text;

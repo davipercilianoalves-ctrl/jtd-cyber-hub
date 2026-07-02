@@ -799,9 +799,12 @@ export type Database = {
           ml_discount_pct: number | null
           ml_item_id: string
           original_price: number | null
+          permalink: string | null
           previous_status: string | null
           price: number | null
           status: string
+          thumbnail: string | null
+          title: string | null
           updated_at: string
           user_id: string
         }
@@ -817,9 +820,12 @@ export type Database = {
           ml_discount_pct?: number | null
           ml_item_id: string
           original_price?: number | null
+          permalink?: string | null
           previous_status?: string | null
           price?: number | null
           status?: string
+          thumbnail?: string | null
+          title?: string | null
           updated_at?: string
           user_id: string
         }
@@ -835,9 +841,12 @@ export type Database = {
           ml_discount_pct?: number | null
           ml_item_id?: string
           original_price?: number | null
+          permalink?: string | null
           previous_status?: string | null
           price?: number | null
           status?: string
+          thumbnail?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string
         }
