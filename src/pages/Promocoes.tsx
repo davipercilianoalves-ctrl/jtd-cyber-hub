@@ -2,7 +2,7 @@
 // Fonte da verdade: `ads.fake_discount` (esperado) vs ML `original_price/price` (real).
 // Snapshots persistidos em `promo_snapshots`. Refresh manual + cron horário público.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,14 +60,16 @@ export default function Promocoes() {
   const [filter, setFilter] = useState<"all" | "ok" | "problem" | "deal">("all");
   const [query, setQuery] = useState("");
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
+  const autoRefreshStarted = useRef(false);
 
-  async function loadFromDB() {
+  async function loadFromDB(): Promise<Row[]> {
     setLoading(true);
     try {
-      const { data: ads } = await supabase
+      const { data: ads, error: adsErr } = await supabase
         .from("ads")
         .select("ml_item_id, fake_discount, titles")
         .not("ml_item_id", "is", null);
+      if (adsErr) throw adsErr;
       const byAd = new Map<string, { fake: number; title?: string }>();
       (ads ?? []).forEach((a: any) => {
         if (a.ml_item_id) byAd.set(a.ml_item_id, {
@@ -103,11 +105,68 @@ export default function Promocoes() {
         null,
       );
       setLastRefresh(newest);
+      return rowsBuilt;
     } catch (e: any) {
       toast.error(`Erro ao carregar: ${e.message}`);
+      return [];
     } finally {
       setLoading(false);
     }
+  }
+
+  function addItemIds(target: Set<string>, results: unknown) {
+    if (!Array.isArray(results)) return;
+    results.forEach((value) => {
+      const id = typeof value === "string" ? value : (value as any)?.id;
+      if (typeof id === "string" && id.trim()) target.add(id.trim());
+    });
+  }
+
+  async function fetchItemIdsFromML(mlUserId: string) {
+    const ids = new Set<string>();
+
+    // Prefer scan because it is the ML-recommended way to list all seller items.
+    let scrollId: string | null = null;
+    try {
+      for (let page = 0; page < 20; page++) {
+        const currentScroll: string | null = scrollId;
+        const qs: string = currentScroll
+          ? `search_type=scan&scroll_id=${encodeURIComponent(currentScroll)}`
+          : `search_type=scan`;
+        const searchRes: { data: any; error: any } = await supabase.functions.invoke("ml-proxy", {
+          body: { endpoint: `/users/${mlUserId}/items/search?${qs}&limit=100`, method: "GET" },
+        });
+        if (searchRes.error) break;
+        const before = ids.size;
+        addItemIds(ids, searchRes.data?.results);
+        scrollId = (searchRes.data?.scroll_id as string | null) ?? null;
+        if (!scrollId || ids.size === before) break;
+      }
+    } catch (_error) {
+      // Falls back to regular pagination below.
+    }
+
+    // Some ML accounts do not return results with scan in this endpoint, so
+    // use regular pagination as a fallback and include the common statuses.
+    if (ids.size === 0) {
+      const statusQueries = ["", "status=active", "status=paused"];
+      for (const statusQuery of statusQueries) {
+        for (let offset = 0; offset < 1000; offset += 50) {
+          const qs = [statusQuery, `limit=50`, `offset=${offset}`].filter(Boolean).join("&");
+          const searchRes: { data: any; error: any } = await supabase.functions.invoke("ml-proxy", {
+            body: { endpoint: `/users/${mlUserId}/items/search?${qs}`, method: "GET" },
+          });
+          if (searchRes.error) break;
+          const results = searchRes.data?.results ?? [];
+          addItemIds(ids, results);
+          const total = Number(searchRes.data?.paging?.total ?? 0);
+          if (!Array.isArray(results) || results.length < 50 || (total > 0 && offset + 50 >= total)) break;
+        }
+        if (ids.size > 0) break;
+      }
+    }
+
+    return Array.from(ids);
   }
 
   async function refreshFromML() {
@@ -125,27 +184,10 @@ export default function Promocoes() {
       const mlUserId = meRes.data?.id;
       if (!mlUserId) throw new Error("Não foi possível obter o usuário ML. Reconecte sua conta.");
 
-      // 2) Lista TODOS os IDs de anúncios do usuário no ML (paginado)
-      const allIds: string[] = [];
-      let scrollId: string | null = null;
-      for (let page = 0; page < 20; page++) {
-        const currentScroll: string | null = scrollId;
-        const qs: string = currentScroll
-          ? `search_type=scan&scroll_id=${encodeURIComponent(currentScroll)}`
-          : `search_type=scan`;
-        const searchRes: { data: any; error: any } = await supabase.functions.invoke("ml-proxy", {
-          body: { endpoint: `/users/${mlUserId}/items/search?${qs}&limit=100`, method: "GET" },
-        });
-        if (searchRes.error) throw new Error(searchRes.error.message);
-        const results: string[] = searchRes.data?.results ?? [];
-        allIds.push(...results);
-        scrollId = (searchRes.data?.scroll_id as string | null) ?? null;
-        if (!scrollId || results.length === 0) break;
-      }
-
-
+      // 2) Lista TODOS os IDs de anúncios do usuário no ML, sem depender da tabela ads.
+      const allIds = await fetchItemIdsFromML(String(mlUserId));
       if (allIds.length === 0) {
-        toast.info("Nenhum anúncio encontrado na sua conta ML.");
+        toast.info("Nenhum anúncio retornou da sua conta Mercado Livre.");
         return;
       }
 
@@ -159,6 +201,33 @@ export default function Promocoes() {
         if (a.ml_item_id) adByItem.set(a.ml_item_id, { id: a.id, fake: Number(a.fake_discount ?? 0) });
       });
 
+      const makeSnapshot = (body: any) => {
+        const itemId: string = body?.id;
+        if (!itemId) return null;
+        const price = body?.price ?? null;
+        const original = body?.original_price ?? null;
+        const deal_ids = body?.deal_ids ?? [];
+        const ad = adByItem.get(itemId);
+        const expected = ad?.fake ?? 0;
+        const { status, discount } = computeStatus(expected, price, original);
+        return {
+          user_id: userId,
+          ml_item_id: itemId,
+          ad_id: ad?.id ?? null,
+          title: body?.title ?? itemId,
+          permalink: body?.permalink ?? null,
+          thumbnail: body?.thumbnail ?? null,
+          price,
+          original_price: original,
+          ml_discount_pct: discount,
+          expected_discount_pct: expected,
+          deal_ids,
+          has_fake_promo_expected: expected > 0,
+          status,
+          checked_at: new Date().toISOString(),
+        };
+      };
+
       // 4) Batch /items?ids=... (20 por vez) para trazer preço, original_price, título etc.
       let ok = 0, fail = 0;
       for (let i = 0; i < allIds.length; i += 20) {
@@ -167,43 +236,25 @@ export default function Promocoes() {
         const { data, error } = await supabase.functions.invoke("ml-proxy", {
           body: { endpoint, method: "GET" },
         });
-        if (error) { fail += chunk.length; continue; }
+        if (error) {
+          fail += chunk.length;
+          continue;
+        }
 
         const arr = Array.isArray(data) ? data : [];
-        const upserts = arr.map((entry: any) => {
-          const body = entry?.body;
-          const itemId: string = body?.id;
-          if (!itemId) return null;
-          const price = body?.price ?? null;
-          const original = body?.original_price ?? null;
-          const deal_ids = body?.deal_ids ?? [];
-          const ad = adByItem.get(itemId);
-          const expected = ad?.fake ?? 0;
-          const { status, discount } = computeStatus(expected, price, original);
-          ok++;
-          return {
-            user_id: userId,
-            ml_item_id: itemId,
-            ad_id: ad?.id ?? null,
-            title: body?.title ?? null,
-            permalink: body?.permalink ?? null,
-            thumbnail: body?.thumbnail ?? null,
-            price,
-            original_price: original,
-            ml_discount_pct: discount,
-            expected_discount_pct: expected,
-            deal_ids,
-            has_fake_promo_expected: expected > 0,
-            status,
-            checked_at: new Date().toISOString(),
-          };
-        }).filter(Boolean);
+        const upserts = arr
+          .map((entry: any) => makeSnapshot(entry?.body ?? entry))
+          .filter(Boolean);
 
         if (upserts.length) {
           const { error: upErr } = await supabase
             .from("promo_snapshots")
             .upsert(upserts as any, { onConflict: "user_id,ml_item_id" });
-          if (upErr) fail += upserts.length;
+          if (upErr) {
+            fail += upserts.length;
+          } else {
+            ok += upserts.length;
+          }
         }
       }
 
@@ -217,7 +268,17 @@ export default function Promocoes() {
   }
 
 
-  useEffect(() => { loadFromDB(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const loaded = await loadFromDB();
+      if (!cancelled && loaded.length === 0 && !autoRefreshStarted.current) {
+        autoRefreshStarted.current = true;
+        await refreshFromML();
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const counts = useMemo(() => {
     let ok = 0, problem = 0, deal = 0;
@@ -306,7 +367,7 @@ export default function Promocoes() {
           ) : filtered.length === 0 ? (
             <div className="p-10 text-center text-sm text-muted-foreground">
               {rows.length === 0
-                ? "Nenhum anúncio com ml_item_id ainda. Clique em Atualizar agora após vincular seus anúncios."
+                ? "Nenhum anúncio carregado ainda. Clique em Atualizar agora para puxar direto do Mercado Livre."
                 : "Nada aqui com esse filtro."}
             </div>
           ) : (
