@@ -64,35 +64,38 @@ export default function Promocoes() {
   async function loadFromDB() {
     setLoading(true);
     try {
-      const { data: ads, error: adsErr } = await supabase
+      const { data: ads } = await supabase
         .from("ads")
-        .select("id, ml_item_id, titles, fake_discount");
-      if (adsErr) throw adsErr;
+        .select("ml_item_id, fake_discount, titles")
+        .not("ml_item_id", "is", null);
+      const byAd = new Map<string, { fake: number; title?: string }>();
+      (ads ?? []).forEach((a: any) => {
+        if (a.ml_item_id) byAd.set(a.ml_item_id, {
+          fake: Number(a.fake_discount ?? 0),
+          title: a.titles?.[0],
+        });
+      });
 
       const { data: snaps, error: snapErr } = await supabase
         .from("promo_snapshots")
-        .select("ml_item_id, price, original_price, ml_discount_pct, deal_ids, status, checked_at");
+        .select("ml_item_id, ad_id, price, original_price, ml_discount_pct, deal_ids, status, checked_at, title, expected_discount_pct");
       if (snapErr) throw snapErr;
 
-      const byItem = new Map((snaps ?? []).map((s: any) => [s.ml_item_id, s]));
-
-      const rowsBuilt: Row[] = (ads ?? [])
-        .filter((a: any) => a.ml_item_id)
-        .map((a: any) => {
-          const s = byItem.get(a.ml_item_id);
-          const expected = Number(a.fake_discount ?? 0);
-          return {
-            ad_id: a.id,
-            ml_item_id: a.ml_item_id,
-            title: (a.titles?.[0] as string) ?? a.ml_item_id,
-            expected_discount_pct: expected,
-            price: s?.price ?? null,
-            original_price: s?.original_price ?? null,
-            ml_discount_pct: s?.ml_discount_pct ?? null,
-            deal_ids: (s?.deal_ids as string[]) ?? [],
-            status: (s?.status as Status) ?? "unknown",
-          };
-        });
+      const rowsBuilt: Row[] = (snaps ?? []).map((s: any) => {
+        const ad = byAd.get(s.ml_item_id);
+        const expected = ad ? ad.fake : Number(s.expected_discount_pct ?? 0);
+        return {
+          ad_id: s.ad_id ?? s.ml_item_id,
+          ml_item_id: s.ml_item_id,
+          title: ad?.title ?? s.title ?? s.ml_item_id,
+          expected_discount_pct: expected,
+          price: s.price ?? null,
+          original_price: s.original_price ?? null,
+          ml_discount_pct: s.ml_discount_pct ?? null,
+          deal_ids: (s.deal_ids as string[]) ?? [],
+          status: (s.status as Status) ?? "unknown",
+        };
+      });
 
       setRows(rowsBuilt);
       const newest = (snaps ?? []).reduce<string | null>(
@@ -114,44 +117,77 @@ export default function Promocoes() {
       const userId = userData.user?.id;
       if (!userId) throw new Error("Não autenticado");
 
-      const { data: ads } = await supabase
-        .from("ads")
-        .select("id, ml_item_id, titles, fake_discount")
-        .not("ml_item_id", "is", null);
+      // 1) Descobre o ML user id (via /users/me)
+      const meRes = await supabase.functions.invoke("ml-proxy", {
+        body: { endpoint: "/users/me", method: "GET" },
+      });
+      if (meRes.error) throw new Error(meRes.error.message);
+      const mlUserId = meRes.data?.id;
+      if (!mlUserId) throw new Error("Não foi possível obter o usuário ML. Reconecte sua conta.");
 
-      const items = (ads ?? []).filter((a: any) => a.ml_item_id);
-      if (!items.length) {
-        toast.info("Nenhum anúncio com ml_item_id vinculado.");
+      // 2) Lista TODOS os IDs de anúncios do usuário no ML (paginado)
+      const allIds: string[] = [];
+      let scrollId: string | null = null;
+      for (let page = 0; page < 20; page++) {
+        const currentScroll: string | null = scrollId;
+        const qs: string = currentScroll
+          ? `search_type=scan&scroll_id=${encodeURIComponent(currentScroll)}`
+          : `search_type=scan`;
+        const searchRes: { data: any; error: any } = await supabase.functions.invoke("ml-proxy", {
+          body: { endpoint: `/users/${mlUserId}/items/search?${qs}&limit=100`, method: "GET" },
+        });
+        if (searchRes.error) throw new Error(searchRes.error.message);
+        const results: string[] = searchRes.data?.results ?? [];
+        allIds.push(...results);
+        scrollId = (searchRes.data?.scroll_id as string | null) ?? null;
+        if (!scrollId || results.length === 0) break;
+      }
+
+
+      if (allIds.length === 0) {
+        toast.info("Nenhum anúncio encontrado na sua conta ML.");
         return;
       }
 
-      // batch de 20 IDs
-      const chunks: any[][] = [];
-      for (let i = 0; i < items.length; i += 20) chunks.push(items.slice(i, i + 20));
+      // 3) Puxa lookup de ads (para casar fake_discount esperado)
+      const { data: adsRows } = await supabase
+        .from("ads")
+        .select("id, ml_item_id, fake_discount")
+        .not("ml_item_id", "is", null);
+      const adByItem = new Map<string, { id: string; fake: number }>();
+      (adsRows ?? []).forEach((a: any) => {
+        if (a.ml_item_id) adByItem.set(a.ml_item_id, { id: a.id, fake: Number(a.fake_discount ?? 0) });
+      });
 
+      // 4) Batch /items?ids=... (20 por vez) para trazer preço, original_price, título etc.
       let ok = 0, fail = 0;
-      for (const chunk of chunks) {
-        const ids = chunk.map((a) => a.ml_item_id).join(",");
-        const endpoint = `/items?ids=${ids}&attributes=id,price,original_price,deal_ids`;
+      for (let i = 0; i < allIds.length; i += 20) {
+        const chunk = allIds.slice(i, i + 20);
+        const endpoint = `/items?ids=${chunk.join(",")}&attributes=id,title,price,original_price,deal_ids,permalink,thumbnail`;
         const { data, error } = await supabase.functions.invoke("ml-proxy", {
           body: { endpoint, method: "GET" },
         });
         if (error) { fail += chunk.length; continue; }
 
         const arr = Array.isArray(data) ? data : [];
-        const upserts = chunk.map((ad: any) => {
-          const found = arr.find((x: any) => x?.body?.id === ad.ml_item_id);
-          const body = found?.body;
+        const upserts = arr.map((entry: any) => {
+          const body = entry?.body;
+          const itemId: string = body?.id;
+          if (!itemId) return null;
           const price = body?.price ?? null;
           const original = body?.original_price ?? null;
           const deal_ids = body?.deal_ids ?? [];
-          const expected = Number(ad.fake_discount ?? 0);
+          const ad = adByItem.get(itemId);
+          const expected = ad?.fake ?? 0;
           const { status, discount } = computeStatus(expected, price, original);
           ok++;
           return {
             user_id: userId,
-            ml_item_id: ad.ml_item_id,
-            ad_id: ad.id,
+            ml_item_id: itemId,
+            ad_id: ad?.id ?? null,
+            title: body?.title ?? null,
+            permalink: body?.permalink ?? null,
+            thumbnail: body?.thumbnail ?? null,
             price,
             original_price: original,
             ml_discount_pct: discount,
@@ -161,15 +197,17 @@ export default function Promocoes() {
             status,
             checked_at: new Date().toISOString(),
           };
-        });
+        }).filter(Boolean);
 
-        const { error: upErr } = await supabase
-          .from("promo_snapshots")
-          .upsert(upserts, { onConflict: "user_id,ml_item_id" });
-        if (upErr) fail += chunk.length;
+        if (upserts.length) {
+          const { error: upErr } = await supabase
+            .from("promo_snapshots")
+            .upsert(upserts as any, { onConflict: "user_id,ml_item_id" });
+          if (upErr) fail += upserts.length;
+        }
       }
 
-      toast.success(`${ok} anúncios atualizados${fail ? ` (${fail} falharam)` : ""}.`);
+      toast.success(`${ok} anúncios atualizados do ML${fail ? ` (${fail} falharam)` : ""}.`);
       await loadFromDB();
     } catch (e: any) {
       toast.error(`Erro: ${e.message}`);
@@ -177,6 +215,7 @@ export default function Promocoes() {
       setRefreshing(false);
     }
   }
+
 
   useEffect(() => { loadFromDB(); }, []);
 
